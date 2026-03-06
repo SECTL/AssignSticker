@@ -1,3 +1,3 @@
 [学科]
-[作业内容] 
+[作业内容]      [标签]
 [完成日期]   [编辑按钮（纯图标）]（图标icons/icons/edit.svg) 【删除按钮（纯图标）】（图标icons/icons/minimize.svg）

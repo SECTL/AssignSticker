@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Wow 伙伴！</title>
     <style>
         @font-face {
@@ -163,6 +166,20 @@
             transform: scale(1.1);
         }
 
+        .toolbar-btn.primary {
+            background: #667eea;
+        }
+
+        .toolbar-btn.primary:hover {
+            background: #5568d3;
+            transform: scale(1.1);
+        }
+
+        .toolbar-btn.primary img {
+            opacity: 1;
+            filter: brightness(0) invert(1);
+        }
+
         .toolbar-btn img {
             width: 22px;
             height: 22px;
@@ -267,6 +284,79 @@
             opacity: 0.7;
         }
 
+        /* 右下角提醒卡片 */
+        .toast-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 400px;
+            animation: toastSlideIn 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes toastSlideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
+        .toast-card.hide {
+            animation: toastSlideOut 0.3s ease forwards;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+        }
+
         /* 作业编辑弹窗 iframe */
         .modal-overlay {
             display: none;
@@ -294,6 +384,174 @@
             box-shadow: none;
             background: transparent;
         }
+
+        /* 作业卡片区域 */
+        .homework-container {
+            position: fixed;
+            top: 120px;
+            left: 15px;
+            right: 20px;
+            bottom: 100px;
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .homework-grid {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0;
+            width: 100%;
+            max-height: calc(100vh - 220px);
+            align-content: flex-start;
+        }
+
+        .homework-card {
+            width: 300px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            border: 1px solid #f0f0f0;
+            break-inside: avoid;
+        }
+
+        .homework-grid:empty::before {
+            content: "📝\A暂无作业，点击下方的\"新建作业\"按钮添加";
+            white-space: pre;
+            text-align: center;
+            font-size: 16px;
+            color: #999;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .homework-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .card-subject {
+            font-size: 14px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .homework-item {
+            position: relative;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .homework-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .item-content {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .item-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            color: #666;
+        }
+
+        .item-actions {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            background: white;
+            padding-left: 10px;
+        }
+
+        .homework-item:hover .item-actions {
+            opacity: 1;
+        }
+
+        .item-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .item-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .item-btn img {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+
+        .item-btn:hover img {
+            opacity: 1;
+        }
+
+        .item-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state img {
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
@@ -311,7 +569,14 @@
 
     <div class="footer-info">
         <div>开发中画面，不代表最终效果</div>
-        <div>AssignSticker 1.2.0.2-Arc_de_Triomphe (debug)</div>
+        <div>AssignSticker 1.3.0-Dangerous Star (debug)</div>
+    </div>
+
+    <!-- 作业卡片展示区域 -->
+    <div class="homework-container" id="homeworkContainer">
+        <div class="homework-grid" id="homeworkGrid">
+            <!-- 作业卡片将在这里动态生成 -->
+        </div>
     </div>
 
     <!-- 作业编辑弹窗 -->
@@ -322,11 +587,9 @@
     <!-- 浮动工具栏 -->
     <div class="floating-toolbar">
         <!-- 新建作业 -->
-        <button class="toolbar-btn" data-tooltip="新建作业" onclick="openHomeworkModal()">
+        <button class="toolbar-btn primary" data-tooltip="新建作业" onclick="openHomeworkModal()">
             <img src="icons/icons/add.svg" alt="新建">
         </button>
-
-        <div class="toolbar-divider"></div>
 
         <!-- 保存 -->
         <div class="submenu-container">
@@ -338,7 +601,7 @@
                     <img src="icons/icons/image.svg" alt="图片">
                     <span>保存为图片</span>
                 </button>
-                <button class="submenu-item">
+                <button class="submenu-item" onclick="saveHomeworkToFile()">
                     <img src="icons/icons/save.svg" alt="保存">
                     <span>手动保存作业</span>
                 </button>
@@ -383,15 +646,18 @@
         </button>
 
         <!-- 退出 -->
-        <button class="toolbar-btn" data-tooltip="退出">
+        <button class="toolbar-btn" data-tooltip="退出" onclick="exitApp()">
             <img src="icons/icons/exit.svg" alt="退出">
         </button>
 
         <!-- 重启 -->
-        <button class="toolbar-btn" data-tooltip="重启">
+        <button class="toolbar-btn" data-tooltip="重启" onclick="restartApp()">
             <img src="icons/icons/restart.svg" alt="重启">
         </button>
     </div>
+
+    <!-- 右下角提醒卡片 -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <script>
         function updateTime() {
@@ -487,6 +753,25 @@
 
         // 作业编辑弹窗功能
         function openHomeworkModal() {
+            const iframe = document.getElementById('homeworkIframe');
+            if (iframe.contentWindow && iframe.contentWindow.resetToCreateMode) {
+                iframe.contentWindow.resetToCreateMode();
+            }
+            document.getElementById('homeworkModal').classList.add('show');
+        }
+
+        function openEditHomeworkModal(id) {
+            const homeworkList = getHomeworkList();
+            const homework = homeworkList.find(h => h.id === id);
+            if (!homework) {
+                alert('作业不存在');
+                return;
+            }
+
+            const iframe = document.getElementById('homeworkIframe');
+            if (iframe.contentWindow && iframe.contentWindow.loadHomeworkForEdit) {
+                iframe.contentWindow.loadHomeworkForEdit(homework);
+            }
             document.getElementById('homeworkModal').classList.add('show');
         }
 
@@ -502,9 +787,240 @@
         // 供 iframe 调用的回调函数
         function onHomeworkSaved(homeworkData) {
             console.log('作业已保存:', homeworkData);
-            alert('作业已保存！\n' + JSON.stringify(homeworkData, null, 2));
+            // 保存到本地存储
+            saveHomework(homeworkData);
+            // 刷新显示
+            renderHomeworkCards();
             closeHomeworkModal();
         }
+
+        // 作业数据管理
+        function getHomeworkList() {
+            const data = localStorage.getItem('homeworkList');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveHomework(homeworkData) {
+            const list = getHomeworkList();
+            
+            // 如果是编辑模式（有id），更新原有作业
+            if (homeworkData.id) {
+                const index = list.findIndex(h => h.id === homeworkData.id);
+                if (index !== -1) {
+                    list[index] = {
+                        ...list[index],
+                        ...homeworkData,
+                        updatedAt: new Date().toISOString()
+                    };
+                }
+            } else {
+                // 新建模式
+                const homework = {
+                    id: Date.now(),
+                    ...homeworkData,
+                    createdAt: new Date().toISOString()
+                };
+                list.push(homework);
+            }
+            
+            localStorage.setItem('homeworkList', JSON.stringify(list));
+        }
+
+        function deleteHomework(id) {
+            const list = getHomeworkList();
+            const newList = list.filter(h => h.id !== id);
+            localStorage.setItem('homeworkList', JSON.stringify(newList));
+            renderHomeworkCards();
+        }
+
+        // 显示右下角提醒卡片
+        function showToast(title, message, duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast-card';
+            toast.innerHTML = `
+                <img src="icons/icons/alert.svg" alt="提醒" class="toast-icon">
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // 自动关闭
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+
+        // 手动保存作业到文件
+        async function saveHomeworkToFile() {
+            const homeworkList = getHomeworkList();
+            
+            if (homeworkList.length === 0) {
+                showToast('提示', '当前没有作业可保存');
+                return;
+            }
+            
+            try {
+                // 调用 Python API 保存作业
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.saveHomeworkToFile(homeworkList);
+                    if (result.success) {
+                        showToast('保存成功', result.message);
+                    } else {
+                        showToast('保存失败', result.message);
+                    }
+                } else {
+                    showToast('提示', '保存功能不可用');
+                }
+            } catch (error) {
+                console.error('保存作业失败:', error);
+                showToast('保存失败', error.message);
+            }
+        }
+
+        // 重启应用程序
+        async function restartApp() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    showToast('重启', '应用程序正在重启...');
+                    await window.pywebview.api.restartApp();
+                } else {
+                    showToast('提示', '重启功能不可用');
+                }
+            } catch (error) {
+                console.error('重启失败:', error);
+                showToast('重启失败', error.message);
+            }
+        }
+
+        // 退出应用程序
+        async function exitApp() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    await window.pywebview.api.exitApp();
+                } else {
+                    // 如果API不可用，直接关闭窗口
+                    window.close();
+                }
+            } catch (error) {
+                console.error('退出失败:', error);
+                window.close();
+            }
+        }
+
+        // 自动保存作业（每5分钟）
+        function startAutoSave() {
+            // 每5分钟执行一次自动保存
+            setInterval(async () => {
+                const homeworkList = getHomeworkList();
+                
+                // 只有在有作业时才保存
+                if (homeworkList.length === 0) {
+                    return;
+                }
+                
+                try {
+                    if (window.pywebview && window.pywebview.api) {
+                        const result = await window.pywebview.api.autoSaveHomework(homeworkList);
+                        if (result.success) {
+                            console.log('自动保存成功:', result.message);
+                        } else {
+                            console.error('自动保存失败:', result.message);
+                        }
+                    }
+                } catch (error) {
+                    console.error('自动保存出错:', error);
+                }
+            }, 5 * 60 * 1000); // 5分钟 = 300000毫秒
+        }
+
+        // 启动自动保存
+        startAutoSave();
+
+        function formatHomeworkContent(homework) {
+            if (homework.type === '练习册') {
+                return `练习册 ${homework.startPage || ''}-${homework.endPage || ''} 页`;
+            } else if (homework.type === '预习') {
+                return `预习: ${homework.previewContent || ''}`;
+            } else if (homework.type === '作业') {
+                return homework.homeworkContent || '';
+            }
+            return '';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${month}月${day}日`;
+        }
+
+        function renderHomeworkCards() {
+            const grid = document.getElementById('homeworkGrid');
+            const homeworkList = getHomeworkList();
+
+            if (homeworkList.length === 0) {
+                grid.innerHTML = '';
+                return;
+            }
+
+            // 按学科分组
+            const grouped = {};
+            homeworkList.forEach(homework => {
+                if (!grouped[homework.subject]) {
+                    grouped[homework.subject] = [];
+                }
+                grouped[homework.subject].push(homework);
+            });
+
+            // 渲染分组卡片
+            grid.innerHTML = Object.entries(grouped).map(([subject, items]) => {
+                const itemsHtml = items.map(homework => {
+                    const content = formatHomeworkContent(homework);
+                    const endDate = formatDate(homework.endTime);
+                    const tagsHtml = homework.tags.map(tag => `<span class="item-tag">${tag}</span>`).join('');
+
+                    return `
+                        <div class="homework-item" data-id="${homework.id}">
+                            <div class="item-header">
+                                <div class="item-content">${content}</div>
+                                <div class="item-tags">${tagsHtml}</div>
+                            </div>
+                            <div class="item-date">截止: ${endDate}</div>
+                            <div class="item-actions">
+                                <button class="item-btn" onclick="editHomework(${homework.id})" title="编辑">
+                                    <img src="icons/icons/edit.svg" alt="编辑">
+                                </button>
+                                <button class="item-btn" onclick="deleteHomework(${homework.id})" title="删除">
+                                    <img src="icons/icons/minimize.svg" alt="删除">
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="homework-card">
+                        <div class="card-subject">${subject}</div>
+                        ${itemsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editHomework(id) {
+            openEditHomeworkModal(id);
+        }
+
+        // 初始化渲染
+        renderHomeworkCards();
 
         // 点击弹窗外部关闭
         document.getElementById('homeworkModal').addEventListener('click', function(e) {

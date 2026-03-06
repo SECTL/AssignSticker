@@ -8,6 +8,8 @@ import subprocess
 import glob
 import urllib.parse
 import threading
+import json
+import random
 from datetime import datetime
 from PIL import Image, ImageDraw
 import pystray
@@ -26,6 +28,9 @@ debug_mode = False
 
 # 系统托盘图标对象
 tray_icon = None
+
+# 重启标记
+should_restart = False
 
 def log(message, level="info"):
     """
@@ -306,6 +311,184 @@ def show_crash_window_standalone(encoded_error):
     except Exception as e:
         print(f"显示崩溃窗口失败: {str(e)}")
 
+def ensure_data_directory():
+    """确保data目录和homework_save、homework_save_auto目录存在，不存在则创建"""
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+        log(f"创建data目录: {data_dir}", "info")
+    
+    homework_save_dir = os.path.join(data_dir, 'homework_save')
+    if not os.path.exists(homework_save_dir):
+        os.makedirs(homework_save_dir)
+        log(f"创建homework_save目录: {homework_save_dir}", "info")
+    
+    homework_save_auto_dir = os.path.join(data_dir, 'homework_save_auto')
+    if not os.path.exists(homework_save_auto_dir):
+        os.makedirs(homework_save_auto_dir)
+        log(f"创建homework_save_auto目录: {homework_save_auto_dir}", "info")
+    
+    return data_dir
+
+
+def get_homework_save_dir():
+    """获取作业保存目录路径"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save')
+
+
+def get_homework_save_auto_dir():
+    """获取自动保存作业目录路径"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save_auto')
+
+
+class Api:
+    """暴露给前端调用的API"""
+    
+    def __init__(self):
+        self.window = None
+        self.should_restart = False
+    
+    def saveHomeworkToFile(self, homework_data):
+        """
+        保存作业数据到JSON文件
+        homework_data: 作业数据对象或数组
+        """
+        try:
+            save_dir = get_homework_save_dir()
+            
+            # 生成文件名：时间戳_随机数.json
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            import random
+            random_num = random.randint(1000, 9999)
+            filename = f"homework_{timestamp}_{random_num}.json"
+            filepath = os.path.join(save_dir, filename)
+            
+            # 写入JSON文件
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(homework_data, f, ensure_ascii=False, indent=2)
+            
+            log(f"作业已保存到: {filepath}", "info")
+            return {"success": True, "message": f"作业已保存到: {filename}", "filepath": filepath}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"保存作业失败: {error_msg}", "error")
+            return {"success": False, "message": f"保存失败: {error_msg}"}
+    
+    def getSavedHomeworkFiles(self):
+        """获取已保存的作业文件列表"""
+        try:
+            save_dir = get_homework_save_dir()
+            if not os.path.exists(save_dir):
+                return {"success": True, "files": []}
+            
+            files = []
+            for filename in os.listdir(save_dir):
+                if filename.endswith('.json'):
+                    filepath = os.path.join(save_dir, filename)
+                    stat = os.stat(filepath)
+                    files.append({
+                        "filename": filename,
+                        "created": datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
+                        "size": stat.st_size
+                    })
+            
+            # 按创建时间排序
+            files.sort(key=lambda x: x["created"], reverse=True)
+            return {"success": True, "files": files}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"获取作业文件列表失败: {error_msg}", "error")
+            return {"success": False, "message": f"获取失败: {error_msg}"}
+    
+    def loadHomeworkFromFile(self, filename):
+        """从文件加载作业数据"""
+        try:
+            save_dir = get_homework_save_dir()
+            filepath = os.path.join(save_dir, filename)
+            
+            # 安全检查：确保文件在保存目录内
+            if not filepath.startswith(save_dir):
+                return {"success": False, "message": "非法文件路径"}
+            
+            if not os.path.exists(filepath):
+                return {"success": False, "message": "文件不存在"}
+            
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            return {"success": True, "data": data}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"加载作业文件失败: {error_msg}", "error")
+            return {"success": False, "message": f"加载失败: {error_msg}"}
+    
+    def autoSaveHomework(self, homework_data):
+        """
+        自动保存作业数据到JSON文件
+        homework_data: 作业数据对象或数组
+        """
+        try:
+            save_dir = get_homework_save_auto_dir()
+            
+            # 生成文件名：auto_时间戳.json
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"auto_{timestamp}.json"
+            filepath = os.path.join(save_dir, filename)
+            
+            # 写入JSON文件
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(homework_data, f, ensure_ascii=False, indent=2)
+            
+            log(f"作业已自动保存到: {filepath}", "info")
+            return {"success": True, "message": f"自动保存成功: {filename}", "filepath": filepath}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"自动保存作业失败: {error_msg}", "error")
+            return {"success": False, "message": f"自动保存失败: {error_msg}"}
+    
+    def restartApp(self):
+        """重启应用程序"""
+        try:
+            log("用户触发重启", "info")
+            global should_restart
+            # 先标记需要重启
+            should_restart = True
+            # 保存日志
+            save_logs()
+            # 停止托盘图标
+            global tray_icon
+            if tray_icon:
+                tray_icon.stop()
+            # 关闭当前窗口并强制退出进程
+            if self.window:
+                self.window.destroy()
+            # 强制退出当前进程
+            os._exit(0)
+        except Exception as e:
+            error_msg = str(e)
+            log(f"重启失败: {error_msg}", "error")
+            return {"success": False, "message": f"重启失败: {error_msg}"}
+    
+    def exitApp(self):
+        """退出应用程序"""
+        try:
+            log("用户触发退出", "info")
+            # 保存日志
+            save_logs()
+            # 停止托盘图标
+            global tray_icon
+            if tray_icon:
+                tray_icon.stop()
+            # 关闭窗口并退出进程
+            if self.window:
+                self.window.destroy()
+            # 强制退出进程
+            os._exit(0)
+        except Exception as e:
+            error_msg = str(e)
+            log(f"退出失败: {error_msg}", "error")
+            return {"success": False, "message": f"退出失败: {error_msg}"}
+
 if __name__ == '__main__':
     # 检查是否是崩溃窗口模式
     if '--crash-window' in sys.argv:
@@ -320,6 +503,9 @@ if __name__ == '__main__':
     show_devtools = '--with-devtools' in sys.argv
 
     try:
+        # 确保data目录存在
+        ensure_data_directory()
+
         # 打印系统信息
         print_system_info()
 
@@ -338,6 +524,9 @@ if __name__ == '__main__':
             if show_devtools:
                 log("开发者工具模式：跳过多开检测", "info")
             log("程序启动成功", "info")
+            # 创建API实例
+            api = Api()
+            
             # 创建无边框窗口
             main_window = webview.create_window(
                 'Wow 伙伴！',
@@ -346,8 +535,12 @@ if __name__ == '__main__':
                 width=2296,
                 height=1136,
                 resizable=False,
-                on_top=False
+                on_top=False,
+                js_api=api
             )
+            
+            # 将窗口对象保存到API中，以便API方法可以访问
+            api.window = main_window
 
             # 在主线程设置托盘图标（必须在start之前）
             setup_tray_icon(main_window)
@@ -376,6 +569,12 @@ if __name__ == '__main__':
         # 显示崩溃窗口
         show_crash_window(error_msg)
     finally:
+        # 检查是否需要重启（重启时已在restartApp中处理）
+        if should_restart:
+            log("正在重启应用程序...", "info")
+            subprocess.Popen([sys.executable, __file__])
+            sys.exit(0)
+        
         # 程序退出时保存日志
         save_logs()
         # 停止托盘图标

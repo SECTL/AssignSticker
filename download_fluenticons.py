@@ -875,7 +875,10 @@ SIZES = [16, 20, 24, 28, 32, 48]
 
 def download_icon(icon_name, size, base_dir):
     """下载单个图标"""
-    url = f"https://cdn.jsdelivr.net/npm/@fluentui/svg-icons@1.1.319/icons_regular/ic_fluent_{icon_name}_{size}_regular.svg"
+    # 将 icon_name 转换为 PascalCase (如: access_time -> AccessTime)
+    parts = icon_name.split("_")
+    icon_pascal = "".join(p.capitalize() for p in parts)
+    url = f"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{icon_pascal}/SVG/ic_fluent_{icon_name}_{size}_regular.svg"
     output_dir = os.path.join(base_dir, f"fluenticons/{size}_regular")
     output_path = os.path.join(output_dir, f"{icon_name}.svg")
     

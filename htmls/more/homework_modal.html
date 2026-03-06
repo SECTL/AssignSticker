@@ -275,7 +275,7 @@
 <body>
     <div class="modal-content">
         <div class="modal-header">
-            <h2>新建作业</h2>
+            <h2 id="modalTitle">新建作业</h2>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -400,6 +400,8 @@
             }
         }
 
+        let editingId = null;
+
         function saveHomework() {
             const subject = document.getElementById('subjectSelect').value;
             const type = document.getElementById('homeworkTypeSelect').value;
@@ -416,6 +418,11 @@
                 endTime: endTime,
                 tags: []
             };
+
+            // 如果是编辑模式，保留原ID
+            if (editingId) {
+                homeworkData.id = editingId;
+            }
 
             document.querySelectorAll('.tag-checkbox input:checked').forEach(cb => {
                 homeworkData.tags.push(cb.value);
@@ -445,6 +452,55 @@
                 closeModal();
             }
         }
+
+        // 加载作业数据用于编辑
+        function loadHomeworkForEdit(homework) {
+            editingId = homework.id;
+            document.getElementById('modalTitle').textContent = '编辑作业';
+            
+            document.getElementById('subjectSelect').value = homework.subject;
+            document.getElementById('homeworkTypeSelect').value = homework.type;
+            document.getElementById('endTimeInput').value = homework.endTime;
+            
+            // 显示对应类型的输入区域
+            toggleHomeworkType();
+            
+            // 填充类型特定的数据
+            if (homework.type === '练习册') {
+                document.getElementById('startPage').value = homework.startPage || '';
+                document.getElementById('endPage').value = homework.endPage || '';
+            } else if (homework.type === '预习') {
+                document.getElementById('previewContent').value = homework.previewContent || '';
+            } else if (homework.type === '作业') {
+                document.getElementById('homeworkContent').value = homework.homeworkContent || '';
+            }
+            
+            // 填充标签
+            document.querySelectorAll('.tag-checkbox input').forEach(cb => {
+                cb.checked = homework.tags.includes(cb.value);
+            });
+            
+            // 清空并重新添加自定义标签
+            document.getElementById('selectedTags').innerHTML = '';
+            homework.tags.forEach(tag => {
+                if (!['放学前交', '家长签字'].includes(tag)) {
+                    const selectedTags = document.getElementById('selectedTags');
+                    const tagElement = document.createElement('div');
+                    tagElement.className = 'selected-tag';
+                    tagElement.innerHTML = `${tag} <span class="remove-tag" onclick="this.parentElement.remove()">&times;</span>`;
+                    selectedTags.appendChild(tagElement);
+                }
+            });
+        }
+
+        // 重置为新建模式
+        function resetToCreateMode() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '新建作业';
+        }
+
+        window.loadHomeworkForEdit = loadHomeworkForEdit;
+        window.resetToCreateMode = resetToCreateMode;
 
         function resetForm() {
             document.getElementById('subjectSelect').value = '';
