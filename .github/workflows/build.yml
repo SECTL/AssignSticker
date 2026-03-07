@@ -8,10 +8,32 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      build_windows:
+        description: 'Build Windows executable'
+        required: true
+        default: true
+        type: boolean
+      build_linux_amd64:
+        description: 'Build Linux AMD64 deb package'
+        required: true
+        default: true
+        type: boolean
+      build_linux_arm64:
+        description: 'Build Linux ARM64 deb package'
+        required: true
+        default: true
+        type: boolean
+      create_release:
+        description: 'Create GitHub Release (only for tags)'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_windows == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -60,6 +82,7 @@ jobs:
 
   build-linux-amd64:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_linux_amd64 == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -141,6 +164,7 @@ jobs:
 
   build-linux-arm64:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_linux_arm64 == 'true'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -217,7 +241,7 @@ jobs:
   release:
     needs: [build-windows, build-linux-amd64, build-linux-arm64]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: (startsWith(github.ref, 'refs/tags/v') && github.event_name != 'workflow_dispatch') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v4
