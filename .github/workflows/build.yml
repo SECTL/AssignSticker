@@ -32,19 +32,20 @@ jobs:
         pyinstaller --onefile --windowed --icon=icon.ico --name AssignSticker main.py
 
     - name: Prepare Windows package
+      shell: pwsh
       run: |
-        mkdir -p release/AssignSticker-windows
-        cp -r dist/AssignSticker.exe release/AssignSticker-windows/
-        cp -r icons release/AssignSticker-windows/
-        cp -r htmls release/AssignSticker-windows/
-        cp -r saying release/AssignSticker-windows/
-        cp -r desktop_widgets release/AssignSticker-windows/
-        cp font.ttf release/AssignSticker-windows/
-        cp icon.ico release/AssignSticker-windows/
-        cp introduce release/AssignSticker-windows/
-        cp banner.png release/AssignSticker-windows/ 2>$null || echo "banner.png not found"
-        cp LICENSE release/AssignSticker-windows/ 2>$null || echo "LICENSE not found"
-        cp README.md release/AssignSticker-windows/ 2>$null || echo "README.md not found"
+        New-Item -ItemType Directory -Force -Path release/AssignSticker-windows
+        Copy-Item -Recurse dist/AssignSticker.exe release/AssignSticker-windows/
+        Copy-Item -Recurse icons release/AssignSticker-windows/
+        Copy-Item -Recurse htmls release/AssignSticker-windows/
+        Copy-Item -Recurse saying release/AssignSticker-windows/
+        Copy-Item -Recurse desktop_widgets release/AssignSticker-windows/
+        Copy-Item font.ttf release/AssignSticker-windows/
+        Copy-Item icon.ico release/AssignSticker-windows/
+        Copy-Item introduce release/AssignSticker-windows/
+        if (Test-Path banner.png) { Copy-Item banner.png release/AssignSticker-windows/ } else { Write-Host "banner.png not found" }
+        if (Test-Path LICENSE) { Copy-Item LICENSE release/AssignSticker-windows/ } else { Write-Host "LICENSE not found" }
+        if (Test-Path README.md) { Copy-Item README.md release/AssignSticker-windows/ } else { Write-Host "README.md not found" }
 
     - name: Create Windows ZIP
       run: |
