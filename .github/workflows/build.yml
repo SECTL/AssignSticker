@@ -22,157 +22,160 @@ on:
         default: false
         type: boolean
 
+env:
+  APP_NAME: assignsticker
+  APP_VERSION: "1.3.0"
+
 jobs:
   build-windows:
     runs-on: windows-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_windows == 'true'
+    if: github.event_name != 'workflow_dispatch' || inputs.build_windows
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller
+          pip install pystray Pillow requests loguru
 
-    - name: Build Windows executable
-      run: |
-        python build.py
+      - name: Build
+        run: python build.py
 
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AssignSticker-windows-x64
-        path: dist/AssignSticker.exe
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AssignSticker-windows-x64
+          path: dist/AssignSticker.exe
 
   build-linux:
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_linux == 'true'
+    if: github.event_name != 'workflow_dispatch' || inputs.build_linux
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Get version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "APP_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install -r requirements.txt
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev \
+            libgirepository-2.0-dev \
+            gir1.2-glib-2.0 \
+            gir1.2-ayatanaappindicator3-0.1 \
+            gir1.2-webkit2-4.1 \
+            pkg-config \
+            python3-dev \
+            dpkg-dev \
+            fakeroot
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y dpkg-dev fakeroot
+      - name: Build DEB package
+        run: |
+          PKG_DIR="build/deb/${APP_NAME}"
 
-    - name: Build Linux executable
-      run: |
-        pyinstaller --onefile --windowed --name assignsticker main.py
+          # 目录结构
+          mkdir -p "${PKG_DIR}/usr/share/${APP_NAME}"
+          mkdir -p "${PKG_DIR}/usr/share/applications"
+          mkdir -p "${PKG_DIR}/usr/bin"
+          mkdir -p "${PKG_DIR}/DEBIAN"
 
-    - name: Prepare DEB package
-      run: |
-        mkdir -p release/deb/assignsticker/usr/local/bin
-        mkdir -p release/deb/assignsticker/usr/share/assignsticker
-        mkdir -p release/deb/assignsticker/usr/share/applications
-        mkdir -p release/deb/assignsticker/DEBIAN
+          # 复制项目文件
+          cp main.py "${PKG_DIR}/usr/share/${APP_NAME}/"
+          cp -r icons htmls saying desktop_widgets "${PKG_DIR}/usr/share/${APP_NAME}/" 2>/dev/null || true
+          cp font.ttf icon.ico introduce banner.png LICENSE README.md "${PKG_DIR}/usr/share/${APP_NAME}/" 2>/dev/null || true
+          cp pyproject.toml "${PKG_DIR}/usr/share/${APP_NAME}/"
 
-        # Copy executable
-        cp dist/assignsticker release/deb/assignsticker/usr/local/bin/
-        chmod +x release/deb/assignsticker/usr/local/bin/assignsticker
+          # 启动脚本
+          cat > "${PKG_DIR}/usr/bin/${APP_NAME}" << 'LAUNCHER'
+          #!/bin/bash
+          cd /usr/share/assignsticker
+          python3 main.py "$@"
+          LAUNCHER
+          chmod +x "${PKG_DIR}/usr/bin/${APP_NAME}"
 
-        # Copy all project files (excluding unnecessary directories)
-        for item in icons htmls saying desktop_widgets; do
-          if [ -d "$item" ]; then
-            cp -r "$item" release/deb/assignsticker/usr/share/assignsticker/
-          fi
-        done
+          # Desktop Entry
+          cat > "${PKG_DIR}/usr/share/applications/${APP_NAME}.desktop" << EOF
+          [Desktop Entry]
+          Name=AssignSticker
+          Comment=Homework Kanban Application
+          Exec=${APP_NAME}
+          Icon=/usr/share/${APP_NAME}/icon.ico
+          Type=Application
+          Categories=Education;Office;
+          Terminal=false
+          EOF
 
-        for file in font.ttf icon.ico introduce banner.png LICENSE README.md; do
-          if [ -f "$file" ]; then
-            cp "$file" release/deb/assignsticker/usr/share/assignsticker/
-          fi
-        done
+          # Control
+          cat > "${PKG_DIR}/DEBIAN/control" << EOF
+          Package: ${APP_NAME}
+          Version: ${APP_VERSION}
+          Section: education
+          Priority: optional
+          Architecture: amd64
+          Depends: python3,
+                   python3-gi,
+                   python3-gi-cairo,
+                   python3-pil,
+                   python3-requests,
+                   gir1.2-gtk-3.0,
+                   gir1.2-webkit2-4.1,
+                   gir1.2-ayatanaappindicator3-0.1,
+                   gir1.2-glib-2.0,
+                   libcairo2,
+                   libgtk-3-0,
+                   libwebkit2gtk-4.1-0
+          Maintainer: SECTL <sectl@example.com>
+          Description: Homework Showboard Application
+           AssignSticker is a homework management and display application.
+          EOF
 
-        # Create desktop entry
-        echo "[Desktop Entry]" > release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Name=AssignSticker" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Comment=Homework Kanban Application" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Exec=/usr/local/bin/assignsticker" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Icon=/usr/share/assignsticker/icon.ico" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Type=Application" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Categories=Education;Office;" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
-        echo "Terminal=false" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+          # postinst: 安装 pip 依赖
+          cat > "${PKG_DIR}/DEBIAN/postinst" << 'EOF'
+          #!/bin/bash
+          pip3 install pystray loguru pycairo PyGObject 2>/dev/null || true
+          EOF
+          chmod 755 "${PKG_DIR}/DEBIAN/postinst"
 
-        # Create control file
-        echo "Package: assignsticker" > release/deb/assignsticker/DEBIAN/control
-        echo "Version: 1.3.0" >> release/deb/assignsticker/DEBIAN/control
-        echo "Section: education" >> release/deb/assignsticker/DEBIAN/control
-        echo "Priority: optional" >> release/deb/assignsticker/DEBIAN/control
-        echo "Architecture: amd64" >> release/deb/assignsticker/DEBIAN/control
-        echo "Depends: python3, python3-gi, python3-gi-cairo, gir1.2-gtk-3.0, gir1.2-webkit2-4.1, libgtk-3-0, libwebkit2gtk-4.1-0, libcairo2, libgirepository-1.0-1, gir1.2-glib-2.0, gir1.2-ayatanaappindicator3-0.1" >> release/deb/assignsticker/DEBIAN/control
-        echo "Maintainer: SECTL <sectl@example.com>" >> release/deb/assignsticker/DEBIAN/control
-        echo "Description: Homework Showboard Application" >> release/deb/assignsticker/DEBIAN/control
-        echo " AssignSticker is a homework management application" >> release/deb/assignsticker/DEBIAN/control
-        echo " that helps users organize and track homework tasks." >> release/deb/assignsticker/DEBIAN/control
+          # 打包
+          dpkg-deb --build "${PKG_DIR}"
+          mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-linux-amd64.deb"
 
-        # Build DEB package
-        dpkg-deb --build release/deb/assignsticker
-        mv release/deb/assignsticker.deb release/AssignSticker-linux-amd64.deb
-
-    - name: Upload Linux artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AssignSticker-linux-amd64
-        path: release/AssignSticker-linux-amd64.deb
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AssignSticker-linux-amd64
+          path: AssignSticker-*-linux-amd64.deb
 
   release:
     needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     if: |
       always() &&
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true') ||
-      startsWith(github.ref, 'refs/tags/v')
+      (startsWith(github.ref, 'refs/tags/v') ||
+       (github.event_name == 'workflow_dispatch' && inputs.create_release))
     steps:
-    - name: Download Windows artifact
-      if: needs.build-windows.result == 'success'
-      uses: actions/download-artifact@v4
-      with:
-        name: AssignSticker-windows-x64
-        path: artifacts/windows
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
-    - name: Download Linux artifact
-      if: needs.build-linux.result == 'success'
-      uses: actions/download-artifact@v4
-      with:
-        name: AssignSticker-linux-amd64
-        path: artifacts/linux
+      - name: List files
+        run: find artifacts -type f
 
-    - name: Prepare release files
-      run: |
-        mkdir -p release_files
-        if [ -f artifacts/windows/AssignSticker.exe ]; then
-          mv artifacts/windows/AssignSticker.exe release_files/
-        fi
-        if [ -f artifacts/linux/AssignSticker-linux-amd64.deb ]; then
-          mv artifacts/linux/AssignSticker-linux-amd64.deb release_files/
-        fi
-        ls -la release_files/
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: release_files/*
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
