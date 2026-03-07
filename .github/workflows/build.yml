@@ -1,0 +1,244 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --icon=icon.ico --name AssignSticker main.py
+
+    - name: Prepare Windows package
+      run: |
+        mkdir -p release/AssignSticker-windows
+        cp -r dist/AssignSticker.exe release/AssignSticker-windows/
+        cp -r icons release/AssignSticker-windows/
+        cp -r htmls release/AssignSticker-windows/
+        cp -r saying release/AssignSticker-windows/
+        cp -r desktop_widgets release/AssignSticker-windows/
+        cp font.ttf release/AssignSticker-windows/
+        cp icon.ico release/AssignSticker-windows/
+        cp introduce release/AssignSticker-windows/
+        cp banner.png release/AssignSticker-windows/ 2>$null || echo "banner.png not found"
+        cp LICENSE release/AssignSticker-windows/ 2>$null || echo "LICENSE not found"
+        cp README.md release/AssignSticker-windows/ 2>$null || echo "README.md not found"
+
+    - name: Create Windows ZIP
+      run: |
+        cd release
+        7z a AssignSticker-windows-x64.zip AssignSticker-windows
+
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AssignSticker-windows-x64
+        path: release/AssignSticker-windows-x64.zip
+
+  build-linux-amd64:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y dpkg-dev debhelper fakeroot
+
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --windowed --name assignsticker main.py
+
+    - name: Prepare DEB package
+      run: |
+        mkdir -p release/deb/assignsticker-amd64/usr/local/bin
+        mkdir -p release/deb/assignsticker-amd64/usr/share/assignsticker
+        mkdir -p release/deb/assignsticker-amd64/usr/share/applications
+        mkdir -p release/deb/assignsticker-amd64/DEBIAN
+
+        # Copy executable
+        cp dist/assignsticker release/deb/assignsticker-amd64/usr/local/bin/
+        chmod +x release/deb/assignsticker-amd64/usr/local/bin/assignsticker
+
+        # Copy application files
+        cp -r icons release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp -r htmls release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp -r saying release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp -r desktop_widgets release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp font.ttf release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp icon.ico release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp introduce release/deb/assignsticker-amd64/usr/share/assignsticker/
+        cp banner.png release/deb/assignsticker-amd64/usr/share/assignsticker/ 2>/dev/null || true
+        cp LICENSE release/deb/assignsticker-amd64/usr/share/assignsticker/ 2>/dev/null || true
+        cp README.md release/deb/assignsticker-amd64/usr/share/assignsticker/ 2>/dev/null || true
+
+        # Create desktop entry
+        cat > release/deb/assignsticker-amd64/usr/share/applications/assignsticker.desktop << 'EOF'
+[Desktop Entry]
+Name=AssignSticker
+Comment=作业看板应用
+Exec=/usr/local/bin/assignsticker
+Icon=/usr/share/assignsticker/icon.ico
+Type=Application
+Categories=Education;Office;
+Terminal=false
+EOF
+
+        # Create control file
+        cat > release/deb/assignsticker-amd64/DEBIAN/control << 'EOF'
+Package: assignsticker
+Version: 1.3.0
+Section: education
+Priority: optional
+Architecture: amd64
+Depends: python3, python3-gi, libgtk-3-0
+Maintainer: SECTL <your-email@example.com>
+Description: 作业看板应用
+ AssignSticker 是一个用于管理作业的看板应用，
+ 帮助用户更好地组织和跟踪作业任务。
+EOF
+
+        # Build DEB package
+        dpkg-deb --build release/deb/assignsticker-amd64
+        mv release/deb/assignsticker-amd64.deb release/AssignSticker-linux-amd64.deb
+
+    - name: Upload Linux AMD64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AssignSticker-linux-amd64
+        path: release/AssignSticker-linux-amd64.deb
+
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
+    - name: Build ARM64 in container
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/arm64
+        file: ./Dockerfile.build
+        push: false
+        outputs: type=local,dest=./release/arm64
+
+    - name: Prepare ARM64 DEB package
+      run: |
+        mkdir -p release/deb/assignsticker-arm64/usr/local/bin
+        mkdir -p release/deb/assignsticker-arm64/usr/share/assignsticker
+        mkdir -p release/deb/assignsticker-arm64/usr/share/applications
+        mkdir -p release/deb/assignsticker-arm64/DEBIAN
+
+        # Copy executable
+        cp release/arm64/assignsticker release/deb/assignsticker-arm64/usr/local/bin/ 2>/dev/null || echo "Using placeholder"
+        chmod +x release/deb/assignsticker-arm64/usr/local/bin/assignsticker 2>/dev/null || true
+
+        # Copy application files
+        cp -r icons release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp -r htmls release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp -r saying release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp -r desktop_widgets release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp font.ttf release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp icon.ico release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp introduce release/deb/assignsticker-arm64/usr/share/assignsticker/
+        cp banner.png release/deb/assignsticker-arm64/usr/share/assignsticker/ 2>/dev/null || true
+        cp LICENSE release/deb/assignsticker-arm64/usr/share/assignsticker/ 2>/dev/null || true
+        cp README.md release/deb/assignsticker-arm64/usr/share/assignsticker/ 2>/dev/null || true
+
+        # Create desktop entry
+        cat > release/deb/assignsticker-arm64/usr/share/applications/assignsticker.desktop << 'EOF'
+[Desktop Entry]
+Name=AssignSticker
+Comment=作业看板应用
+Exec=/usr/local/bin/assignsticker
+Icon=/usr/share/assignsticker/icon.ico
+Type=Application
+Categories=Education;Office;
+Terminal=false
+EOF
+
+        # Create control file
+        cat > release/deb/assignsticker-arm64/DEBIAN/control << 'EOF'
+Package: assignsticker
+Version: 1.3.0
+Section: education
+Priority: optional
+Architecture: arm64
+Depends: python3, python3-gi, libgtk-3-0
+Maintainer: SECTL <your-email@example.com>
+Description: 作业看板应用
+ AssignSticker 是一个用于管理作业的看板应用，
+ 帮助用户更好地组织和跟踪作业任务。
+EOF
+
+        # Build DEB package
+        dpkg-deb --build release/deb/assignsticker-arm64
+        mv release/deb/assignsticker-arm64.deb release/AssignSticker-linux-arm64.deb
+
+    - name: Upload Linux ARM64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AssignSticker-linux-arm64
+        path: release/AssignSticker-linux-arm64.deb
+
+  release:
+    needs: [build-windows, build-linux-amd64, build-linux-arm64]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/AssignSticker-windows-x64/*.zip
+          artifacts/AssignSticker-linux-amd64/*.deb
+          artifacts/AssignSticker-linux-arm64/*.deb
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

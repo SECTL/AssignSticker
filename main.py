@@ -489,6 +489,320 @@ class Api:
             log(f"退出失败: {error_msg}", "error")
             return {"success": False, "message": f"退出失败: {error_msg}"}
 
+    def openSettingsWindow(self):
+        """打开设置窗口"""
+        try:
+            log("打开设置窗口", "info")
+            # 创建设置窗口
+            settings_window = webview.create_window(
+                '设置 - AssignSticker',
+                'htmls/settingspage/settingswindow.html',
+                width=800,
+                height=600,
+                resizable=True,
+                min_size=(600, 400),
+                background_color='#f5f5f5'
+            )
+            return {"success": True, "message": "设置窗口已打开"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"打开设置窗口失败: {error_msg}", "error")
+            return {"success": False, "message": f"打开设置窗口失败: {error_msg}"}
+
+    def saveSettings(self, settings):
+        """保存设置到文件"""
+        try:
+            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=2)
+            log(f"设置已保存", "info")
+            return {"success": True, "message": "设置已保存"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"保存设置失败: {error_msg}", "error")
+            return {"success": False, "message": f"保存设置失败: {error_msg}"}
+
+    def loadSettings(self):
+        """从文件加载设置"""
+        try:
+            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                return {"success": True, "data": settings}
+            else:
+                # 返回默认设置
+                default_settings = {
+                    "theme": "blue",
+                    "fontSize": 14,
+                    "opacity": 100,
+                    "glassEffect": False,
+                    "showSaying": True,
+                    "showSeconds": True,
+                    "toolbarPosition": "center",
+                    "enableAnimation": True,
+                    "animationSpeed": "normal",
+                    "autoStart": False,
+                    "startMinimized": False,
+                    "enableReminder": True,
+                    "reminderTime": "30分钟",
+                    "autoSaveInterval": "5分钟"
+                }
+                return {"success": True, "data": default_settings}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"加载设置失败: {error_msg}", "error")
+            return {"success": False, "message": f"加载设置失败: {error_msg}"}
+
+    def exportHomeworkData(self):
+        """导出作业数据"""
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            from datetime import datetime
+
+            # 获取作业数据
+            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            if not os.path.exists(homework_file):
+                return {"success": False, "message": "没有找到作业数据"}
+
+            with open(homework_file, 'r', encoding='utf-8') as f:
+                homework_data = json.load(f)
+
+            # 创建导出文件名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            default_filename = f'homework_backup_{timestamp}.json'
+
+            # 使用文件对话框选择保存位置
+            root = tk.Tk()
+            root.withdraw()
+            file_path = filedialog.asksaveasfilename(
+                defaultextension='.json',
+                filetypes=[('JSON files', '*.json'), ('All files', '*.*')],
+                initialfile=default_filename,
+                title='导出作业数据'
+            )
+            root.destroy()
+
+            if file_path:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(homework_data, f, ensure_ascii=False, indent=2)
+                log(f"作业数据已导出到: {file_path}", "info")
+                return {"success": True, "message": f"数据已导出到: {file_path}"}
+            else:
+                return {"success": False, "message": "用户取消了导出"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"导出数据失败: {error_msg}", "error")
+            return {"success": False, "message": f"导出失败: {error_msg}"}
+
+    def importHomeworkData(self):
+        """导入作业数据"""
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+
+            # 使用文件对话框选择文件
+            root = tk.Tk()
+            root.withdraw()
+            file_path = filedialog.askopenfilename(
+                filetypes=[('JSON files', '*.json'), ('All files', '*.*')],
+                title='导入作业数据'
+            )
+            root.destroy()
+
+            if not file_path:
+                return {"success": False, "message": "用户取消了导入"}
+
+            # 读取文件
+            with open(file_path, 'r', encoding='utf-8') as f:
+                imported_data = json.load(f)
+
+            # 验证数据格式
+            if not isinstance(imported_data, list):
+                return {"success": False, "message": "无效的数据格式"}
+
+            # 保存到作业文件
+            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            with open(homework_file, 'w', encoding='utf-8') as f:
+                json.dump(imported_data, f, ensure_ascii=False, indent=2)
+
+            log(f"作业数据已从 {file_path} 导入", "info")
+            return {"success": True, "message": "数据导入成功", "data": imported_data}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"导入数据失败: {error_msg}", "error")
+            return {"success": False, "message": f"导入失败: {error_msg}"}
+
+    def clearAllData(self):
+        """清除所有数据"""
+        try:
+            # 清除作业数据
+            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            if os.path.exists(homework_file):
+                os.remove(homework_file)
+
+            # 清除设置数据
+            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+            if os.path.exists(settings_file):
+                os.remove(settings_file)
+
+            log("所有数据已清除", "info")
+            return {"success": True, "message": "所有数据已清除"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"清除数据失败: {error_msg}", "error")
+            return {"success": False, "message": f"清除失败: {error_msg}"}
+
+    def setAutoStart(self, enabled):
+        """设置开机自启动"""
+        try:
+            import platform
+            system = platform.system()
+
+            if system == 'Darwin':  # macOS
+                # macOS 使用 launchd
+                launch_agents_dir = os.path.expanduser('~/Library/LaunchAgents')
+                plist_path = os.path.join(launch_agents_dir, 'com.sectl.assignsticker.plist')
+
+                if enabled:
+                    # 创建 plist 文件
+                    if not os.path.exists(launch_agents_dir):
+                        os.makedirs(launch_agents_dir)
+
+                    app_path = os.path.dirname(os.path.abspath(__file__))
+                    plist_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sectl.assignsticker</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>{os.path.join(app_path, 'main.py')}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>'''
+                    with open(plist_path, 'w') as f:
+                        f.write(plist_content)
+
+                    # 加载 launchd 任务
+                    subprocess.run(['launchctl', 'load', plist_path], check=True)
+                    log("已启用开机自启动", "info")
+                else:
+                    # 禁用开机自启动
+                    if os.path.exists(plist_path):
+                        subprocess.run(['launchctl', 'unload', plist_path], check=False)
+                        os.remove(plist_path)
+                    log("已禁用开机自启动", "info")
+
+            elif system == 'Windows':
+                import winreg
+                key_path = r'Software\Microsoft\Windows\CurrentVersion\Run'
+                app_path = os.path.dirname(os.path.abspath(__file__))
+                exe_path = os.path.join(app_path, 'main.py')
+
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                    if enabled:
+                        winreg.SetValueEx(key, 'AssignSticker', 0, winreg.REG_SZ, f'python "{exe_path}"')
+                        log("已启用开机自启动", "info")
+                    else:
+                        try:
+                            winreg.DeleteValue(key, 'AssignSticker')
+                            log("已禁用开机自启动", "info")
+                        except FileNotFoundError:
+                            pass
+                    winreg.CloseKey(key)
+                except Exception as e:
+                    log(f"设置开机自启动失败: {str(e)}", "error")
+                    return {"success": False, "message": f"设置失败: {str(e)}"}
+
+            return {"success": True, "message": "设置已更新"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"设置开机自启动失败: {error_msg}", "error")
+            return {"success": False, "message": f"设置失败: {error_msg}"}
+
+    def loadHomeworkData(self):
+        """加载作业数据，过滤掉已过期的作业"""
+        try:
+            from datetime import datetime, timedelta
+
+            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+
+            if not os.path.exists(homework_file):
+                return {"success": True, "data": [], "message": "没有作业数据"}
+
+            with open(homework_file, 'r', encoding='utf-8') as f:
+                homework_list = json.load(f)
+
+            # 获取当前时间
+            now = datetime.now()
+
+            # 过滤未过期的作业（截止日期当天24:00之前都算未过期）
+            valid_homework = []
+            expired_homework = []
+
+            for homework in homework_list:
+                if homework.get('endTime'):
+                    end_time = datetime.fromisoformat(homework['endTime'].replace('Z', '+00:00').replace('+00:00', ''))
+                    # 计算截止日期的当天24:00
+                    deadline = end_time.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+                    if now <= deadline:
+                        valid_homework.append(homework)
+                    else:
+                        expired_homework.append(homework)
+                else:
+                    # 没有截止日期的作业默认保留
+                    valid_homework.append(homework)
+
+            # 如果有过期作业，更新文件
+            if expired_homework:
+                with open(homework_file, 'w', encoding='utf-8') as f:
+                    json.dump(valid_homework, f, ensure_ascii=False, indent=2)
+                log(f"已清理 {len(expired_homework)} 个过期作业", "info")
+
+            return {"success": True, "data": valid_homework, "message": f"加载了 {len(valid_homework)} 个作业"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"加载作业数据失败: {error_msg}", "error")
+            return {"success": False, "message": f"加载失败: {error_msg}", "data": []}
+
+    def saveHomeworkToAutoSave(self, homework_list):
+        """自动保存作业到自动保存目录"""
+        try:
+            auto_save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_saves_auto')
+            if not os.path.exists(auto_save_dir):
+                os.makedirs(auto_save_dir)
+
+            # 生成文件名：时间戳.json
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"auto_save_{timestamp}.json"
+            filepath = os.path.join(auto_save_dir, filename)
+
+            # 写入JSON文件
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(homework_list, f, ensure_ascii=False, indent=2)
+
+            log(f"作业已自动保存到: {filepath}", "info")
+            return {"success": True, "message": f"自动保存成功: {filename}"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"自动保存作业失败: {error_msg}", "error")
+            return {"success": False, "message": f"自动保存失败: {error_msg}"}
+
 if __name__ == '__main__':
     # 检查是否是崩溃窗口模式
     if '--crash-window' in sys.argv:

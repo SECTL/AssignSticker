@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../../font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'CustomFont', sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .settings-container {
+            max-width: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: #e0e0e0;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        /* 选择框样式 */
+        .select-box {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .select-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* 颜色选择器样式 */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 8px;
+        }
+
+        .color-value {
+            font-size: 14px;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* 滑块样式 */
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider {
+            width: 150px;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            font-size: 14px;
+            color: #666;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        /* 预览区域 */
+        .preview-box {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            margin-top: 16px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        /* 主题选项 */
+        .theme-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .theme-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-option.active {
+            border-color: #667eea;
+        }
+
+        .theme-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .theme-orange {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .theme-dark {
+            background: linear-gradient(135deg, #434343 0%, #000000 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <!-- 主题设置 -->
+        <div class="settings-card">
+            <div class="card-title">主题设置</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">主题颜色</div>
+                    <div class="setting-desc">选择应用的主题配色方案</div>
+                </div>
+            </div>
+            <div class="theme-options">
+                <div class="theme-option theme-blue active" onclick="selectTheme(this, 'blue')"></div>
+                <div class="theme-option theme-green" onclick="selectTheme(this, 'green')"></div>
+                <div class="theme-option theme-orange" onclick="selectTheme(this, 'orange')"></div>
+                <div class="theme-option theme-dark" onclick="selectTheme(this, 'dark')"></div>
+            </div>
+            <div class="preview-box" id="themePreview">
+                主题预览
+            </div>
+        </div>
+
+        <!-- 字体设置 -->
+        <div class="settings-card">
+            <div class="card-title">字体设置</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">字体大小</div>
+                    <div class="setting-desc">调整应用内文字显示大小</div>
+                </div>
+                <div class="slider-wrapper">
+                    <input type="range" class="slider" min="12" max="20" value="14" id="fontSizeSlider" oninput="updateFontSize(this.value)">
+                    <span class="slider-value" id="fontSizeValue">14px</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">自定义字体</div>
+                    <div class="setting-desc">使用自定义字体文件（.ttf 格式）</div>
+                </div>
+                <button class="btn btn-secondary" onclick="selectFontFile()">选择文件</button>
+            </div>
+        </div>
+
+        <!-- 窗口透明度 -->
+        <div class="settings-card">
+            <div class="card-title">窗口效果</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">窗口透明度</div>
+                    <div class="setting-desc">调整主窗口的背景透明度</div>
+                </div>
+                <div class="slider-wrapper">
+                    <input type="range" class="slider" min="50" max="100" value="100" id="opacitySlider" oninput="updateOpacity(this.value)">
+                    <span class="slider-value" id="opacityValue">100%</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">毛玻璃效果</div>
+                    <div class="setting-desc">启用窗口背景模糊效果（可能影响性能）</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+            </div>
+        </div>
+
+        <!-- 界面元素 -->
+        <div class="settings-card">
+            <div class="card-title">界面元素</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">显示一言</div>
+                    <div class="setting-desc">在主窗口显示每日一言</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">显示时间秒数</div>
+                    <div class="setting-desc">在时间显示中显示秒数</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">浮动工具栏位置</div>
+                    <div class="setting-desc">选择浮动工具栏的显示位置</div>
+                </div>
+                <select class="select-box">
+                    <option>底部居中</option>
+                    <option>底部左侧</option>
+                    <option>底部右侧</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 动画效果 -->
+        <div class="settings-card">
+            <div class="card-title">动画效果</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">启用动画</div>
+                    <div class="setting-desc">开启动画过渡效果</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">动画速度</div>
+                    <div class="setting-desc">调整界面动画的播放速度</div>
+                </div>
+                <select class="select-box">
+                    <option>慢速</option>
+                    <option selected>正常</option>
+                    <option>快速</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前设置
+        let currentSettings = {
+            theme: 'blue',
+            fontSize: 14,
+            opacity: 100,
+            glassEffect: false,
+            showSaying: true,
+            showSeconds: true,
+            toolbarPosition: 'center',
+            enableAnimation: true,
+            animationSpeed: 'normal'
+        };
+
+        // 页面加载时加载设置
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadSettings();
+        });
+
+        // 加载设置
+        async function loadSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadSettings();
+                    if (result.success && result.data) {
+                        currentSettings = { ...currentSettings, ...result.data };
+                        applySettingsToUI();
+                    }
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+            }
+        }
+
+        // 将设置应用到UI
+        function applySettingsToUI() {
+            // 应用主题
+            document.querySelectorAll('.theme-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            const themeMap = {
+                'blue': 0, 'green': 1, 'orange': 2, 'dark': 3
+            };
+            const themeOptions = document.querySelectorAll('.theme-option');
+            if (themeOptions[themeMap[currentSettings.theme]] !== undefined) {
+                themeOptions[themeMap[currentSettings.theme]].classList.add('active');
+            }
+
+            // 应用字体大小
+            document.getElementById('fontSizeSlider').value = currentSettings.fontSize;
+            document.getElementById('fontSizeValue').textContent = currentSettings.fontSize + 'px';
+
+            // 应用透明度
+            document.getElementById('opacitySlider').value = currentSettings.opacity;
+            document.getElementById('opacityValue').textContent = currentSettings.opacity + '%';
+
+            // 应用毛玻璃效果
+            const glassSwitch = document.querySelectorAll('.toggle-switch')[0];
+            if (glassSwitch) {
+                if (currentSettings.glassEffect) {
+                    glassSwitch.classList.add('active');
+                } else {
+                    glassSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用一言显示
+            const sayingSwitch = document.querySelectorAll('.toggle-switch')[1];
+            if (sayingSwitch) {
+                if (currentSettings.showSaying) {
+                    sayingSwitch.classList.add('active');
+                } else {
+                    sayingSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用时间秒数显示
+            const secondsSwitch = document.querySelectorAll('.toggle-switch')[2];
+            if (secondsSwitch) {
+                if (currentSettings.showSeconds) {
+                    secondsSwitch.classList.add('active');
+                } else {
+                    secondsSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用浮动工具栏位置
+            const toolbarSelect = document.querySelectorAll('.select-box')[0];
+            if (toolbarSelect) {
+                const positionMap = {
+                    'center': '底部居中',
+                    'left': '底部左侧',
+                    'right': '底部右侧'
+                };
+                toolbarSelect.value = positionMap[currentSettings.toolbarPosition] || '底部居中';
+            }
+
+            // 应用动画开关
+            const animationSwitch = document.querySelectorAll('.toggle-switch')[3];
+            if (animationSwitch) {
+                if (currentSettings.enableAnimation) {
+                    animationSwitch.classList.add('active');
+                } else {
+                    animationSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用动画速度
+            const speedSelect = document.querySelectorAll('.select-box')[1];
+            if (speedSelect) {
+                const speedMap = {
+                    'slow': '慢速',
+                    'normal': '正常',
+                    'fast': '快速'
+                };
+                speedSelect.value = speedMap[currentSettings.animationSpeed] || '正常';
+            }
+        }
+
+        // 切换开关
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            saveCurrentSettings();
+        }
+
+        // 选择主题
+        function selectTheme(element, theme) {
+            document.querySelectorAll('.theme-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            element.classList.add('active');
+            currentSettings.theme = theme;
+
+            const preview = document.getElementById('themePreview');
+            const gradients = {
+                'blue': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'green': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                'orange': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'dark': 'linear-gradient(135deg, #434343 0%, #000000 100%)'
+            };
+            preview.style.background = gradients[theme];
+
+            saveCurrentSettings();
+        }
+
+        // 更新字体大小
+        function updateFontSize(value) {
+            document.getElementById('fontSizeValue').textContent = value + 'px';
+            currentSettings.fontSize = parseInt(value);
+            saveCurrentSettings();
+        }
+
+        // 更新透明度
+        function updateOpacity(value) {
+            document.getElementById('opacityValue').textContent = value + '%';
+            currentSettings.opacity = parseInt(value);
+            saveCurrentSettings();
+        }
+
+        // 选择字体文件
+        function selectFontFile() {
+            console.log('选择字体文件');
+            // 这里可以调用 Python API 选择文件
+        }
+
+        // 保存当前设置
+        async function saveCurrentSettings() {
+            // 从UI获取最新值
+            currentSettings.glassEffect = document.querySelectorAll('.toggle-switch')[0].classList.contains('active');
+            currentSettings.showSaying = document.querySelectorAll('.toggle-switch')[1].classList.contains('active');
+            currentSettings.showSeconds = document.querySelectorAll('.toggle-switch')[2].classList.contains('active');
+            currentSettings.enableAnimation = document.querySelectorAll('.toggle-switch')[3].classList.contains('active');
+
+            // 获取工具栏位置
+            const toolbarSelect = document.querySelectorAll('.select-box')[0];
+            if (toolbarSelect) {
+                const positionMap = {
+                    '底部居中': 'center',
+                    '底部左侧': 'left',
+                    '底部右侧': 'right'
+                };
+                currentSettings.toolbarPosition = positionMap[toolbarSelect.value] || 'center';
+            }
+
+            // 获取动画速度
+            const speedSelect = document.querySelectorAll('.select-box')[1];
+            if (speedSelect) {
+                const speedMap = {
+                    '慢速': 'slow',
+                    '正常': 'normal',
+                    '快速': 'fast'
+                };
+                currentSettings.animationSpeed = speedMap[speedSelect.value] || 'normal';
+            }
+
+            // 保存到文件
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    await window.pywebview.api.saveSettings(currentSettings);
+                    console.log('设置已保存');
+                }
+            } catch (error) {
+                console.error('保存设置失败:', error);
+            }
+
+            // 通知主窗口更新设置
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'settingsUpdated',
+                    settings: currentSettings
+                }, '*');
+            }
+        }
+
+        // 监听下拉框变化
+        document.querySelectorAll('.select-box').forEach(select => {
+            select.addEventListener('change', saveCurrentSettings);
+        });
+
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>

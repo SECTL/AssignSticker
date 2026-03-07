@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../../font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'CustomFont', sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .settings-container {
+            max-width: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: #e0e0e0;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        /* 选择框样式 */
+        .select-box {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .select-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        /* 输入框样式 */
+        .input-field {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <!-- 启动设置 -->
+        <div class="settings-card">
+            <div class="card-title">启动设置</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">开机自启动</div>
+                    <div class="setting-desc">系统启动时自动运行 AssignSticker</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">启动时最小化</div>
+                    <div class="setting-desc">启动后自动最小化到系统托盘</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+            </div>
+        </div>
+
+        <!-- 作业提醒 -->
+        <div class="settings-card">
+            <div class="card-title">作业提醒</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">启用作业提醒</div>
+                    <div class="setting-desc">作业截止前发送提醒通知</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">提醒时间</div>
+                    <div class="setting-desc">作业截止前多长时间提醒</div>
+                </div>
+                <select class="select-box">
+                    <option>15分钟</option>
+                    <option selected>30分钟</option>
+                    <option>1小时</option>
+                    <option>2小时</option>
+                    <option>1天</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 数据管理 -->
+        <div class="settings-card">
+            <div class="card-title">数据管理</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">自动保存间隔</div>
+                    <div class="setting-desc">自动保存作业数据的时间间隔</div>
+                </div>
+                <select class="select-box">
+                    <option>3分钟</option>
+                    <option selected>5分钟</option>
+                    <option>10分钟</option>
+                    <option>15分钟</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">导出作业数据</div>
+                    <div class="setting-desc">将所有作业数据导出为 JSON 文件</div>
+                </div>
+                <button class="btn btn-secondary" onclick="exportData()">导出</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">导入作业数据</div>
+                    <div class="setting-desc">从 JSON 文件导入作业数据</div>
+                </div>
+                <button class="btn btn-secondary" onclick="importData()">导入</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">清除所有数据</div>
+                    <div class="setting-desc">删除所有作业和设置数据（不可恢复）</div>
+                </div>
+                <button class="btn btn-primary" onclick="clearAllData()" style="background: #ef4444;">清除</button>
+            </div>
+        </div>
+
+        <!-- 快捷键设置 -->
+        <div class="settings-card">
+            <div class="card-title">快捷键设置</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">新建作业</div>
+                    <div class="setting-desc">快速打开新建作业窗口</div>
+                </div>
+                <input type="text" class="input-field" value="Ctrl + N" readonly>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">保存作业</div>
+                    <div class="setting-desc">手动保存当前作业</div>
+                </div>
+                <input type="text" class="input-field" value="Ctrl + S" readonly>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">打开设置</div>
+                    <div class="setting-desc">打开设置窗口</div>
+                </div>
+                <input type="text" class="input-field" value="Ctrl + ," readonly>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前设置
+        let currentSettings = {
+            autoStart: false,
+            startMinimized: false,
+            enableReminder: true,
+            reminderTime: '30分钟',
+            autoSaveInterval: '5分钟'
+        };
+
+        // 页面加载时加载设置
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadSettings();
+        });
+
+        // 加载设置
+        async function loadSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadSettings();
+                    if (result.success && result.data) {
+                        currentSettings = { ...currentSettings, ...result.data };
+                        applySettingsToUI();
+                    }
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+            }
+        }
+
+        // 将设置应用到UI
+        function applySettingsToUI() {
+            // 应用开机自启动
+            const autoStartSwitch = document.querySelectorAll('.toggle-switch')[0];
+            if (autoStartSwitch) {
+                if (currentSettings.autoStart) {
+                    autoStartSwitch.classList.add('active');
+                } else {
+                    autoStartSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用启动时最小化
+            const startMinimizedSwitch = document.querySelectorAll('.toggle-switch')[1];
+            if (startMinimizedSwitch) {
+                if (currentSettings.startMinimized) {
+                    startMinimizedSwitch.classList.add('active');
+                } else {
+                    startMinimizedSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用作业提醒
+            const reminderSwitch = document.querySelectorAll('.toggle-switch')[2];
+            if (reminderSwitch) {
+                if (currentSettings.enableReminder) {
+                    reminderSwitch.classList.add('active');
+                } else {
+                    reminderSwitch.classList.remove('active');
+                }
+            }
+
+            // 应用提醒时间
+            const reminderSelect = document.querySelectorAll('.select-box')[0];
+            if (reminderSelect) {
+                reminderSelect.value = currentSettings.reminderTime || '30分钟';
+            }
+
+            // 应用自动保存间隔
+            const autoSaveSelect = document.querySelectorAll('.select-box')[1];
+            if (autoSaveSelect) {
+                autoSaveSelect.value = currentSettings.autoSaveInterval || '5分钟';
+            }
+        }
+
+        // 切换开关
+        async function toggleSwitch(element) {
+            element.classList.toggle('active');
+            await saveCurrentSettings();
+        }
+
+        // 保存当前设置
+        async function saveCurrentSettings() {
+            // 从UI获取最新值
+            currentSettings.autoStart = document.querySelectorAll('.toggle-switch')[0].classList.contains('active');
+            currentSettings.startMinimized = document.querySelectorAll('.toggle-switch')[1].classList.contains('active');
+            currentSettings.enableReminder = document.querySelectorAll('.toggle-switch')[2].classList.contains('active');
+
+            // 获取提醒时间
+            const reminderSelect = document.querySelectorAll('.select-box')[0];
+            if (reminderSelect) {
+                currentSettings.reminderTime = reminderSelect.value;
+            }
+
+            // 获取自动保存间隔
+            const autoSaveSelect = document.querySelectorAll('.select-box')[1];
+            if (autoSaveSelect) {
+                currentSettings.autoSaveInterval = autoSaveSelect.value;
+            }
+
+            // 保存到文件
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    await window.pywebview.api.saveSettings(currentSettings);
+                    console.log('设置已保存');
+                }
+            } catch (error) {
+                console.error('保存设置失败:', error);
+            }
+
+            // 通知主窗口更新设置
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'settingsUpdated',
+                    settings: currentSettings
+                }, '*');
+            }
+
+            // 如果修改了开机自启动，调用专门的API
+            if (currentSettings.autoStart !== undefined) {
+                try {
+                    if (window.pywebview && window.pywebview.api) {
+                        await window.pywebview.api.setAutoStart(currentSettings.autoStart);
+                    }
+                } catch (error) {
+                    console.error('设置开机自启动失败:', error);
+                }
+            }
+        }
+
+        // 导出数据
+        async function exportData() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.exportHomeworkData();
+                    if (result.success) {
+                        alert('导出成功！\n' + result.message);
+                    } else {
+                        alert('导出失败：' + result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('导出数据失败:', error);
+                alert('导出失败：' + error.message);
+            }
+        }
+
+        // 导入数据
+        async function importData() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.importHomeworkData();
+                    if (result.success) {
+                        alert('导入成功！');
+                        // 通知主窗口刷新作业列表
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({
+                                type: 'homeworkImported',
+                                data: result.data
+                            }, '*');
+                        }
+                    } else {
+                        alert('导入失败：' + result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('导入数据失败:', error);
+                alert('导入失败：' + error.message);
+            }
+        }
+
+        // 清除所有数据
+        async function clearAllData() {
+            if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
+                try {
+                    if (window.pywebview && window.pywebview.api) {
+                        const result = await window.pywebview.api.clearAllData();
+                        if (result.success) {
+                            alert('所有数据已清除！');
+                            // 通知主窗口刷新
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({
+                                    type: 'dataCleared'
+                                }, '*');
+                            }
+                        } else {
+                            alert('清除失败：' + result.message);
+                        }
+                    }
+                } catch (error) {
+                    console.error('清除数据失败:', error);
+                    alert('清除失败：' + error.message);
+                }
+            }
+        }
+
+        // 监听下拉框变化
+        document.querySelectorAll('.select-box').forEach(select => {
+            select.addEventListener('change', saveCurrentSettings);
+        });
+
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>

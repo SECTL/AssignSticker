@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>设置</title>
+    <style>
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../../font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'CustomFont', sans-serif;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+        }
+
+        body {
+            background: #f5f5f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 侧边导航栏 */
+        .sidebar {
+            width: 200px;
+            min-width: 180px;
+            max-width: 280px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .sidebar-subtitle {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .nav-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 4px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover {
+            background: #f5f5f5;
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+        }
+
+        .nav-item img {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+
+        .nav-item.active img {
+            opacity: 1;
+            filter: brightness(0) invert(1);
+        }
+
+        .nav-item span {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .nav-item.active span {
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .content-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .close-btn img {
+            width: 16px;
+            height: 16px;
+            opacity: 0.6;
+        }
+
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+        }
+
+        .content-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .settings-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边导航栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">设置</div>
+        </div>
+        <div class="nav-list">
+            <div class="nav-item active" onclick="switchTab(this, 'mainset')">
+                <img src="../../icons/icons/settings/home.svg" alt="主要设置">
+                <span>主要设置</span>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'styleset')">
+                <img src="../../icons/icons/settings/style.svg" alt="外观设置">
+                <span>外观设置</span>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'update')">
+                <img src="../../icons/icons/settings/update.svg" alt="软件更新">
+                <span>软件更新</span>
+            </div>
+            <div class="nav-item" onclick="switchTab(this, 'about')">
+                <img src="../../icons/icons/settings/about.svg" alt="关于">
+                <span>关于</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="content-header">
+            <div class="content-title" id="pageTitle">主要设置</div>
+            <button class="close-btn" onclick="closeSettings()" title="关闭">
+                <img src="../../icons/icons/minimize.svg" alt="关闭">
+            </button>
+        </div>
+        <div class="content-body">
+            <iframe class="settings-iframe" id="contentFrame" src="mainset_interface.html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // 切换标签页
+        function switchTab(element, tabName) {
+            // 移除所有active状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加active状态到当前项
+            element.classList.add('active');
+            
+            // 更新页面标题
+            const titles = {
+                'mainset': '主要设置',
+                'styleset': '外观设置',
+                'update': '软件更新',
+                'about': '关于'
+            };
+            document.getElementById('pageTitle').textContent = titles[tabName] || '设置';
+            
+            // 切换iframe内容
+            const frameSrc = {
+                'mainset': 'mainset_interface.html',
+                'styleset': 'styleset_interface.html',
+                'update': 'update_interface.html',
+                'about': 'about_interface.html'
+            };
+            document.getElementById('contentFrame').src = frameSrc[tabName] || 'mainset_interface.html';
+        }
+
+        // 关闭设置窗口
+        function closeSettings() {
+            // 如果是独立窗口，直接关闭
+            if (window.pywebview) {
+                window.close();
+            } else if (window.parent && window.parent.closeSettingsModal) {
+                // 兼容旧的弹窗模式
+                window.parent.closeSettingsModal();
+            }
+        }
+
+        // 监听主题更新消息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'themeUpdated') {
+                const theme = event.data.theme;
+                if (theme) {
+                    document.documentElement.style.setProperty('--primary-color', theme.primary);
+                    document.documentElement.style.setProperty('--secondary-color', theme.secondary);
+                    document.documentElement.style.setProperty('--accent-color', theme.accent);
+                }
+            }
+        });
+
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>

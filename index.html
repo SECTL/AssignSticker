@@ -641,7 +641,7 @@
         </button>
 
         <!-- 设置 -->
-        <button class="toolbar-btn" data-tooltip="设置">
+        <button class="toolbar-btn" data-tooltip="设置" onclick="openSettings()">
             <img src="icons/icons/settings.svg" alt="设置">
         </button>
 
@@ -784,6 +784,22 @@
             }
         }
 
+        // 设置窗口功能
+        async function openSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.openSettingsWindow();
+                    if (!result.success) {
+                        console.error('打开设置窗口失败:', result.message);
+                    }
+                } else {
+                    console.error('API 不可用');
+                }
+            } catch (error) {
+                console.error('打开设置窗口出错:', error);
+            }
+        }
+
         // 供 iframe 调用的回调函数
         function onHomeworkSaved(homeworkData) {
             console.log('作业已保存:', homeworkData);
@@ -795,7 +811,36 @@
         }
 
         // 作业数据管理
+        // 作业数据缓存
+        let homeworkCache = null;
+
+        // 从服务器加载作业数据
+        async function loadHomeworkFromServer() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadHomeworkData();
+                    if (result.success) {
+                        homeworkCache = result.data || [];
+                        // 同步到 localStorage
+                        localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
+                        return homeworkCache;
+                    }
+                }
+            } catch (error) {
+                console.error('从服务器加载作业失败:', error);
+            }
+            // 如果服务器加载失败，从 localStorage 加载
+            const data = localStorage.getItem('homeworkList');
+            homeworkCache = data ? JSON.parse(data) : [];
+            return homeworkCache;
+        }
+
         function getHomeworkList() {
+            // 如果有缓存，返回缓存
+            if (homeworkCache !== null) {
+                return homeworkCache;
+            }
+            // 否则从 localStorage 加载
             const data = localStorage.getItem('homeworkList');
             return data ? JSON.parse(data) : [];
         }
@@ -1019,14 +1064,276 @@
             openEditHomeworkModal(id);
         }
 
-        // 初始化渲染
-        renderHomeworkCards();
+        // 设置管理
+        let appSettings = {
+            theme: 'blue',
+            fontSize: 14,
+            opacity: 100,
+            glassEffect: false,
+            showSaying: true,
+            showSeconds: true,
+            toolbarPosition: 'center',
+            enableAnimation: true,
+            animationSpeed: 'normal',
+            autoStart: false,
+            startMinimized: false,
+            enableReminder: true,
+            reminderTime: '30分钟',
+            autoSaveInterval: '5分钟'
+        };
+
+        // 自动保存定时器
+        let autoSaveTimer = null;
+
+        // 加载设置
+        async function loadAppSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadSettings();
+                    if (result.success && result.data) {
+                        appSettings = { ...appSettings, ...result.data };
+                        applySettings();
+                    }
+                }
+            } catch (error) {
+                console.error('加载设置失败:', error);
+            }
+        }
+
+        // 应用设置
+        function applySettings() {
+            // 应用主题
+            applyTheme(appSettings.theme);
+
+            // 应用字体大小
+            document.documentElement.style.fontSize = appSettings.fontSize + 'px';
+
+            // 应用窗口透明度
+            document.body.style.opacity = appSettings.opacity / 100;
+
+            // 应用毛玻璃效果
+            if (appSettings.glassEffect) {
+                document.body.style.backdropFilter = 'blur(10px)';
+            } else {
+                document.body.style.backdropFilter = 'none';
+            }
+
+            // 应用一言显示
+            const sayingContainer = document.querySelector('.saying-container');
+            if (sayingContainer) {
+                sayingContainer.style.display = appSettings.showSaying ? 'block' : 'none';
+            }
+
+            // 应用动画设置
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (!appSettings.enableAnimation) {
+                    el.style.transition = 'none';
+                } else {
+                    el.style.transition = '';
+                }
+            });
+
+            // 应用浮动工具栏位置
+            const toolbar = document.getElementById('floatingToolbar');
+            if (toolbar) {
+                toolbar.style.left = '';
+                toolbar.style.right = '';
+                toolbar.style.transform = '';
+
+                switch (appSettings.toolbarPosition) {
+                    case 'left':
+                        toolbar.style.left = '20px';
+                        toolbar.style.transform = 'none';
+                        break;
+                    case 'right':
+                        toolbar.style.right = '20px';
+                        toolbar.style.left = 'auto';
+                        toolbar.style.transform = 'none';
+                        break;
+                    default: // center
+                        toolbar.style.left = '50%';
+                        toolbar.style.transform = 'translateX(-50%)';
+                        break;
+                }
+            }
+        }
+
+        // 应用主题
+        function applyTheme(theme) {
+            const themes = {
+                blue: { primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
+                green: { primary: '#11998e', secondary: '#38ef7d', accent: '#00d2ff' },
+                orange: { primary: '#f093fb', secondary: '#f5576c', accent: '#ffd89b' },
+                dark: { primary: '#434343', secondary: '#000000', accent: '#666666' }
+            };
+
+            const selectedTheme = themes[theme] || themes.blue;
+            document.documentElement.style.setProperty('--primary-color', selectedTheme.primary);
+            document.documentElement.style.setProperty('--secondary-color', selectedTheme.secondary);
+            document.documentElement.style.setProperty('--accent-color', selectedTheme.accent);
+
+            // 更新布置作业按钮的背景色
+            const primaryBtn = document.querySelector('.toolbar-btn.primary');
+            if (primaryBtn) {
+                primaryBtn.style.background = selectedTheme.primary;
+            }
+
+            // 更新设置窗口导航栏选中色（通过postMessage通知设置窗口）
+            const settingsFrame = document.getElementById('settingsFrame');
+            if (settingsFrame && settingsFrame.contentWindow) {
+                settingsFrame.contentWindow.postMessage({
+                    type: 'themeUpdated',
+                    theme: selectedTheme
+                }, '*');
+            }
+        }
+
+        // 设置自动保存定时器
+        function setupAutoSave() {
+            // 清除现有定时器
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+
+            // 解析自动保存间隔
+            const intervalMap = {
+                '3分钟': 3 * 60 * 1000,
+                '5分钟': 5 * 60 * 1000,
+                '10分钟': 10 * 60 * 1000,
+                '15分钟': 15 * 60 * 1000
+            };
+            const interval = intervalMap[appSettings.autoSaveInterval] || 5 * 60 * 1000;
+
+            // 设置新的定时器
+            autoSaveTimer = setInterval(async () => {
+                await autoSaveHomework();
+            }, interval);
+
+            console.log(`自动保存已设置，间隔: ${appSettings.autoSaveInterval}`);
+        }
+
+        // 自动保存作业
+        async function autoSaveHomework() {
+            try {
+                const homeworkList = getHomeworkList();
+                if (homeworkList.length === 0) return;
+
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.saveHomeworkToAutoSave(homeworkList);
+                    if (result.success) {
+                        console.log('自动保存成功:', result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('自动保存失败:', error);
+            }
+        }
+
+        // 检查作业提醒
+        function checkHomeworkReminders() {
+            if (!appSettings.enableReminder) return;
+
+            const homeworkList = getHomeworkList();
+            const now = new Date();
+
+            // 解析提醒时间
+            const reminderMap = {
+                '15分钟': 15 * 60 * 1000,
+                '30分钟': 30 * 60 * 1000,
+                '1小时': 60 * 60 * 1000,
+                '2小时': 2 * 60 * 60 * 1000,
+                '1天': 24 * 60 * 60 * 1000
+            };
+            const reminderMs = reminderMap[appSettings.reminderTime] || 30 * 60 * 1000;
+
+            homeworkList.forEach(homework => {
+                if (homework.endTime) {
+                    const endTime = new Date(homework.endTime);
+                    const timeDiff = endTime - now;
+
+                    // 如果作业即将到期（在提醒时间内）且未过期
+                    if (timeDiff > 0 && timeDiff <= reminderMs) {
+                        showNotification(`作业提醒`, `${homework.subject}: ${homework.content} 即将截止！`);
+                    }
+                }
+            });
+        }
+
+        // 显示通知
+        function showNotification(title, message) {
+            // 使用浏览器通知API
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, { body: message });
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(title, { body: message });
+                        }
+                    });
+                }
+            }
+
+            // 同时显示toast提示
+            showToast(message, 'info');
+        }
+
+        // 启动时最小化检查
+        function checkStartMinimized() {
+            if (appSettings.startMinimized) {
+                // 延迟执行，确保窗口已创建
+                setTimeout(() => {
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.minimizeWindow();
+                    }
+                }, 1000);
+            }
+        }
+
+        // 保存设置
+        async function saveAppSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.saveSettings(appSettings);
+                    if (result.success) {
+                        console.log('设置已保存');
+                    }
+                }
+            } catch (error) {
+                console.error('保存设置失败:', error);
+            }
+        }
+
+        // 监听来自设置窗口的消息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'settingsUpdated') {
+                appSettings = { ...appSettings, ...event.data.settings };
+                applySettings();
+                saveAppSettings();
+            }
+        });
+
+        // 初始化
+        async function init() {
+            await loadAppSettings();
+            await loadHomeworkFromServer();
+            renderHomeworkCards();
+        }
+        init();
 
         // 点击弹窗外部关闭
         document.getElementById('homeworkModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeHomeworkModal();
             }
+        });
+
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
         });
     </script>
 </body>

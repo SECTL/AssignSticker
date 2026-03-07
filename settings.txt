@@ -1,0 +1,4 @@
+主要设置 /htmls/settingspage/mainset_interface.html /icons/icons/settings/home.svg
+外观设置 /htmls/settingspage/styleset_interface.html /icons/icons/settings/style.svg
+软件更新 /htmls/settingspage/update_interface.html /icons/icons/settings/update.svg
+关于 /htmls/settingspage/about_interface.html /icons/icons/settings/about.svg
