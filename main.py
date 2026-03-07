@@ -22,6 +22,8 @@ log_entries = []
 
 # 全局窗口对象
 main_window = None
+widget_window = None
+is_main_window_hidden = False
 
 # 调试模式开关
 debug_mode = False
@@ -348,6 +350,34 @@ def get_homework_save_auto_dir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save_auto')
 
 
+class WidgetApi:
+    """小组件窗口的API"""
+    
+    def show_main_window(self):
+        """显示主窗口"""
+        global is_main_window_hidden, widget_window, main_window
+        log("小组件: 显示主窗口", "info")
+        is_main_window_hidden = False
+        
+        if main_window:
+            main_window.show()
+            main_window.restore()
+        
+        # 隐藏小组件
+        if widget_window:
+            widget_window.hide()
+    
+    def move_widget(self, delta_x, delta_y):
+        """移动小组件窗口"""
+        global widget_window
+        if widget_window:
+            try:
+                x, y = widget_window.x, widget_window.y
+                widget_window.move(x + delta_x, y + delta_y)
+            except Exception as e:
+                log(f"移动小组件失败: {str(e)}", "error")
+
+
 class Api:
     """暴露给前端调用的API"""
     
@@ -495,6 +525,61 @@ class Api:
             error_msg = str(e)
             log(f"退出失败: {error_msg}", "error")
             return {"success": False, "message": f"退出失败: {error_msg}"}
+
+    def hideMainWindow(self):
+        """隐藏主窗口并显示小组件"""
+        try:
+            global is_main_window_hidden, widget_window
+            log("隐藏主窗口", "info")
+            is_main_window_hidden = True
+            
+            # 隐藏主窗口
+            if self.window:
+                self.window.hide()
+            
+            # 创建小组件窗口
+            if widget_window is None:
+                widget_window = webview.create_window(
+                    'AssignSticker Widget',
+                    'desktop_widgets/desktop_widgets.html',
+                    width=120,
+                    height=140,
+                    frameless=True,
+                    on_top=True,
+                    resizable=False,
+                    transparent=True,
+                    js_api=WidgetApi()
+                )
+            else:
+                widget_window.show()
+            
+            return {"success": True, "message": "主窗口已隐藏"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"隐藏主窗口失败: {error_msg}", "error")
+            return {"success": False, "message": f"隐藏失败: {error_msg}"}
+
+    def showMainWindow(self):
+        """显示主窗口并隐藏小组件"""
+        try:
+            global is_main_window_hidden, widget_window
+            log("显示主窗口", "info")
+            is_main_window_hidden = False
+            
+            # 显示主窗口
+            if self.window:
+                self.window.show()
+                self.window.restore()
+            
+            # 隐藏小组件
+            if widget_window:
+                widget_window.hide()
+            
+            return {"success": True, "message": "主窗口已显示"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"显示主窗口失败: {error_msg}", "error")
+            return {"success": False, "message": f"显示失败: {error_msg}"}
 
     def openSettingsWindow(self):
         """打开设置窗口"""

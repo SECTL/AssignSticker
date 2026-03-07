@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssignSticker Widget</title>
+    <style>
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../font.ttf') format('truetype');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'CustomFont', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 10px;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .widget-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            gap: 8px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .show-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .show-button:hover {
+            background: rgba(102, 126, 234, 1);
+            transform: scale(1.02);
+        }
+
+        .show-button:active {
+            transform: scale(0.98);
+        }
+
+        .show-button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .drag-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            cursor: move;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="drag-area"></div>
+    <div class="widget-container">
+        <img src="widgets.logo.png" alt="Logo" class="logo">
+        <button class="show-button" id="showButton">
+            <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 9a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm0-5a10 10 0 0 1 9.7 7.56.75.75 0 1 1-1.45.37 8.5 8.5 0 0 0-16.5 0 .75.75 0 0 1-1.45-.36A10 10 0 0 1 12 5.5Z" fill="currentColor"/>
+            </svg>
+            显示作业板
+        </button>
+    </div>
+
+    <script>
+        // 拖动功能
+        const dragArea = document.querySelector('.drag-area');
+        let isDragging = false;
+        let startX, startY;
+
+        dragArea.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && window.pywebview && window.pywebview.api) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                window.pywebview.api.move_widget(deltaX, deltaY);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // 显示主窗口按钮
+        document.getElementById('showButton').addEventListener('click', () => {
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.show_main_window();
+            }
+        });
+    </script>
+</body>
+</html>

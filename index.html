@@ -614,7 +614,7 @@
         </button>
 
         <!-- 隐藏 -->
-        <button class="toolbar-btn" data-tooltip="隐藏">
+        <button class="toolbar-btn" data-tooltip="隐藏" onclick="hideMainWindow()">
             <img src="icons/icons/hide.svg" alt="隐藏">
         </button>
 
@@ -957,6 +957,20 @@
             } catch (error) {
                 console.error('退出失败:', error);
                 window.close();
+            }
+        }
+
+        // 隐藏主窗口并显示小组件
+        async function hideMainWindow() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    await window.pywebview.api.hideMainWindow();
+                } else {
+                    showToast('提示', '隐藏功能不可用');
+                }
+            } catch (error) {
+                console.error('隐藏失败:', error);
+                showToast('隐藏失败', error.message);
             }
         }
 
