@@ -4,6 +4,8 @@
 
 <image src="./icon.png"/>
 
+<image src="./banner.png"/>
+
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/AssignSticker?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/AssignSticker/issues)
 [![最新版本](https://img.shields.io/github/v/release/SECTL/AssignSticker?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/AssignSticker/releases/latest)
 [![最新Beta版本](https://img.shields.io/github/v/release/SECTL/AssignSticker?include_prereleases&style=for-the-badge&label=测试版)](https://github.com/SECTL/AssignSticker/releases/)
@@ -44,3 +46,4 @@
 ## 版权与说明
 
 - Copyright © 2025-2026 SECTL
+
