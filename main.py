@@ -35,13 +35,17 @@ should_restart = False
 def log(message, level="info"):
     """
     记录日志
-    格式: 时间（日期+时间）｜类型（info/error/warning）｜内容
+    格式: 时间（日期+时间）| 类型（info/error/warning）| 内容
     """
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    log_entry = f"{timestamp}｜{level}｜{message}"
+    log_entry = f"{timestamp} | {level} | {message}"
     log_entries.append(log_entry)
     # 同时输出到控制台
-    print(log_entry)
+    try:
+        print(log_entry)
+    except UnicodeEncodeError:
+        # Windows 控制台编码问题，使用 ASCII 字符
+        print(f"{timestamp} | {level} | {message.encode('ascii', 'replace').decode('ascii')}")
 
 def save_logs():
     """
@@ -69,11 +73,14 @@ def save_logs():
     
     # 写入日志
     with open(filename, 'w', encoding='utf-8') as f:
-        f.write("时间（日期+时间）｜类型（info/error/warning）｜内容\n")
+        f.write("时间（日期+时间）| 类型（info/error/warning）| 内容\n")
         for entry in log_entries:
             f.write(entry + "\n")
     
-    print(f"日志已保存到: {filename}")
+    try:
+        print(f"日志已保存到: {filename}")
+    except UnicodeEncodeError:
+        print(f"Logs saved to: {filename}")
 
 def print_system_info():
     """打印系统信息"""
