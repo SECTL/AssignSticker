@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 AssignSticker 打包脚本
 使用 PyInstaller 打包成 Windows x64 可执行文件
@@ -11,6 +12,12 @@ import shutil
 import subprocess
 from pathlib import Path
 from datetime import datetime
+
+# 设置 Windows 控制台编码为 UTF-8
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 
 def get_project_root():
