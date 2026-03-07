@@ -14,6 +14,12 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 import pystray
 
+# 根据操作系统设置默认的GUI后端
+system = platform.system()
+if system == 'Linux':
+    # Linux系统默认使用GTK后端
+    os.environ['WEBVIEW_GUI'] = 'gtk'
+
 # 修改默认端口
 http.DEFAULT_HTTP_PORT = 2001
 
