@@ -103,30 +103,26 @@ jobs:
         done
 
         # Create desktop entry
-        cat > release/deb/assignsticker/usr/share/applications/assignsticker.desktop << 'EOF'
-[Desktop Entry]
-Name=AssignSticker
-Comment=Homework Kanban Application
-Exec=/usr/local/bin/assignsticker
-Icon=/usr/share/assignsticker/icon.ico
-Type=Application
-Categories=Education;Office;
-Terminal=false
-EOF
+        echo "[Desktop Entry]" > release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Name=AssignSticker" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Comment=Homework Kanban Application" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Exec=/usr/local/bin/assignsticker" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Icon=/usr/share/assignsticker/icon.ico" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Type=Application" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Categories=Education;Office;" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
+        echo "Terminal=false" >> release/deb/assignsticker/usr/share/applications/assignsticker.desktop
 
         # Create control file
-        cat > release/deb/assignsticker/DEBIAN/control << 'EOF'
-Package: assignsticker
-Version: 1.3.0
-Section: education
-Priority: optional
-Architecture: amd64
-Depends: python3
-Maintainer: SECTL <sectl@example.com>
-Description: Homework Kanban Application
- AssignSticker is a homework management application
- that helps users organize and track homework tasks.
-EOF
+        echo "Package: assignsticker" > release/deb/assignsticker/DEBIAN/control
+        echo "Version: 1.3.0" >> release/deb/assignsticker/DEBIAN/control
+        echo "Section: education" >> release/deb/assignsticker/DEBIAN/control
+        echo "Priority: optional" >> release/deb/assignsticker/DEBIAN/control
+        echo "Architecture: amd64" >> release/deb/assignsticker/DEBIAN/control
+        echo "Depends: python3" >> release/deb/assignsticker/DEBIAN/control
+        echo "Maintainer: SECTL <sectl@example.com>" >> release/deb/assignsticker/DEBIAN/control
+        echo "Description: Homework Kanban Application" >> release/deb/assignsticker/DEBIAN/control
+        echo " AssignSticker is a homework management application" >> release/deb/assignsticker/DEBIAN/control
+        echo " that helps users organize and track homework tasks." >> release/deb/assignsticker/DEBIAN/control
 
         # Build DEB package
         dpkg-deb --build release/deb/assignsticker
