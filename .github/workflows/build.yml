@@ -107,17 +107,18 @@ jobs:
           # 修复 venv 路径
           sed -i "s|${PWD}/${PKG}||g" "${PKG}/opt/${APP_NAME}/venv/bin/"* 2>/dev/null || true
 
-          # 启动脚本
+          # 启动脚本 (注意这里用 'EOF' 防止 $@ 被过早解析)
           cat > "${PKG}/usr/bin/${APP_NAME}" <<'EOF'
           #!/bin/bash
           export GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0
           cd /opt/assignsticker
           exec /opt/assignsticker/venv/bin/python main.py "$@"
           EOF
-                    chmod +x "${PKG}/usr/bin/${APP_NAME}"
+          
+          chmod +x "${PKG}/usr/bin/${APP_NAME}"
 
-                    # Desktop Entry
-                    cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<EOF
+          # Desktop Entry (使用 EOF 允许环境变量解析)
+          cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<EOF
           [Desktop Entry]
           Name=AssignSticker
           Comment=Homework Kanban Application
@@ -129,11 +130,11 @@ jobs:
           StartupWMClass=assignsticker
           EOF
 
-                    # 计算大小
-                    SIZE=$(du -sk "${PKG}" | cut -f1)
+          # 计算大小
+          SIZE=$(du -sk "${PKG}" | cut -f1)
 
-                    # Control
-                    cat > "${PKG}/DEBIAN/control" <<EOF
+          # Control (修复了 Description 下方长描述的空格缩进问题)
+          cat > "${PKG}/DEBIAN/control" <<EOF
           Package: ${APP_NAME}
           Version: ${APP_VERSION}
           Section: education
@@ -141,22 +142,22 @@ jobs:
           Architecture: amd64
           Installed-Size: ${SIZE}
           Depends: python3 (>= 3.10),
-                  gir1.2-gtk-3.0,
-                  gir1.2-webkit2-4.1,
-                  gir1.2-ayatanaappindicator3-0.1,
-                  libcairo2,
-                  libgtk-3-0,
-                  libwebkit2gtk-4.1-0
+                   gir1.2-gtk-3.0,
+                   gir1.2-webkit2-4.1,
+                   gir1.2-ayatanaappindicator3-0.1,
+                   libcairo2,
+                   libgtk-3-0,
+                   libwebkit2gtk-4.1-0
           Maintainer: SECTL <sectl@example.com>
           Homepage: https://github.com/sectl/AssignSticker
           Description: Homework Showboard Application
-          AssignSticker is a homework management and display
-          application for classroom use.
+           AssignSticker is a homework management and display
+           application for classroom use.
           EOF
 
-                    # 打包
-                    dpkg-deb --root-owner-group --build "${PKG}"
-                    mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
+          # 打包
+          dpkg-deb --root-owner-group --build "${PKG}"
+          mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
