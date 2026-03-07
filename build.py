@@ -2,6 +2,7 @@
 """
 AssignSticker 打包脚本
 使用 PyInstaller 打包成 Windows x64 可执行文件
+打包项目根目录下的所有内容（排除特定文件和目录）
 """
 
 import os
@@ -29,47 +30,61 @@ def clean_build_dirs():
 
 
 def get_all_data_files():
-    """获取所有需要打包的数据文件和目录"""
+    """获取所有需要打包的数据文件和目录（自动扫描根目录）"""
     project_root = get_project_root()
 
-    # 定义需要包含的目录
-    include_dirs = [
-        'icons',
-        'htmls',
-        'saying',
-        'desktop_widgets',
-    ]
-
-    # 定义需要包含的单个文件
-    include_files = [
-        'font.ttf',
-        'icon.ico',
-        'introduce',
-        'banner.png',
-        'LICENSE',
-        'README.md',
-    ]
+    # 定义需要排除的文件和目录
+    exclude_items = {
+        # Python 相关
+        'build.py',           # 本打包脚本
+        'build',              # 构建目录
+        'dist',               # 输出目录
+        '__pycache__',        # Python 缓存
+        '*.pyc',              # 编译后的 Python 文件
+        '*.pyo',              # 优化的 Python 文件
+        '.git',               # Git 目录
+        '.gitignore',         # Git 忽略文件
+        '.github',            # GitHub 工作流目录
+        'release',            # 发布目录
+        'logs',               # 日志目录
+        'data',               # 运行时数据目录
+        # IDE 相关
+        '.vscode',            # VS Code 配置
+        '.idea',              # PyCharm 配置
+        '*.spec',             # PyInstaller spec 文件
+    }
 
     datas = []
 
-    # 添加目录
-    for dir_name in include_dirs:
-        dir_path = project_root / dir_name
-        if dir_path.exists():
-            # PyInstaller --add-data 格式: "源路径;目标路径"
-            datas.append(f"--add-data={dir_name};{dir_name}")
-            print(f"  包含目录: {dir_name}")
-        else:
-            print(f"  警告: 目录不存在 {dir_name}")
+    print("\n扫描项目根目录...")
 
-    # 添加单个文件
-    for file_name in include_files:
-        file_path = project_root / file_name
-        if file_path.exists():
-            datas.append(f"--add-data={file_name};.")
-            print(f"  包含文件: {file_name}")
-        else:
-            print(f"  警告: 文件不存在 {file_name}")
+    # 遍历项目根目录下的所有项目
+    for item in project_root.iterdir():
+        item_name = item.name
+
+        # 检查是否在排除列表中
+        if item_name in exclude_items:
+            print(f"  排除: {item_name}")
+            continue
+
+        # 跳过隐藏文件（以.开头）
+        if item_name.startswith('.') and item_name != '.':
+            print(f"  排除隐藏项: {item_name}")
+            continue
+
+        # 跳过 Python 缓存文件
+        if item_name.endswith(('.pyc', '.pyo', '.spec')):
+            print(f"  排除缓存: {item_name}")
+            continue
+
+        if item.is_dir():
+            # 目录: --add-data=目录名;目录名
+            datas.append(f"--add-data={item_name};{item_name}")
+            print(f"  包含目录: {item_name}")
+        elif item.is_file():
+            # 文件: --add-data=文件名;.
+            datas.append(f"--add-data={item_name};.")
+            print(f"  包含文件: {item_name}")
 
     return datas
 
@@ -127,7 +142,7 @@ def build_exe():
 
 
 def create_distribution():
-    """创建发布包"""
+    """创建发布包（复制dist目录下的exe文件）"""
     print("\n创建发布包...")
 
     project_root = get_project_root()
@@ -150,38 +165,6 @@ def create_distribution():
         print(f"  错误: 找不到 {exe_source}")
         return False
 
-    # 复制其他文件和目录
-    copy_items = [
-        'icons',
-        'htmls',
-        'saying',
-        'desktop_widgets',
-        'font.ttf',
-        'icon.ico',
-        'introduce',
-        'banner.png',
-        'LICENSE',
-        'README.md',
-    ]
-
-    for item in copy_items:
-        source = project_root / item
-        target = release_dir / item
-
-        if not source.exists():
-            print(f"  跳过: {item} (不存在)")
-            continue
-
-        try:
-            if source.is_dir():
-                shutil.copytree(source, target, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-                print(f"  复制目录: {item}")
-            else:
-                shutil.copy2(source, target)
-                print(f"  复制文件: {item}")
-        except Exception as e:
-            print(f"  错误复制 {item}: {e}")
-
     # 创建 ZIP 压缩包
     print("\n创建 ZIP 压缩包...")
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -189,7 +172,7 @@ def create_distribution():
     zip_path = project_root / 'release' / zip_name
 
     try:
-        shutil.make_archive(str(zip_path), 'zip', str(release_dir))
+        shutil.make_archive(str(zip_path), 'zip', str(dist_dir))
         print(f"  创建: {zip_name}.zip")
     except Exception as e:
         print(f"  错误创建 ZIP: {e}")
@@ -233,6 +216,7 @@ def main():
         print("="*60)
         print(f"\n可执行文件: dist/AssignSticker.exe")
         print(f"发布包: release/AssignSticker-windows-x64-*.zip")
+        print("\n注意: 所有资源文件已通过 --add-data 打包到exe内部")
     else:
         print("\n打包失败，请检查错误信息")
         sys.exit(1)
