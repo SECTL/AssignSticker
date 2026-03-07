@@ -542,8 +542,8 @@ class Api:
                 widget_window = webview.create_window(
                     'AssignSticker Widget',
                     'desktop_widgets/desktop_widgets.html',
-                    width=120,
-                    height=140,
+                    width=140,
+                    height=60,
                     frameless=True,
                     on_top=True,
                     resizable=False,

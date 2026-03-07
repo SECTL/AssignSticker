@@ -29,16 +29,16 @@
 
         .widget-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            padding: 12px;
-            gap: 8px;
+            padding: 10px 12px;
+            gap: 10px;
         }
 
         .logo {
-            width: 48px;
-            height: 48px;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
             object-fit: contain;
         }
 
@@ -46,12 +46,12 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 12px;
+            padding: 6px 10px;
             background: rgba(102, 126, 234, 0.9);
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -68,8 +68,8 @@
         }
 
         .show-button svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             fill: currentColor;
         }
 
@@ -89,7 +89,7 @@
     <div class="widget-container">
         <img src="widgets.logo.png" alt="Logo" class="logo">
         <button class="show-button" id="showButton">
-            <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 9a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm0-5a10 10 0 0 1 9.7 7.56.75.75 0 1 1-1.45.37 8.5 8.5 0 0 0-16.5 0 .75.75 0 0 1-1.45-.36A10 10 0 0 1 12 5.5Z" fill="currentColor"/>
             </svg>
             显示作业板
