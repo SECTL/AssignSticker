@@ -33,18 +33,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+        run: uv python install 3.13
 
       - name: Install dependencies
         run: |
-          pip install pyinstaller
-          pip install pystray Pillow requests loguru
+          uv sync
+          uv pip install pyinstaller
 
       - name: Build
-        run: python build.py
+        run: uv run python build.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -62,96 +63,106 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "APP_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libcairo2-dev \
-            libgirepository-2.0-dev \
-            gir1.2-glib-2.0 \
-            gir1.2-ayatanaappindicator3-0.1 \
-            gir1.2-webkit2-4.1 \
-            pkg-config \
+            python3-venv \
             python3-dev \
-            dpkg-dev \
-            fakeroot
+            pkg-config \
+            libcairo2-dev \
+            libgirepository1.0-dev \
+            gir1.2-gtk-3.0 \
+            gir1.2-webkit2-4.1 \
+            gir1.2-ayatanaappindicator3-0.1 \
+            dpkg-dev
 
       - name: Build DEB package
         run: |
-          PKG_DIR="build/deb/${APP_NAME}"
+          set -e
+          PKG="build/deb/${APP_NAME}"
 
           # 目录结构
-          mkdir -p "${PKG_DIR}/usr/share/${APP_NAME}"
-          mkdir -p "${PKG_DIR}/usr/share/applications"
-          mkdir -p "${PKG_DIR}/usr/bin"
-          mkdir -p "${PKG_DIR}/DEBIAN"
+          mkdir -p "${PKG}/opt/${APP_NAME}"
+          mkdir -p "${PKG}/usr/bin"
+          mkdir -p "${PKG}/usr/share/applications"
+          mkdir -p "${PKG}/DEBIAN"
 
           # 复制项目文件
-          cp main.py "${PKG_DIR}/usr/share/${APP_NAME}/"
-          cp -r icons htmls saying desktop_widgets "${PKG_DIR}/usr/share/${APP_NAME}/" 2>/dev/null || true
-          cp font.ttf icon.ico introduce banner.png LICENSE README.md "${PKG_DIR}/usr/share/${APP_NAME}/" 2>/dev/null || true
-          cp pyproject.toml "${PKG_DIR}/usr/share/${APP_NAME}/"
+          cp *.py "${PKG}/opt/${APP_NAME}/"
+          for item in icons htmls saying desktop_widgets font.ttf icon.ico introduce banner.png LICENSE README.md pyproject.toml; do
+            [ -e "$item" ] && cp -r "$item" "${PKG}/opt/${APP_NAME}/"
+          done
+
+          # 用 uv 创建 venv 并安装依赖
+          cd "${PKG}/opt/${APP_NAME}"
+          uv venv venv
+          uv pip install --python venv/bin/python \
+            pystray Pillow pycairo PyGObject requests loguru
+          cd -
+
+          # 修复 venv 路径
+          sed -i "s|${PWD}/${PKG}||g" "${PKG}/opt/${APP_NAME}/venv/bin/"* 2>/dev/null || true
 
           # 启动脚本
-          cat > "${PKG_DIR}/usr/bin/${APP_NAME}" << 'LAUNCHER'
+          cat > "${PKG}/usr/bin/${APP_NAME}" <<'EOF'
           #!/bin/bash
-          cd /usr/share/assignsticker
-          python3 main.py "$@"
-          LAUNCHER
-          chmod +x "${PKG_DIR}/usr/bin/${APP_NAME}"
+          export GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0
+          cd /opt/assignsticker
+          exec /opt/assignsticker/venv/bin/python main.py "$@"
+          EOF
+                    chmod +x "${PKG}/usr/bin/${APP_NAME}"
 
-          # Desktop Entry
-          cat > "${PKG_DIR}/usr/share/applications/${APP_NAME}.desktop" << EOF
+                    # Desktop Entry
+                    cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<EOF
           [Desktop Entry]
           Name=AssignSticker
           Comment=Homework Kanban Application
           Exec=${APP_NAME}
-          Icon=/usr/share/${APP_NAME}/icon.ico
+          Icon=/opt/${APP_NAME}/icon.ico
           Type=Application
           Categories=Education;Office;
           Terminal=false
+          StartupWMClass=assignsticker
           EOF
 
-          # Control
-          cat > "${PKG_DIR}/DEBIAN/control" << EOF
+                    # 计算大小
+                    SIZE=$(du -sk "${PKG}" | cut -f1)
+
+                    # Control
+                    cat > "${PKG}/DEBIAN/control" <<EOF
           Package: ${APP_NAME}
           Version: ${APP_VERSION}
           Section: education
           Priority: optional
           Architecture: amd64
-          Depends: python3,
-                   python3-gi,
-                   python3-gi-cairo,
-                   python3-pil,
-                   python3-requests,
-                   gir1.2-gtk-3.0,
-                   gir1.2-webkit2-4.1,
-                   gir1.2-ayatanaappindicator3-0.1,
-                   gir1.2-glib-2.0,
-                   libcairo2,
-                   libgtk-3-0,
-                   libwebkit2gtk-4.1-0
+          Installed-Size: ${SIZE}
+          Depends: python3 (>= 3.10),
+                  gir1.2-gtk-3.0,
+                  gir1.2-webkit2-4.1,
+                  gir1.2-ayatanaappindicator3-0.1,
+                  libcairo2,
+                  libgtk-3-0,
+                  libwebkit2gtk-4.1-0
           Maintainer: SECTL <sectl@example.com>
+          Homepage: https://github.com/sectl/AssignSticker
           Description: Homework Showboard Application
-           AssignSticker is a homework management and display application.
+          AssignSticker is a homework management and display
+          application for classroom use.
           EOF
 
-          # postinst: 安装 pip 依赖
-          cat > "${PKG_DIR}/DEBIAN/postinst" << 'EOF'
-          #!/bin/bash
-          pip3 install pystray loguru pycairo PyGObject 2>/dev/null || true
-          EOF
-          chmod 755 "${PKG_DIR}/DEBIAN/postinst"
-
-          # 打包
-          dpkg-deb --build "${PKG_DIR}"
-          mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-linux-amd64.deb"
+                    # 打包
+                    dpkg-deb --root-owner-group --build "${PKG}"
+                    mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: AssignSticker-linux-amd64
-          path: AssignSticker-*-linux-amd64.deb
+          path: "*.deb"
 
   release:
     needs: [build-windows, build-linux]
@@ -161,7 +172,7 @@ jobs:
       (startsWith(github.ref, 'refs/tags/v') ||
        (github.event_name == 'workflow_dispatch' && inputs.create_release))
     steps:
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
