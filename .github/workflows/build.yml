@@ -77,14 +77,11 @@ jobs:
             gir1.2-girepository-2.0 \
             gir1.2-gtk-3.0 \
             gir1.2-webkit2-4.1 \
-            gir1.2-ayatanaappindicator3-0.1 \
             dpkg-dev \
             python3-gi \
             python3-gi-cairo \
             libwebkit2gtk-4.1-0 \
             libayatana-appindicator3-1 \
-            libayatana-appindicator3-1-dev \
-            
 
       - name: Build with PyInstaller
         env:
