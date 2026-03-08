@@ -70,7 +70,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-venv \
             python3-dev \
             pkg-config \
             libcairo2-dev \
@@ -80,38 +79,118 @@ jobs:
             gir1.2-ayatanaappindicator3-0.1 \
             dpkg-dev
 
+      - name: Build with PyInstaller
+        run: |
+          # 安装依赖和 pyinstaller
+          uv sync
+          uv add --dev pyinstaller
+
+          # 创建 pyinstaller spec 文件
+          cat > assignsticker.spec << 'SPECEOF'
+          # -*- mode: python ; coding: utf-8 -*-
+          import sys
+          from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
+
+          block_cipher = None
+
+          # 数据文件
+          datas = [
+              ('htmls', 'htmls'),
+              ('icons', 'icons'),
+              ('saying', 'saying'),
+              ('desktop_widgets', 'desktop_widgets'),
+              ('font.ttf', '.'),
+              ('icon.ico', '.'),
+              ('introduce', '.'),
+              ('banner.png', '.'),
+          ]
+
+          # 隐藏导入（Linux 特有）
+          hiddenimports = [
+              'gi',
+              'gi.repository',
+              'gi.repository.Gtk',
+              'gi.repository.Gdk',
+              'gi.repository.GObject',
+              'gi.repository.GLib',
+              'gi.repository.Gio',
+              'gi.repository.AyatanaAppIndicator3',
+              'cairo',
+              'webview',
+              'webview.platforms.gtk',
+              'pystray',
+              'pystray._appindicator',
+              'PIL',
+              'PIL._imagingtk',
+              'PIL._tkinter_finder',
+          ]
+
+          a = Analysis(
+              ['main.py'],
+              pathex=[],
+              binaries=[],
+              datas=datas,
+              hiddenimports=hiddenimports,
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              win_no_prefer_redirects=False,
+              win_private_assemblies=False,
+              cipher=block_cipher,
+              noarchive=False,
+          )
+          pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+          exe = EXE(
+              pyz,
+              a.scripts,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              [],
+              name='assignsticker',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              runtime_tmpdir=None,
+              console=False,
+              disable_windowed_traceback=False,
+              target_arch=None,
+              codesign_identity=None,
+              entitlements_file=None,
+              icon='icon.ico',
+          )
+          SPECEOF
+
+          # 使用 pyinstaller 打包
+          uv run pyinstaller assignsticker.spec
+
       - name: Build DEB package
         run: |
           set -e
           PKG="build/deb/${APP_NAME}"
 
-          # 1. 先在工作目录创建 .venv 并安装依赖
-          uv sync
-
-          # 2. 创建 deb 包目录结构
+          # 创建 deb 包目录结构
           mkdir -p "${PKG}/opt/${APP_NAME}"
           mkdir -p "${PKG}/usr/bin"
           mkdir -p "${PKG}/usr/share/applications"
           mkdir -p "${PKG}/DEBIAN"
 
-          # 3. 复制项目文件（包括 .venv）
-          cp *.py "${PKG}/opt/${APP_NAME}/"
-          for item in icons htmls saying desktop_widgets font.ttf icon.ico introduce banner.png LICENSE README.md pyproject.toml uv.lock; do
-            [ -e "$item" ] && cp -r "$item" "${PKG}/opt/${APP_NAME}/"
-          done
-          # 复制 .venv
-          cp -r .venv "${PKG}/opt/${APP_NAME}/"
+          # 复制 PyInstaller 输出
+          cp -r dist/assignsticker/* "${PKG}/opt/${APP_NAME}/"
 
-          # 4. 创建启动脚本（使用 .venv）
+          # 创建启动脚本
           cat > "${PKG}/usr/bin/${APP_NAME}" <<'EOF'
           #!/bin/bash
           export GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0
-          cd /opt/assignsticker
-          exec /opt/assignsticker/.venv/bin/python main.py "$@"
+          exec /opt/assignsticker/assignsticker "$@"
           EOF
           chmod +x "${PKG}/usr/bin/${APP_NAME}"
 
-          # 5. 创建 Desktop Entry
+          # 创建 Desktop Entry
           cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<EOF
           [Desktop Entry]
           Name=AssignSticker
@@ -124,7 +203,7 @@ jobs:
           StartupWMClass=assignsticker
           EOF
 
-          # 6. 计算大小并创建 control 文件
+          # 计算大小并创建 control 文件
           SIZE=$(du -sk "${PKG}" | cut -f1)
           cat > "${PKG}/DEBIAN/control" <<EOF
           Package: ${APP_NAME}
@@ -133,8 +212,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Installed-Size: ${SIZE}
-          Depends: python3 (>= 3.10),
-                   gir1.2-gtk-3.0,
+          Depends: gir1.2-gtk-3.0,
                    gir1.2-webkit2-4.1,
                    gir1.2-ayatanaappindicator3-0.1,
                    libcairo2,
@@ -148,7 +226,7 @@ jobs:
            application for classroom use.
           EOF
 
-          # 7. 打包
+          # 打包
           dpkg-deb --root-owner-group --build "${PKG}"
           mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
 
