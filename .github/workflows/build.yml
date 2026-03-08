@@ -146,7 +146,7 @@ jobs:
                    gir1.2-ayatanaappindicator3-0.1,
                    libcairo2,
                    libgtk-3-0,
-                   libwebkit2gtk-4.1-0
+                   libwebkit2gtk-4.1-0,
                    libgirepository-2.0
           Maintainer: SECTL <sectl@example.com>
           Homepage: https://github.com/sectl/AssignSticker
