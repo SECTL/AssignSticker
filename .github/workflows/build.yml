@@ -103,9 +103,6 @@ jobs:
           uv sync
           cd -
 
-          # 修复 venv 路径
-          sed -i "s|${PWD}/${PKG}||g" "${PKG}/opt/${APP_NAME}/venv/bin/"* 2>/dev/null || true
-
           # 启动脚本 (注意这里用 'EOF' 防止 $@ 被过早解析)
           cat > "${PKG}/usr/bin/${APP_NAME}" <<'EOF'
           #!/bin/bash
