@@ -100,8 +100,7 @@ jobs:
           # 用 uv 创建 venv 并安装依赖
           cd "${PKG}/opt/${APP_NAME}"
           uv venv venv
-          uv pip install --python venv/bin/python \
-            pystray Pillow pycairo PyGObject requests loguru
+          uv sync
           cd -
 
           # 修复 venv 路径
@@ -148,6 +147,7 @@ jobs:
                    libcairo2,
                    libgtk-3-0,
                    libwebkit2gtk-4.1-0
+                   libgirepository-2.0
           Maintainer: SECTL <sectl@example.com>
           Homepage: https://github.com/sectl/AssignSticker
           Description: Homework Showboard Application
