@@ -84,8 +84,6 @@ jobs:
             libayatana-appindicator3-1 \
 
       - name: Build with PyInstaller
-        env:
-          GI_TYPELIB_PATH: /usr/lib/x86_64-linux-gnu/girepository-1.0
         run: |
           # 安装依赖和 pyinstaller
           uv sync
