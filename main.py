@@ -1112,6 +1112,21 @@ if __name__ == '__main__':
                         window.dragStart();
                     });
                 """)
+                
+                # 加载并应用缩放设置
+                try:
+                    settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+                    if os.path.exists(settings_file):
+                        with open(settings_file, 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                        
+                        # 应用缩放设置
+                        if 'zoom' in settings:
+                            zoom = settings['zoom']
+                            main_window.evaluate_js(f"document.body.style.zoom = '{zoom}%'")
+                            log(f"应用缩放设置: {zoom}%", "info")
+                except Exception as e:
+                    log(f"加载缩放设置失败: {str(e)}", "error")
 
             # 启动程序（根据参数决定是否启用开发者工具）
             webview.start(

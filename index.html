@@ -621,7 +621,7 @@
         <div class="toolbar-divider"></div>
 
         <!-- 缩小 -->
-        <button class="toolbar-btn" data-tooltip="缩小">
+        <button class="toolbar-btn" data-tooltip="缩小" onclick="zoomOut()">
             <img src="icons/icons/minimize.svg" alt="缩小">
         </button>
 
@@ -629,7 +629,7 @@
         <span class="zoom-display">100%</span>
 
         <!-- 放大 -->
-        <button class="toolbar-btn" data-tooltip="放大">
+        <button class="toolbar-btn" data-tooltip="放大" onclick="zoomIn()">
             <img src="icons/icons/maximize.svg" alt="放大">
         </button>
 
@@ -971,6 +971,40 @@
             } catch (error) {
                 console.error('隐藏失败:', error);
                 showToast('隐藏失败', error.message);
+            }
+        }
+
+        // 放大窗口
+        let currentZoom = 100;
+        function zoomIn() {
+            if (currentZoom < 150) {
+                currentZoom += 10;
+                updateZoomDisplay();
+                applyZoom();
+            }
+        }
+
+        // 缩小窗口
+        function zoomOut() {
+            if (currentZoom > 80) {
+                currentZoom -= 10;
+                updateZoomDisplay();
+                applyZoom();
+            }
+        }
+
+        // 更新缩放显示
+        function updateZoomDisplay() {
+            document.querySelector('.zoom-display').textContent = currentZoom + '%';
+        }
+
+        // 应用缩放
+        function applyZoom() {
+            document.body.style.zoom = currentZoom + '%';
+            
+            // 通知 Python API 保存设置
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.saveSettings({ zoom: currentZoom });
             }
         }
 
