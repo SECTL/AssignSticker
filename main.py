@@ -10,7 +10,7 @@ import urllib.parse
 import threading
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from PIL import Image, ImageDraw
 import pystray
 
@@ -54,6 +54,14 @@ def log(message, level="info"):
     except UnicodeEncodeError:
         # Windows 控制台编码问题，使用 ASCII 字符
         print(f"{timestamp} | {level} | {message.encode('ascii', 'replace').decode('ascii')}")
+
+# 导入通知库
+try:
+    from plyer import notification
+    HAS_PLYER = True
+except ImportError:
+    HAS_PLYER = False
+    log("plyer库未安装，通知功能将不可用", "warning")
 
 def save_logs():
     """
@@ -644,6 +652,103 @@ class Api:
             log(f"设置缩放比例失败: {error_msg}", "error")
             return {"success": False, "message": f"设置失败: {error_msg}"}
 
+    def showNotification(self, title, message):
+        """显示系统通知"""
+        try:
+            if HAS_PLYER:
+                notification.notify(
+                    title=title,
+                    message=message,
+                    app_name='AssignSticker',
+                    timeout=10
+                )
+                log(f"显示通知: {title} - {message}", "info")
+                return {"success": True, "message": "通知已显示"}
+            else:
+                log("通知功能不可用：plyer库未安装", "warning")
+                return {"success": False, "message": "通知功能不可用"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"显示通知失败: {error_msg}", "error")
+            return {"success": False, "message": f"通知失败: {error_msg}"}
+
+    def checkHomeworkReminders(self, homework_list):
+        """检查作业提醒"""
+        try:
+            if not homework_list:
+                return {"success": True, "reminders": []}
+            
+            # 加载设置
+            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+            enable_reminder = True
+            reminder_time = '30分钟'
+            
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    enable_reminder = settings.get('enableReminder', True)
+                    reminder_time = settings.get('reminderTime', '30分钟')
+            
+            if not enable_reminder:
+                return {"success": True, "reminders": [], "message": "提醒功能已禁用"}
+            
+            # 解析提醒时间
+            time_map = {
+                '15分钟': 15,
+                '30分钟': 30,
+                '1小时': 60,
+                '2小时': 120,
+                '1天': 1440
+            }
+            reminder_minutes = time_map.get(reminder_time, 30)
+            
+            # 检查每个作业
+            reminders = []
+            now = datetime.now()
+            
+            for homework in homework_list:
+                if homework.get('completed', False):
+                    continue
+                
+                deadline_str = homework.get('deadline', '')
+                if not deadline_str:
+                    continue
+                
+                try:
+                    deadline = datetime.strptime(deadline_str, '%Y-%m-%d %H:%M')
+                    time_diff = deadline - now
+                    minutes_left = time_diff.total_seconds() / 60
+                    
+                    # 如果在提醒时间范围内且未过期
+                    if 0 < minutes_left <= reminder_minutes:
+                        reminders.append({
+                            'id': homework.get('id'),
+                            'subject': homework.get('subject', '未知科目'),
+                            'content': homework.get('content', ''),
+                            'deadline': deadline_str,
+                            'minutes_left': int(minutes_left)
+                        })
+                        
+                        # 发送通知
+                        if HAS_PLYER:
+                            time_str = f"{int(minutes_left)}分钟" if minutes_left >= 1 else "即将"
+                            notification.notify(
+                                title=f"作业提醒：{homework.get('subject', '未知科目')}",
+                                message=f"{homework.get('content', '')[:50]}... 将在{time_str}后截止",
+                                app_name='AssignSticker',
+                                timeout=10
+                            )
+                            log(f"发送作业提醒: {homework.get('subject')}", "info")
+                except Exception as e:
+                    log(f"解析截止时间失败: {str(e)}", "error")
+                    continue
+            
+            return {"success": True, "reminders": reminders}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"检查作业提醒失败: {error_msg}", "error")
+            return {"success": False, "message": f"检查失败: {error_msg}"}
+
     def saveSettings(self, settings):
         """保存设置到文件"""
         try:
@@ -1085,6 +1190,17 @@ if __name__ == '__main__':
             # 创建API实例
             api = Api()
             
+            # 检查是否启动时最小化
+            start_minimized = False
+            try:
+                settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+                if os.path.exists(settings_file):
+                    with open(settings_file, 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                    start_minimized = settings.get('startMinimized', False)
+            except Exception as e:
+                log(f"读取启动设置失败: {str(e)}", "error")
+            
             # 创建无边框窗口
             main_window = webview.create_window(
                 'Wow 伙伴！',
@@ -1094,11 +1210,17 @@ if __name__ == '__main__':
                 height=1136,
                 resizable=False,
                 on_top=False,
-                js_api=api
+                js_api=api,
+                hidden=start_minimized
             )
             
             # 将窗口对象保存到API中，以便API方法可以访问
             api.window = main_window
+            
+            # 如果启动时最小化，隐藏窗口并显示托盘图标
+            if start_minimized:
+                log("启动时最小化模式", "info")
+                main_window.hide()
 
             # 在主线程设置托盘图标（必须在start之前）
             setup_tray_icon(main_window)

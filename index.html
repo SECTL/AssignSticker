@@ -665,7 +665,11 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            const timeString = `${hours}:${minutes}:${seconds}`;
+            
+            // 根据设置决定是否显示秒数
+            const timeString = appSettings.showSeconds ? 
+                `${hours}:${minutes}:${seconds}` : 
+                `${hours}:${minutes}`;
             document.getElementById('timeDisplay').textContent = timeString;
         }
 
@@ -1008,9 +1012,18 @@
             }
         }
 
-        // 自动保存作业（每5分钟）
+        // 自动保存作业
         function startAutoSave() {
-            // 每5分钟执行一次自动保存
+            // 根据设置决定自动保存间隔
+            const intervalMap = {
+                '3分钟': 3 * 60 * 1000,
+                '5分钟': 5 * 60 * 1000,
+                '10分钟': 10 * 60 * 1000,
+                '15分钟': 15 * 60 * 1000
+            };
+            
+            const interval = intervalMap[appSettings.autoSaveInterval] || 5 * 60 * 1000;
+            
             setInterval(async () => {
                 const homeworkList = getHomeworkList();
                 
@@ -1031,11 +1044,34 @@
                 } catch (error) {
                     console.error('自动保存出错:', error);
                 }
-            }, 5 * 60 * 1000); // 5分钟 = 300000毫秒
+            }, interval);
         }
 
         // 启动自动保存
         startAutoSave();
+
+        // 检查作业提醒
+        function checkHomeworkReminders() {
+            if (!appSettings.enableReminder) {
+                return;
+            }
+            
+            const homeworkList = getHomeworkList();
+            if (homeworkList.length === 0) {
+                return;
+            }
+            
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    window.pywebview.api.checkHomeworkReminders(homeworkList);
+                }
+            } catch (error) {
+                console.error('检查作业提醒出错:', error);
+            }
+        }
+
+        // 每5分钟检查一次作业提醒
+        setInterval(checkHomeworkReminders, 5 * 60 * 1000);
 
         function formatHomeworkContent(homework) {
             if (homework.type === '练习册') {
