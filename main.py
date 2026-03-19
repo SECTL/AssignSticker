@@ -630,6 +630,20 @@ class Api:
             log(f"打开设置窗口失败: {error_msg}", "error")
             return {"success": False, "message": f"打开设置窗口失败: {error_msg}"}
 
+    def setZoom(self, zoom):
+        """设置主窗口缩放比例"""
+        try:
+            if self.window:
+                self.window.evaluate_js(f"document.body.style.zoom = '{zoom}%'")
+                log(f"设置缩放比例为 {zoom}%", "info")
+                return {"success": True, "message": f"缩放比例已设置为 {zoom}%"}
+            else:
+                return {"success": False, "message": "主窗口不存在"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"设置缩放比例失败: {error_msg}", "error")
+            return {"success": False, "message": f"设置失败: {error_msg}"}
+
     def saveSettings(self, settings):
         """保存设置到文件"""
         try:
@@ -637,6 +651,11 @@ class Api:
             with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
             log(f"设置已保存", "info")
+            
+            # 如果有缩放设置，应用到主窗口
+            if 'zoom' in settings and self.window:
+                self.window.evaluate_js(f"document.body.style.zoom = '{settings['zoom']}%'")
+            
             return {"success": True, "message": "设置已保存"}
         except Exception as e:
             error_msg = str(e)
@@ -656,6 +675,7 @@ class Api:
                 default_settings = {
                     "theme": "blue",
                     "fontSize": 14,
+                    "zoom": 100,
                     "opacity": 100,
                     "glassEffect": False,
                     "showSaying": True,

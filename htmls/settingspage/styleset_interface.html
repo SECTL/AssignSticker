@@ -327,6 +327,16 @@
             <div class="card-title">窗口效果</div>
             <div class="setting-item">
                 <div class="setting-info">
+                    <div class="setting-label">窗口缩放比例</div>
+                    <div class="setting-desc">调整主窗口的显示缩放比例</div>
+                </div>
+                <div class="slider-wrapper">
+                    <input type="range" class="slider" min="80" max="150" value="100" id="zoomSlider" oninput="updateZoom(this.value)">
+                    <span class="slider-value" id="zoomValue">100%</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
                     <div class="setting-label">窗口透明度</div>
                     <div class="setting-desc">调整主窗口的背景透明度</div>
                 </div>
@@ -403,6 +413,7 @@
         let currentSettings = {
             theme: 'blue',
             fontSize: 14,
+            zoom: 100,
             opacity: 100,
             glassEffect: false,
             showSaying: true,
@@ -449,6 +460,10 @@
             // 应用字体大小
             document.getElementById('fontSizeSlider').value = currentSettings.fontSize;
             document.getElementById('fontSizeValue').textContent = currentSettings.fontSize + 'px';
+
+            // 应用缩放比例
+            document.getElementById('zoomSlider').value = currentSettings.zoom;
+            document.getElementById('zoomValue').textContent = currentSettings.zoom + '%';
 
             // 应用透明度
             document.getElementById('opacitySlider').value = currentSettings.opacity;
@@ -550,6 +565,13 @@
             saveCurrentSettings();
         }
 
+        // 更新缩放比例
+        function updateZoom(value) {
+            document.getElementById('zoomValue').textContent = value + '%';
+            currentSettings.zoom = parseInt(value);
+            saveCurrentSettings();
+        }
+
         // 更新透明度
         function updateOpacity(value) {
             document.getElementById('opacityValue').textContent = value + '%';
@@ -608,6 +630,14 @@
                 window.parent.postMessage({
                     type: 'settingsUpdated',
                     settings: currentSettings
+                }, '*');
+            }
+            
+            // 通知主窗口更新缩放
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'zoomUpdated',
+                    zoom: currentSettings.zoom
                 }, '*');
             }
         }

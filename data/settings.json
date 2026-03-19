@@ -1,0 +1,16 @@
+{
+  "theme": "blue",
+  "fontSize": 14,
+  "opacity": 100,
+  "glassEffect": false,
+  "showSaying": true,
+  "showSeconds": true,
+  "toolbarPosition": "center",
+  "enableAnimation": true,
+  "animationSpeed": "normal",
+  "autoStart": false,
+  "startMinimized": false,
+  "enableReminder": true,
+  "reminderTime": "30分钟",
+  "autoSaveInterval": "5分钟"
+}

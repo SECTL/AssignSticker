@@ -269,6 +269,17 @@
                     document.documentElement.style.setProperty('--accent-color', theme.accent);
                 }
             }
+            
+            // 监听缩放更新消息
+            if (event.data && event.data.type === 'zoomUpdated') {
+                const zoom = event.data.zoom;
+                if (zoom) {
+                    // 通知主窗口更新缩放
+                    if (window.pywebview && window.pywebview.api) {
+                        window.pywebview.api.setZoom(zoom);
+                    }
+                }
+            }
         });
 
         // 禁用右键菜单
