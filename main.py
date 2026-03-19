@@ -343,6 +343,29 @@ def ensure_data_directory():
         os.makedirs(homework_save_auto_dir)
         log(f"创建homework_save_auto目录: {homework_save_auto_dir}", "info")
     
+    # 确保 settings.json 存在
+    settings_file = os.path.join(data_dir, 'settings.json')
+    if not os.path.exists(settings_file):
+        default_settings = {
+            "theme": "blue",
+            "fontSize": 14,
+            "opacity": 100,
+            "glassEffect": False,
+            "showSaying": True,
+            "showSeconds": True,
+            "toolbarPosition": "center",
+            "enableAnimation": True,
+            "animationSpeed": "normal",
+            "autoStart": False,
+            "startMinimized": False,
+            "enableReminder": True,
+            "reminderTime": "30分钟",
+            "autoSaveInterval": "5分钟"
+        }
+        with open(settings_file, 'w', encoding='utf-8') as f:
+            json.dump(default_settings, f, ensure_ascii=False, indent=2)
+        log(f"创建默认设置文件: {settings_file}", "info")
+    
     return data_dir
 
 
@@ -830,6 +853,109 @@ class Api:
             error_msg = str(e)
             log(f"设置开机自启动失败: {error_msg}", "error")
             return {"success": False, "message": f"设置失败: {error_msg}"}
+
+    def checkUpdate(self):
+        """检查更新"""
+        try:
+            import urllib.request
+            import json as json_module
+
+            # GitHub API 地址
+            repo = "SECTL/AssignSticker"
+            api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+
+            try:
+                request = urllib.request.Request(api_url)
+                request.add_header('User-Agent', 'AssignSticker')
+                
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    data = json_module.loads(response.read().decode('utf-8'))
+                
+                latest_version = data.get('tag_name', 'v1.0.0').lstrip('v')
+                current_version = "1.3.0"
+                
+                # 比较版本
+                is_latest = self.compare_versions(current_version, latest_version) >= 0
+                
+                log(f"检查更新完成：当前版本 {current_version}，最新版本 {latest_version}", "info")
+                
+                return {
+                    "success": True,
+                    "isLatest": is_latest,
+                    "latestVersion": latest_version,
+                    "message": "检查完成" if is_latest else "有新版本可用"
+                }
+                
+            except Exception as e:
+                error_msg = str(e)
+                log(f"检查更新失败: {error_msg}", "error")
+                return {"success": False, "message": f"检查失败: {error_msg}"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"检查更新异常: {error_msg}", "error")
+            return {"success": False, "message": f"检查异常: {error_msg}"}
+
+    def compare_versions(self, v1, v2):
+        """比较版本号，返回 0 表示相等，正数表示 v1 > v2，负数表示 v1 < v2"""
+        try:
+            def parse_version(version):
+                parts = version.split('.')
+                result = []
+                for part in parts:
+                    try:
+                        result.append(int(part))
+                    except ValueError:
+                        result.append(0)
+                return result
+            
+            v1_parts = parse_version(v1)
+            v2_parts = parse_version(v2)
+            
+            # 补齐长度
+            max_len = max(len(v1_parts), len(v2_parts))
+            v1_parts.extend([0] * (max_len - len(v1_parts)))
+            v2_parts.extend([0] * (max_len - len(v2_parts)))
+            
+            # 逐位比较
+            for i in range(max_len):
+                if v1_parts[i] != v2_parts[i]:
+                    return v1_parts[i] - v2_parts[i]
+            
+            return 0
+        except Exception:
+            return 0
+
+    def getChangelog(self):
+        """获取更新日志"""
+        try:
+            import urllib.request
+            import json as json_module
+
+            repo = "SECTL/AssignSticker"
+            api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+
+            try:
+                request = urllib.request.Request(api_url)
+                request.add_header('User-Agent', 'AssignSticker')
+                
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    data = json_module.loads(response.read().decode('utf-8'))
+                
+                changelog = data.get('body', '暂无更新日志')
+                
+                log("获取更新日志成功", "info")
+                return {"success": True, "changelog": changelog}
+                
+            except Exception as e:
+                error_msg = str(e)
+                log(f"获取更新日志失败: {error_msg}", "error")
+                return {"success": False, "message": f"获取失败: {error_msg}"}
+
+        except Exception as e:
+            error_msg = str(e)
+            log(f"获取更新日志异常: {error_msg}", "error")
+            return {"success": False, "message": f"获取异常: {error_msg}"}
 
     def loadHomeworkData(self):
         """加载作业数据，过滤掉已过期的作业"""
