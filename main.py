@@ -10,6 +10,7 @@ import urllib.parse
 import threading
 import json
 import random
+import re
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw
 import pystray
@@ -39,6 +40,220 @@ tray_icon = None
 
 # 重启标记
 should_restart = False
+
+DEFAULT_SETTINGS = {
+    "theme": "blue",
+    "fontSize": 14,
+    "zoom": 100,
+    "opacity": 100,
+    "glassEffect": False,
+    "showSaying": True,
+    "showSeconds": True,
+    "toolbarPosition": "center",
+    "enableAnimation": True,
+    "animationSpeed": "normal",
+    "autoStart": False,
+    "startMinimized": False,
+    "enableReminder": True,
+    "reminderTime": "30分钟",
+    "autoSaveInterval": "5分钟"
+}
+
+
+def get_data_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+
+
+def get_settings_file():
+    return os.path.join(get_data_dir(), 'settings.json')
+
+
+def get_homework_file():
+    return os.path.join(get_data_dir(), 'homework.json')
+
+
+def get_homework_template_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'homeworktemple')
+
+
+DEFAULT_HOMEWORK_TEMPLATES = [
+    {
+        "filename": "workbook.yml",
+        "name": "练习册",
+        "body": {
+            "开始页": "spinbox",
+            "结束页": "spinbox",
+            "备注": "rtftextbox"
+        }
+    },
+    {
+        "filename": "preview.yml",
+        "name": "预习",
+        "body": {
+            "预习内容": "rtftextbox"
+        }
+    },
+    {
+        "filename": "custom.yml",
+        "name": "自定义作业",
+        "body": {
+            "作业内容": "rtftextbox"
+        }
+    }
+]
+
+ALLOWED_TEMPLATE_UIS = {"combobox", "textbox", "spinbox", "rtftextbox"}
+
+
+def parse_template_yaml(content):
+    """解析简易模板YML:
+    name: 模板名
+    body:
+      字段名: ui类型
+    """
+    lines = (content or "").replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    name = ""
+    body = {}
+    in_body = False
+
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        if not line.strip() or line.strip().startswith("#"):
+            continue
+
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+
+        if indent == 0 and stripped.startswith("name:"):
+            name = stripped.split(":", 1)[1].strip().strip('"').strip("'")
+            in_body = False
+            continue
+
+        if indent == 0 and stripped.startswith("body:"):
+            in_body = True
+            continue
+
+        if in_body and indent >= 1:
+            if ":" not in stripped:
+                continue
+            key, value = stripped.split(":", 1)
+            field = key.strip().strip('"').strip("'")
+            ui = value.strip().strip('"').strip("'").lower()
+            if field and ui in ALLOWED_TEMPLATE_UIS:
+                body[field] = ui
+
+    if not name:
+        raise ValueError("模板缺少 name")
+    if not body:
+        raise ValueError("模板缺少有效 body 字段")
+
+    return {"name": name, "body": body}
+
+
+def dump_template_yaml(template):
+    name = str(template.get("name", "")).strip()
+    body = template.get("body", {}) if isinstance(template.get("body", {}), dict) else {}
+
+    lines = [f"name: {name}", "body:"]
+    for field, ui in body.items():
+        field_name = str(field).strip()
+        ui_name = str(ui).strip().lower()
+        if not field_name or ui_name not in ALLOWED_TEMPLATE_UIS:
+            continue
+        lines.append(f"  {field_name}: {ui_name}")
+    return "\n".join(lines) + "\n"
+
+
+def _sanitize_template_filename(name):
+    base = re.sub(r"[^\w\-\u4e00-\u9fff]+", "_", (name or "").strip(), flags=re.UNICODE).strip("_")
+    if not base:
+        base = f"template_{int(datetime.now().timestamp())}"
+    return f"{base}.yml"
+
+
+def load_homework_templates():
+    template_dir = get_homework_template_dir()
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+
+    templates = []
+    for filename in sorted(os.listdir(template_dir)):
+        if not filename.lower().endswith((".yml", ".yaml")):
+            continue
+        filepath = os.path.join(template_dir, filename)
+        if not os.path.isfile(filepath):
+            continue
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                parsed = parse_template_yaml(f.read())
+            templates.append({
+                "filename": filename,
+                "name": parsed["name"],
+                "body": parsed["body"]
+            })
+        except Exception as e:
+            log(f"读取模板失败 {filename}: {str(e)}", "warning")
+            continue
+    return templates
+
+
+def ensure_default_homework_templates():
+    template_dir = get_homework_template_dir()
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+
+    existing = {
+        name.lower() for name in os.listdir(template_dir)
+        if os.path.isfile(os.path.join(template_dir, name))
+    }
+    for tpl in DEFAULT_HOMEWORK_TEMPLATES:
+        filename = tpl["filename"]
+        if filename.lower() in existing:
+            continue
+        filepath = os.path.join(template_dir, filename)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(dump_template_yaml(tpl))
+        log(f"创建默认模板文件: {filepath}", "info")
+
+
+def load_settings_data():
+    settings_file = get_settings_file()
+    if os.path.exists(settings_file):
+        try:
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                return {**DEFAULT_SETTINGS, **loaded}
+        except Exception as e:
+            log(f"读取设置失败，回退默认值: {str(e)}", "warning")
+    return dict(DEFAULT_SETTINGS)
+
+
+def save_settings_data(settings):
+    settings_file = get_settings_file()
+    with open(settings_file, 'w', encoding='utf-8') as f:
+        json.dump(settings, f, ensure_ascii=False, indent=2)
+
+
+def save_homework_data(homework_list):
+    homework_file = get_homework_file()
+    with open(homework_file, 'w', encoding='utf-8') as f:
+        json.dump(homework_list, f, ensure_ascii=False, indent=2)
+
+
+def get_screen_size():
+    """获取当前主屏幕分辨率（逻辑像素）"""
+    try:
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        width = root.winfo_screenwidth()
+        height = root.winfo_screenheight()
+        root.destroy()
+        return width, height
+    except Exception as e:
+        log(f"获取屏幕分辨率失败，使用默认值: {str(e)}", "warning")
+        return 1920, 1080
 
 def log(message, level="info"):
     """
@@ -336,7 +551,7 @@ def show_crash_window_standalone(encoded_error):
 
 def ensure_data_directory():
     """确保data目录和homework_save、homework_save_auto目录存在，不存在则创建"""
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    data_dir = get_data_dir()
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
         log(f"创建data目录: {data_dir}", "info")
@@ -352,27 +567,13 @@ def ensure_data_directory():
         log(f"创建homework_save_auto目录: {homework_save_auto_dir}", "info")
     
     # 确保 settings.json 存在
-    settings_file = os.path.join(data_dir, 'settings.json')
+    settings_file = get_settings_file()
     if not os.path.exists(settings_file):
-        default_settings = {
-            "theme": "blue",
-            "fontSize": 14,
-            "opacity": 100,
-            "glassEffect": False,
-            "showSaying": True,
-            "showSeconds": True,
-            "toolbarPosition": "center",
-            "enableAnimation": True,
-            "animationSpeed": "normal",
-            "autoStart": False,
-            "startMinimized": False,
-            "enableReminder": True,
-            "reminderTime": "30分钟",
-            "autoSaveInterval": "5分钟"
-        }
         with open(settings_file, 'w', encoding='utf-8') as f:
-            json.dump(default_settings, f, ensure_ascii=False, indent=2)
+            json.dump(DEFAULT_SETTINGS, f, ensure_ascii=False, indent=2)
         log(f"创建默认设置文件: {settings_file}", "info")
+
+    ensure_default_homework_templates()
     
     return data_dir
 
@@ -421,6 +622,17 @@ class Api:
     def __init__(self):
         self.window = None
         self.should_restart = False
+
+    def _push_settings_to_main_window(self, settings):
+        """将设置实时下发到主窗口"""
+        try:
+            if self.window:
+                payload = json.dumps(settings, ensure_ascii=False)
+                self.window.evaluate_js(
+                    f"window.applySettingsFromBackend && window.applySettingsFromBackend({payload});"
+                )
+        except Exception as e:
+            log(f"下发设置到主窗口失败: {str(e)}", "warning")
     
     def saveHomeworkToFile(self, homework_data):
         """
@@ -440,6 +652,9 @@ class Api:
             # 写入JSON文件
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(homework_data, f, ensure_ascii=False, indent=2)
+
+            # 同步主作业文件，保证导入导出和下次启动可读取
+            save_homework_data(homework_data)
             
             log(f"作业已保存到: {filepath}", "info")
             return {"success": True, "message": f"作业已保存到: {filename}", "filepath": filepath}
@@ -512,6 +727,9 @@ class Api:
             # 写入JSON文件
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(homework_data, f, ensure_ascii=False, indent=2)
+
+            # 同步主作业文件
+            save_homework_data(homework_data)
             
             log(f"作业已自动保存到: {filepath}", "info")
             return {"success": True, "message": f"自动保存成功: {filename}", "filepath": filepath}
@@ -618,6 +836,30 @@ class Api:
             log(f"显示主窗口失败: {error_msg}", "error")
             return {"success": False, "message": f"显示失败: {error_msg}"}
 
+    def minimizeWindow(self):
+        """最小化主窗口（兼容前端设置调用）"""
+        try:
+            if self.window:
+                self.window.minimize()
+                return {"success": True, "message": "窗口已最小化"}
+            return {"success": False, "message": "主窗口不存在"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"最小化窗口失败: {error_msg}", "error")
+            return {"success": False, "message": f"最小化失败: {error_msg}"}
+
+    def saveHomeworkData(self, homework_list):
+        """保存当前作业列表为主数据文件"""
+        try:
+            if not isinstance(homework_list, list):
+                return {"success": False, "message": "作业数据格式错误"}
+            save_homework_data(homework_list)
+            return {"success": True, "message": "作业数据已保存"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"保存作业数据失败: {error_msg}", "error")
+            return {"success": False, "message": f"保存失败: {error_msg}"}
+
     def openSettingsWindow(self):
         """打开设置窗口"""
         try:
@@ -630,7 +872,8 @@ class Api:
                 height=600,
                 resizable=True,
                 min_size=(600, 400),
-                background_color='#f5f5f5'
+                background_color='#f5f5f5',
+                js_api=self
             )
             return {"success": True, "message": "设置窗口已打开"}
         except Exception as e:
@@ -641,6 +884,10 @@ class Api:
     def setZoom(self, zoom):
         """设置主窗口缩放比例"""
         try:
+            current_settings = load_settings_data()
+            current_settings['zoom'] = int(zoom)
+            save_settings_data(current_settings)
+
             if self.window:
                 self.window.evaluate_js(f"document.body.style.zoom = '{zoom}%'")
                 log(f"设置缩放比例为 {zoom}%", "info")
@@ -679,15 +926,12 @@ class Api:
                 return {"success": True, "reminders": []}
             
             # 加载设置
-            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
             enable_reminder = True
             reminder_time = '30分钟'
-            
-            if os.path.exists(settings_file):
-                with open(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    enable_reminder = settings.get('enableReminder', True)
-                    reminder_time = settings.get('reminderTime', '30分钟')
+
+            settings = load_settings_data()
+            enable_reminder = settings.get('enableReminder', True)
+            reminder_time = settings.get('reminderTime', '30分钟')
             
             if not enable_reminder:
                 return {"success": True, "reminders": [], "message": "提醒功能已禁用"}
@@ -710,12 +954,23 @@ class Api:
                 if homework.get('completed', False):
                     continue
                 
-                deadline_str = homework.get('deadline', '')
+                deadline_str = homework.get('endTime', '')
                 if not deadline_str:
                     continue
+
+                content = (
+                    homework.get('homeworkContent')
+                    or homework.get('previewContent')
+                    or (
+                        f"练习册 {homework.get('startPage', '')}-{homework.get('endPage', '')} 页"
+                        if homework.get('type') == '练习册'
+                        else ''
+                    )
+                    or '作业'
+                )
                 
                 try:
-                    deadline = datetime.strptime(deadline_str, '%Y-%m-%d %H:%M')
+                    deadline = datetime.fromisoformat(deadline_str)
                     time_diff = deadline - now
                     minutes_left = time_diff.total_seconds() / 60
                     
@@ -724,7 +979,7 @@ class Api:
                         reminders.append({
                             'id': homework.get('id'),
                             'subject': homework.get('subject', '未知科目'),
-                            'content': homework.get('content', ''),
+                            'content': content,
                             'deadline': deadline_str,
                             'minutes_left': int(minutes_left)
                         })
@@ -734,7 +989,7 @@ class Api:
                             time_str = f"{int(minutes_left)}分钟" if minutes_left >= 1 else "即将"
                             notification.notify(
                                 title=f"作业提醒：{homework.get('subject', '未知科目')}",
-                                message=f"{homework.get('content', '')[:50]}... 将在{time_str}后截止",
+                                message=f"{content[:50]}... 将在{time_str}后截止",
                                 app_name='AssignSticker',
                                 timeout=10
                             )
@@ -752,15 +1007,15 @@ class Api:
     def saveSettings(self, settings):
         """保存设置到文件"""
         try:
-            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
-            with open(settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=2)
+            if not isinstance(settings, dict):
+                return {"success": False, "message": "设置格式错误"}
+
+            merged_settings = load_settings_data()
+            merged_settings.update(settings)
+            save_settings_data(merged_settings)
             log(f"设置已保存", "info")
-            
-            # 如果有缩放设置，应用到主窗口
-            if 'zoom' in settings and self.window:
-                self.window.evaluate_js(f"document.body.style.zoom = '{settings['zoom']}%'")
-            
+
+            self._push_settings_to_main_window(merged_settings)
             return {"success": True, "message": "设置已保存"}
         except Exception as e:
             error_msg = str(e)
@@ -770,35 +1025,98 @@ class Api:
     def loadSettings(self):
         """从文件加载设置"""
         try:
-            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
-            if os.path.exists(settings_file):
-                with open(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                return {"success": True, "data": settings}
-            else:
-                # 返回默认设置
-                default_settings = {
-                    "theme": "blue",
-                    "fontSize": 14,
-                    "zoom": 100,
-                    "opacity": 100,
-                    "glassEffect": False,
-                    "showSaying": True,
-                    "showSeconds": True,
-                    "toolbarPosition": "center",
-                    "enableAnimation": True,
-                    "animationSpeed": "normal",
-                    "autoStart": False,
-                    "startMinimized": False,
-                    "enableReminder": True,
-                    "reminderTime": "30分钟",
-                    "autoSaveInterval": "5分钟"
-                }
-                return {"success": True, "data": default_settings}
+            settings = load_settings_data()
+            return {"success": True, "data": settings}
         except Exception as e:
             error_msg = str(e)
             log(f"加载设置失败: {error_msg}", "error")
             return {"success": False, "message": f"加载设置失败: {error_msg}"}
+
+    def loadHomeworkTemplates(self):
+        """加载作业模板YML"""
+        try:
+            ensure_default_homework_templates()
+            templates = load_homework_templates()
+            return {"success": True, "data": templates}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"加载作业模板失败: {error_msg}", "error")
+            return {"success": False, "message": f"加载作业模板失败: {error_msg}"}
+
+    def saveHomeworkTemplate(self, template):
+        """保存作业模板YML"""
+        try:
+            if not isinstance(template, dict):
+                return {"success": False, "message": "模板格式错误"}
+
+            name = str(template.get("name", "")).strip()
+            body = template.get("body", {})
+            if not name:
+                return {"success": False, "message": "模板名称不能为空"}
+            if not isinstance(body, dict) or not body:
+                return {"success": False, "message": "模板字段不能为空"}
+
+            cleaned_body = {}
+            for field, ui in body.items():
+                field_name = str(field).strip()
+                ui_name = str(ui).strip().lower()
+                if not field_name:
+                    continue
+                if ui_name not in ALLOWED_TEMPLATE_UIS:
+                    return {"success": False, "message": f"不支持的字段类型: {ui_name}"}
+                cleaned_body[field_name] = ui_name
+
+            if not cleaned_body:
+                return {"success": False, "message": "模板字段不能为空"}
+
+            template_dir = get_homework_template_dir()
+            if not os.path.exists(template_dir):
+                os.makedirs(template_dir)
+
+            filename = str(template.get("filename", "")).strip()
+            if filename:
+                filename = re.sub(r"[^\w\-\u4e00-\u9fff\.]+", "_", filename, flags=re.UNICODE)
+                if not filename.lower().endswith((".yml", ".yaml")):
+                    filename += ".yml"
+            else:
+                filename = _sanitize_template_filename(name)
+
+            filepath = os.path.join(template_dir, filename)
+            payload = {"name": name, "body": cleaned_body}
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(dump_template_yaml(payload))
+
+            log(f"模板已保存: {filepath}", "info")
+            return {"success": True, "message": "模板已保存", "filename": filename}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"保存作业模板失败: {error_msg}", "error")
+            return {"success": False, "message": f"保存作业模板失败: {error_msg}"}
+
+    def deleteHomeworkTemplate(self, filename):
+        """删除作业模板YML"""
+        try:
+            target = str(filename or "").strip()
+            if not target:
+                return {"success": False, "message": "缺少模板文件名"}
+
+            template_dir = get_homework_template_dir()
+            filepath = os.path.join(template_dir, target)
+            real_template_dir = os.path.realpath(template_dir)
+            real_path = os.path.realpath(filepath)
+            if not real_path.startswith(real_template_dir + os.sep):
+                return {"success": False, "message": "非法路径"}
+
+            if not os.path.exists(real_path):
+                return {"success": False, "message": "模板不存在"}
+
+            os.remove(real_path)
+            log(f"模板已删除: {real_path}", "info")
+            return {"success": True, "message": "模板已删除"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"删除作业模板失败: {error_msg}", "error")
+            return {"success": False, "message": f"删除作业模板失败: {error_msg}"}
 
     def exportHomeworkData(self):
         """导出作业数据"""
@@ -1087,7 +1405,7 @@ class Api:
         try:
             from datetime import datetime, timedelta
 
-            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            homework_file = get_homework_file()
 
             if not os.path.exists(homework_file):
                 return {"success": True, "data": [], "message": "没有作业数据"}
@@ -1104,7 +1422,7 @@ class Api:
 
             for homework in homework_list:
                 if homework.get('endTime'):
-                    end_time = datetime.fromisoformat(homework['endTime'].replace('Z', '+00:00').replace('+00:00', ''))
+                    end_time = datetime.fromisoformat(homework['endTime'].replace('Z', ''))
                     # 计算截止日期的当天24:00
                     deadline = end_time.replace(hour=23, minute=59, second=59, microsecond=999999)
 
@@ -1132,7 +1450,7 @@ class Api:
     def saveHomeworkToAutoSave(self, homework_list):
         """自动保存作业到自动保存目录"""
         try:
-            auto_save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_saves_auto')
+            auto_save_dir = get_homework_save_auto_dir()
             if not os.path.exists(auto_save_dir):
                 os.makedirs(auto_save_dir)
 
@@ -1144,6 +1462,8 @@ class Api:
             # 写入JSON文件
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(homework_list, f, ensure_ascii=False, indent=2)
+
+            save_homework_data(homework_list)
 
             log(f"作业已自动保存到: {filepath}", "info")
             return {"success": True, "message": f"自动保存成功: {filename}"}
@@ -1193,21 +1513,31 @@ if __name__ == '__main__':
             # 检查是否启动时最小化
             start_minimized = False
             try:
-                settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
-                if os.path.exists(settings_file):
-                    with open(settings_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
-                    start_minimized = settings.get('startMinimized', False)
+                settings = load_settings_data()
+                start_minimized = settings.get('startMinimized', False)
             except Exception as e:
                 log(f"读取启动设置失败: {str(e)}", "error")
+
+            # 根据屏幕大小自适应主窗口尺寸，避免高缩放下超出可视区域被系统强制铺满
+            base_width, base_height = 2296, 1136
+            screen_width, screen_height = get_screen_size()
+            max_width = int(screen_width * 0.92)
+            max_height = int(screen_height * 0.90)
+            window_width = min(base_width, max_width)
+            window_height = min(base_height, max_height)
+            log(
+                f"窗口尺寸计算: 屏幕={screen_width}x{screen_height}, "
+                f"窗口={window_width}x{window_height}",
+                "info"
+            )
             
             # 创建无边框窗口
             main_window = webview.create_window(
                 'Wow 伙伴！',
                 'index.html',
                 frameless=True,
-                width=2296,
-                height=1136,
+                width=window_width,
+                height=window_height,
                 resizable=False,
                 on_top=False,
                 js_api=api,
@@ -1237,18 +1567,15 @@ if __name__ == '__main__':
                 
                 # 加载并应用缩放设置
                 try:
-                    settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
-                    if os.path.exists(settings_file):
-                        with open(settings_file, 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                        
-                        # 应用缩放设置
-                        if 'zoom' in settings:
-                            zoom = settings['zoom']
-                            main_window.evaluate_js(f"document.body.style.zoom = '{zoom}%'")
-                            log(f"应用缩放设置: {zoom}%", "info")
+                    settings = load_settings_data()
+                    # 统一通过前端设置函数应用，避免遗漏项
+                    payload = json.dumps(settings, ensure_ascii=False)
+                    main_window.evaluate_js(
+                        f"window.applySettingsFromBackend && window.applySettingsFromBackend({payload});"
+                    )
+                    log("启动时已应用设置", "info")
                 except Exception as e:
-                    log(f"加载缩放设置失败: {str(e)}", "error")
+                    log(f"启动应用设置失败: {str(e)}", "error")
 
             # 启动程序（根据参数决定是否启用开发者工具）
             webview.start(

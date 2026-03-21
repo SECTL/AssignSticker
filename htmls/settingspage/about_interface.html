@@ -19,8 +19,9 @@
         }
 
         body {
-            background: #f5f5f5;
-            padding: 20px;
+            background: #11151d;
+            color: #e6ebf8;
+            padding: 16px;
             min-height: 100vh;
         }
 
@@ -29,7 +30,33 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
+        }
+
+        .info-section {
+            background: #1a202b;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #2a3343;
+            width: 100%;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f4fd;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a3343;
+        }
+
+        .banner {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border-radius: 14px;
+            border: 1px solid #2a3343;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
         }
 
         .app-info {
@@ -43,62 +70,54 @@
             width: 200px;
             height: auto;
             flex-shrink: 0;
+            border-radius: 10px;
+        }
+
+        .app-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .app-name {
+            font-size: 22px;
+            color: #f1f4fd;
+            font-weight: 700;
+            letter-spacing: 0.4px;
         }
 
         .app-version {
-            font-size: 14px;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
+            font-size: 13px;
+            color: #dce6ff;
+            background: rgba(78, 141, 255, 0.18);
+            border: 1px solid rgba(78, 141, 255, 0.42);
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 999px;
             display: inline-block;
-        }
-
-        .info-section {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            flex: 1;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .info-value {
-            font-size: 14px;
-            color: #333;
-            font-weight: 500;
+            width: fit-content;
         }
 
         .description {
             font-size: 14px;
-            color: #555;
+            color: #c7d0e4;
             line-height: 1.8;
+        }
+
+        .description a {
+            color: #85b0ff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(133, 176, 255, 0.4);
+        }
+
+        .description a:hover {
+            color: #a9c8ff;
+            border-bottom-color: rgba(169, 200, 255, 0.8);
+        }
+
+        .links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .link-item {
@@ -106,97 +125,145 @@
             align-items: center;
             gap: 10px;
             padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            border-radius: 10px;
             text-decoration: none;
             color: inherit;
+            border: 1px solid #2b3445;
+            background: #161c27;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
 
         .link-item:hover {
-            background: #f5f5f5;
+            background: #1d2533;
+            border-color: #3a4962;
+            transform: translateX(2px);
         }
 
         .link-icon {
             width: 20px;
             height: 20px;
-            opacity: 0.6;
+            opacity: 0.85;
+            filter: brightness(0) invert(1);
         }
 
         .link-text {
             flex: 1;
             font-size: 14px;
-            color: #333;
+            color: #d9e2f8;
         }
 
         .link-arrow {
             width: 16px;
             height: 16px;
-            opacity: 0.4;
+            opacity: 0.65;
+            filter: brightness(0) invert(1);
         }
 
         .copyright {
             text-align: center;
             font-size: 12px;
-            color: #999;
-            padding-top: 20px;
-            border-top: 1px solid #f0f0f0;
-            margin-top: auto;
+            color: #8e98af;
+            padding: 8px 0 2px;
         }
 
-        .banner {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .search-hidden {
+            display: none !important;
+        }
+
+        .search-match {
+            box-shadow: inset 0 0 0 1px rgba(78, 141, 255, 0.42);
+        }
+
+        .search-no-results {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            color: #8e98af;
+            font-size: 13px;
+        }
+
+        .search-no-results.show {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .app-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .app-logo {
+                width: 160px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="about-container">
-        <!-- 横幅 -->
-        <img src="../../banner.png" alt="Banner" class="banner">
+        <img src="../../banner.png" alt="Banner" class="banner search-target" data-search="banner 头图 横幅 AssignSticker">
 
-        <!-- 应用信息 -->
-        <div class="app-info">
-            <img src="../../desktop_widgets/widgets.logo.png" alt="AssignSticker" class="app-logo">
-            <div class="app-version">版本 1.3.0 (CODENAME:Dangerous Star)</div>
-        </div>
-
-        <!-- 应用描述 -->
-        <div class="info-section">
-            <div class="section-title">关于应用</div>
-            <div class="description">
-                本应用受到Zooni（<a href="https://acs.jursin.top/Class/Board/Zooni.html" target="_blank">https://acs.jursin.top/Class/Board/Zooni.html</a>）的启发而开发。<br>
-                感谢黎泽懿（<a href="https://github.com/lzy98276" target="_blank">https://github.com/lzy98276</a>）旗下的SECTL（<a href="https://sectl.top/" target="_blank">https://sectl.top/</a>）对本项目的大力支持。
+        <div class="info-section search-target" data-search="应用信息 版本 名称 AssignSticker">
+            <div class="app-info">
+                <img src="../../desktop_widgets/widgets.logo.png" alt="AssignSticker" class="app-logo">
+                <div class="app-meta">
+                    <div class="app-name">AssignSticker</div>
+                    <div class="app-version">版本 1.3.0 (CODENAME: Dangerous Star)</div>
+                </div>
             </div>
         </div>
 
-        <!-- 相关链接 -->
-        <div class="info-section">
-            <div class="section-title">相关链接</div>
-            <a href="https://github.com/SECTL/AssignSticker" target="_blank" class="link-item">
-                <img src="../../icons/icons/settings/about.svg" alt="GitHub" class="link-icon">
-                <span class="link-text">GitHub 仓库</span>
-                <img src="../../icons/icons/maximize.svg" alt="打开" class="link-arrow">
-            </a>
-            <a href="https://github.com/SECTL/AssignSticker/issues" target="_blank" class="link-item">
-                <img src="../../icons/icons/edit.svg" alt="反馈" class="link-icon">
-                <span class="link-text">问题反馈</span>
-                <img src="../../icons/icons/maximize.svg" alt="打开" class="link-arrow">
-            </a>
+        <div class="info-section search-target" data-search="关于应用 说明 灵感 Zooni SECTL">
+            <div class="section-title">关于应用</div>
+            <div class="description">
+                本应用受到 Zooni（<a href="https://acs.jursin.top/Class/Board/Zooni.html" target="_blank">https://acs.jursin.top/Class/Board/Zooni.html</a>）的启发而开发。<br>
+                感谢黎泽懿（<a href="https://github.com/lzy98276" target="_blank">https://github.com/lzy98276</a>）旗下的 SECTL（<a href="https://sectl.top/" target="_blank">https://sectl.top/</a>）对本项目的大力支持。
+            </div>
         </div>
 
-        <!-- 版权信息 -->
-        <div class="copyright">
-            © 2026 SECTL. All rights reserved.
+        <div class="info-section search-target" data-search="相关链接 github issues 反馈 仓库">
+            <div class="section-title">相关链接</div>
+            <div class="links-list">
+                <a href="https://github.com/SECTL/AssignSticker" target="_blank" class="link-item search-target" data-search="github 仓库 源码">
+                    <img src="../../icons/icons/settings/about.svg" alt="GitHub" class="link-icon">
+                    <span class="link-text">GitHub 仓库</span>
+                    <img src="../../icons/icons/maximize.svg" alt="打开" class="link-arrow">
+                </a>
+                <a href="https://github.com/SECTL/AssignSticker/issues" target="_blank" class="link-item search-target" data-search="issues 问题 反馈">
+                    <img src="../../icons/icons/edit.svg" alt="反馈" class="link-icon">
+                    <span class="link-text">问题反馈</span>
+                    <img src="../../icons/icons/maximize.svg" alt="打开" class="link-arrow">
+                </a>
+            </div>
         </div>
+
+        <div class="copyright search-target" data-search="版权 2026 SECTL">© 2026 SECTL. All rights reserved.</div>
+        <div id="searchNoResults" class="search-no-results">没有匹配到相关关于信息</div>
     </div>
 
     <script>
-        // 禁用右键菜单
+        function applySearch(query) {
+            const q = (query || '').trim().toLowerCase();
+            const targets = Array.from(document.querySelectorAll('.search-target'));
+            const noResults = document.getElementById('searchNoResults');
+
+            let visibleCount = 0;
+            targets.forEach((node) => {
+                const text = [
+                    node.dataset.search || '',
+                    node.textContent || ''
+                ].join(' ').toLowerCase();
+
+                const matched = !q || text.includes(q);
+                node.classList.toggle('search-hidden', !matched);
+                node.classList.toggle('search-match', Boolean(q && matched));
+                if (matched) visibleCount += 1;
+            });
+
+            noResults.classList.toggle('show', visibleCount === 0);
+        }
+
+        window.applySearch = applySearch;
+
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;

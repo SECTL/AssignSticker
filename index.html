@@ -21,12 +21,26 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #667eea;
+            --primary-strong: #5568d3;
+            --primary-soft: rgba(102, 126, 234, 0.12);
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --bg-start: #f8f9ff;
+            --bg-end: #eef2ff;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+        }
+
+        body {
+            background: linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
         }
 
         .header-container {
@@ -117,13 +131,17 @@
         }
 
         h1 {
-            color: rgb(6, 6, 6);
+            color: var(--primary-strong);
             margin: 0;
             font-size: 37px;
         }
 
+        #timeDisplay {
+            color: #000;
+        }
+
         #dateDisplay {
-            color: rgb(6, 6, 6);
+            color: #000;
             margin: 2px 0 0 0;
             font-size: 15px;
             text-align: left;
@@ -167,11 +185,11 @@
         }
 
         .toolbar-btn.primary {
-            background: #667eea;
+            background: var(--primary-color);
         }
 
         .toolbar-btn.primary:hover {
-            background: #5568d3;
+            background: var(--primary-strong);
             transform: scale(1.1);
         }
 
@@ -306,7 +324,7 @@
             min-width: 280px;
             max-width: 400px;
             animation: toastSlideIn 0.3s ease;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid var(--primary-color);
         }
 
         @keyframes toastSlideIn {
@@ -416,20 +434,23 @@
             padding: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.2s ease;
-            border: 1px solid #f0f0f0;
+            border: 1px solid var(--primary-soft);
             break-inside: avoid;
         }
 
         .homework-grid:empty::before {
-            content: "📝\A暂无作业，点击下方的\"新建作业\"按钮添加";
-            white-space: pre;
+            content: "暂无作业，点击下方的\"新建作业\"按钮添加";
+            white-space: pre-wrap;
             text-align: center;
             font-size: 16px;
-            color: #999;
+            color: var(--primary-strong);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            padding-top: 66px;
+            background: url('icons/icons/noh.svg') no-repeat center top;
+            background-size: 48px 48px;
         }
 
         .homework-card:hover {
@@ -440,7 +461,7 @@
         .card-subject {
             font-size: 14px;
             font-weight: bold;
-            color: #667eea;
+            color: var(--primary-color);
             margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 1px solid #f0f0f0;
@@ -485,9 +506,9 @@
         .item-tag {
             font-size: 11px;
             padding: 2px 8px;
-            background: #f5f5f5;
+            background: var(--primary-soft);
             border-radius: 10px;
-            color: #666;
+            color: var(--primary-strong);
         }
 
         .item-actions {
@@ -521,7 +542,7 @@
         }
 
         .item-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: var(--primary-soft);
         }
 
         .item-btn img {
@@ -585,7 +606,7 @@
     </div>
 
     <!-- 浮动工具栏 -->
-    <div class="floating-toolbar">
+    <div class="floating-toolbar" id="floatingToolbar">
         <!-- 新建作业 -->
         <button class="toolbar-btn primary" data-tooltip="新建作业" onclick="openHomeworkModal()">
             <img src="icons/icons/add.svg" alt="新建">
@@ -665,14 +686,7 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            
-            // 根据设置决定是否显示秒数
-            const showSeconds = (typeof appSettings !== 'undefined' && appSettings.showSeconds !== undefined) ? 
-                appSettings.showSeconds : true;
-            const timeString = showSeconds ? 
-                `${hours}:${minutes}:${seconds}` : 
-                `${hours}:${minutes}`;
-            document.getElementById('timeDisplay').textContent = timeString;
+            document.getElementById('timeDisplay').textContent = `${hours}:${minutes}:${seconds}`;
         }
 
         function updateDate() {
@@ -813,6 +827,7 @@
             saveHomework(homeworkData);
             // 刷新显示
             renderHomeworkCards();
+            syncHomeworkDataToServer();
             closeHomeworkModal();
         }
 
@@ -875,13 +890,26 @@
             }
             
             localStorage.setItem('homeworkList', JSON.stringify(list));
+            homeworkCache = list;
         }
 
         function deleteHomework(id) {
             const list = getHomeworkList();
             const newList = list.filter(h => h.id !== id);
             localStorage.setItem('homeworkList', JSON.stringify(newList));
+            homeworkCache = newList;
+            syncHomeworkDataToServer();
             renderHomeworkCards();
+        }
+
+        async function syncHomeworkDataToServer() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    await window.pywebview.api.saveHomeworkData(getHomeworkList());
+                }
+            } catch (error) {
+                console.error('同步作业数据失败:', error);
+            }
         }
 
         // 显示右下角提醒卡片
@@ -1049,9 +1077,6 @@
             }, interval);
         }
 
-        // 启动自动保存
-        startAutoSave();
-
         // 检查作业提醒
         function checkHomeworkReminders() {
             if (!appSettings.enableReminder) {
@@ -1075,13 +1100,84 @@
         // 每5分钟检查一次作业提醒
         setInterval(checkHomeworkReminders, 5 * 60 * 1000);
 
+        function escapeHtml(text) {
+            return (text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function sanitizeRichText(input) {
+            const allowedTags = new Set(['B', 'STRONG', 'U', 'S', 'STRIKE', 'DEL', 'BR', 'DIV', 'P']);
+            const source = input || '';
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div>${source}</div>`, 'text/html');
+            const root = doc.body.firstElementChild;
+
+            function walk(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return escapeHtml(node.textContent || '');
+                }
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    return '';
+                }
+
+                const tag = node.tagName.toUpperCase();
+                const children = Array.from(node.childNodes).map(walk).join('');
+
+                if (tag === 'BR') return '<br>';
+                if (!allowedTags.has(tag)) return children;
+                if (tag === 'STRIKE' || tag === 'DEL') return `<s>${children}</s>`;
+                if (tag === 'DIV' || tag === 'P') return `${children}<br>`;
+                if (tag === 'B') return `<strong>${children}</strong>`;
+                return `<${tag.toLowerCase()}>${children}</${tag.toLowerCase()}>`;
+            }
+
+            return Array.from(root.childNodes)
+                .map(walk)
+                .join('')
+                .replace(/(<br>\s*){3,}/g, '<br><br>')
+                .replace(/^(<br>\s*)+|(<br>\s*)+$/g, '');
+        }
+
+        function normalizeContentText(text) {
+            return escapeHtml(text || '').replace(/\n/g, '<br>');
+        }
+
         function formatHomeworkContent(homework) {
+            if (homework.templateBodyData && typeof homework.templateBodyData === 'object') {
+                const lines = Object.entries(homework.templateBodyData).map(([label, info]) => {
+                    const ui = String(info?.ui || '').toLowerCase();
+                    const value = info?.value || '';
+                    const html = info?.html || '';
+                    const rendered = ui === 'rtftextbox'
+                        ? sanitizeRichText(html || normalizeContentText(value))
+                        : normalizeContentText(value);
+                    return `${escapeHtml(label)}: ${rendered}`;
+                }).filter(Boolean);
+                if (lines.length > 0) {
+                    return lines.join('<br>');
+                }
+            }
+
             if (homework.type === '练习册') {
-                return `练习册 ${homework.startPage || ''}-${homework.endPage || ''} 页`;
+                const base = normalizeContentText(`练习册 ${homework.startPage || ''}-${homework.endPage || ''} 页`);
+                const noteRich = homework.workbookNoteHtml
+                    ? sanitizeRichText(homework.workbookNoteHtml)
+                    : normalizeContentText(homework.workbookNote || '');
+                return noteRich ? `${base}<br>备注: ${noteRich}` : base;
             } else if (homework.type === '预习') {
-                return `预习: ${homework.previewContent || ''}`;
-            } else if (homework.type === '作业') {
-                return homework.homeworkContent || '';
+                const rich = homework.previewContentHtml
+                    ? sanitizeRichText(homework.previewContentHtml)
+                    : normalizeContentText(homework.previewContent || '');
+                return `预习: ${rich}`;
+            } else if (homework.type === '自定义作业' || homework.type === '作业') {
+                if (homework.homeworkContentHtml) {
+                    return sanitizeRichText(homework.homeworkContentHtml);
+                }
+                return normalizeContentText(homework.homeworkContent || '');
             }
             return '';
         }
@@ -1204,10 +1300,10 @@
                 document.body.style.backdropFilter = 'none';
             }
 
-            // 应用一言显示
+            // 一言固定显示（不再受设置开关影响）
             const sayingContainer = document.querySelector('.saying-container');
             if (sayingContainer) {
-                sayingContainer.style.display = appSettings.showSaying ? 'block' : 'none';
+                sayingContainer.style.display = 'block';
             }
 
             // 应用动画设置
@@ -1243,36 +1339,67 @@
                         break;
                 }
             }
+
+            // 应用缩放
+            if (typeof appSettings.zoom === 'number') {
+                currentZoom = appSettings.zoom;
+                updateZoomDisplay();
+                document.body.style.zoom = currentZoom + '%';
+            }
+
+            // 设置自动保存定时器
+            setupAutoSave();
         }
 
         // 应用主题
         function applyTheme(theme) {
             const themes = {
-                blue: { primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
-                green: { primary: '#11998e', secondary: '#38ef7d', accent: '#00d2ff' },
-                orange: { primary: '#f093fb', secondary: '#f5576c', accent: '#ffd89b' },
-                dark: { primary: '#434343', secondary: '#000000', accent: '#666666' }
+                blue: {
+                    primary: '#667eea',
+                    strong: '#5568d3',
+                    soft: 'rgba(102, 126, 234, 0.12)',
+                    secondary: '#764ba2',
+                    accent: '#f093fb',
+                    bgStart: '#f8f9ff',
+                    bgEnd: '#eef2ff'
+                },
+                green: {
+                    primary: '#11998e',
+                    strong: '#0f857b',
+                    soft: 'rgba(17, 153, 142, 0.12)',
+                    secondary: '#38ef7d',
+                    accent: '#00d2ff',
+                    bgStart: '#f3fbf9',
+                    bgEnd: '#e8f7f3'
+                },
+                orange: {
+                    primary: '#f5576c',
+                    strong: '#e6465e',
+                    soft: 'rgba(245, 87, 108, 0.14)',
+                    secondary: '#f093fb',
+                    accent: '#ffd89b',
+                    bgStart: '#fff7f7',
+                    bgEnd: '#fff0eb'
+                },
+                dark: {
+                    primary: '#5a5a5a',
+                    strong: '#3f3f3f',
+                    soft: 'rgba(90, 90, 90, 0.16)',
+                    secondary: '#000000',
+                    accent: '#666666',
+                    bgStart: '#f3f3f3',
+                    bgEnd: '#e7e7e7'
+                }
             };
 
             const selectedTheme = themes[theme] || themes.blue;
             document.documentElement.style.setProperty('--primary-color', selectedTheme.primary);
+            document.documentElement.style.setProperty('--primary-strong', selectedTheme.strong);
+            document.documentElement.style.setProperty('--primary-soft', selectedTheme.soft);
             document.documentElement.style.setProperty('--secondary-color', selectedTheme.secondary);
             document.documentElement.style.setProperty('--accent-color', selectedTheme.accent);
-
-            // 更新布置作业按钮的背景色
-            const primaryBtn = document.querySelector('.toolbar-btn.primary');
-            if (primaryBtn) {
-                primaryBtn.style.background = selectedTheme.primary;
-            }
-
-            // 更新设置窗口导航栏选中色（通过postMessage通知设置窗口）
-            const settingsFrame = document.getElementById('settingsFrame');
-            if (settingsFrame && settingsFrame.contentWindow) {
-                settingsFrame.contentWindow.postMessage({
-                    type: 'themeUpdated',
-                    theme: selectedTheme
-                }, '*');
-            }
+            document.documentElement.style.setProperty('--bg-start', selectedTheme.bgStart);
+            document.documentElement.style.setProperty('--bg-end', selectedTheme.bgEnd);
         }
 
         // 设置自动保存定时器
@@ -1317,8 +1444,8 @@
             }
         }
 
-        // 检查作业提醒
-        function checkHomeworkReminders() {
+        // 本地浏览器通知（备用）
+        function checkHomeworkRemindersLocal() {
             if (!appSettings.enableReminder) return;
 
             const homeworkList = getHomeworkList();
@@ -1363,7 +1490,7 @@
             }
 
             // 同时显示toast提示
-            showToast(message, 'info');
+            showToast(title, message);
         }
 
         // 启动时最小化检查
@@ -1400,6 +1527,13 @@
                 saveAppSettings();
             }
         });
+
+        // 给 Python 侧调用：实时下发设置并立即生效
+        window.applySettingsFromBackend = function(settings) {
+            if (!settings || typeof settings !== 'object') return;
+            appSettings = { ...appSettings, ...settings };
+            applySettings();
+        };
 
         // 初始化
         async function init() {

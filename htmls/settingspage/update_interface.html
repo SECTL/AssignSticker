@@ -19,8 +19,9 @@
         }
 
         body {
-            background: #f5f5f5;
-            padding: 20px;
+            background: #11151d;
+            color: #e6ebf8;
+            padding: 16px;
             min-height: 100vh;
         }
 
@@ -29,32 +30,35 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
         }
 
         .settings-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            background: #1a202b;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #2a3343;
             width: 100%;
         }
 
         .card-title {
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: #f1f4fd;
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #2a3343;
         }
 
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             padding: 16px 0;
-            border-bottom: 1px solid #f5f5f5;
+            border-bottom: 1px solid #262f3f;
+            border-radius: 8px;
+            transition: background 0.2s ease, border-color 0.2s ease;
         }
 
         .setting-item:last-child {
@@ -65,96 +69,131 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            min-width: 0;
         }
 
         .setting-label {
             font-size: 14px;
-            color: #333;
+            color: #e8edfa;
             font-weight: 500;
         }
 
         .setting-desc {
             font-size: 12px;
-            color: #999;
+            color: #8e98af;
         }
 
-        /* 按钮样式 */
+        .version-badge {
+            font-size: 13px;
+            color: #dce6ff;
+            background: rgba(78, 141, 255, 0.18);
+            border: 1px solid rgba(78, 141, 255, 0.42);
+            border-radius: 999px;
+            padding: 4px 12px;
+            white-space: nowrap;
+        }
+
         .btn {
-            padding: 8px 16px;
+            padding: 8px 14px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, opacity 0.2s ease;
         }
 
         .btn-primary {
-            background: #667eea;
-            color: white;
+            background: #4e8dff;
+            color: #fff;
         }
 
         .btn-primary:hover {
-            background: #5a6fd6;
+            background: #3d7ef3;
         }
 
         .btn-secondary {
-            background: #f5f5f5;
-            color: #666;
+            background: #232c3c;
+            color: #d8dff2;
+            border: 1px solid #2f3a4d;
         }
 
         .btn-secondary:hover {
-            background: #e8e8e8;
+            background: #2d384b;
         }
 
         .btn:disabled {
-            background: #ccc;
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
-        /* 更新状态 */
         .update-status {
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 16px;
-            font-size: 14px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+            border: 1px solid transparent;
+            white-space: pre-line;
         }
 
         .update-status.success {
-            background: rgba(76, 175, 80, 0.1);
-            color: #2e7d32;
+            background: rgba(57, 197, 115, 0.14);
+            color: #9af0bc;
+            border-color: rgba(57, 197, 115, 0.38);
         }
 
         .update-status.error {
-            background: rgba(244, 67, 54, 0.1);
-            color: #c62828;
+            background: rgba(239, 68, 68, 0.14);
+            color: #ffb2b2;
+            border-color: rgba(239, 68, 68, 0.4);
         }
 
         .update-status.info {
-            background: rgba(33, 150, 243, 0.1);
-            color: #1565c0;
+            background: rgba(78, 141, 255, 0.16);
+            color: #c4d8ff;
+            border-color: rgba(78, 141, 255, 0.38);
+        }
+
+        .search-hidden {
+            display: none !important;
+        }
+
+        .search-match {
+            background: rgba(78, 141, 255, 0.08);
+            border-bottom-color: rgba(78, 141, 255, 0.28);
+        }
+
+        .search-no-results {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            color: #8e98af;
+            font-size: 13px;
+        }
+
+        .search-no-results.show {
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="settings-container">
-        <!-- 软件更新 -->
-        <div class="settings-card">
+        <div class="settings-card search-target" data-search="软件更新 当前版本 检查更新 更新日志 版本 release update changelog">
             <div class="card-title">软件更新</div>
-            <div class="setting-item">
+            <div class="setting-item search-target" data-search="当前版本 版本号 version">
                 <div class="setting-info">
                     <div class="setting-label">当前版本</div>
                     <div class="setting-desc">v1.3.0 (Dangerous Star)</div>
                 </div>
-                <span style="color: #667eea; font-size: 14px;">v1.3.0</span>
+                <span class="version-badge">v1.3.0</span>
             </div>
-            <div class="setting-item">
+            <div class="setting-item search-target" data-search="检查更新 检测新版本 update">
                 <div class="setting-info">
                     <div class="setting-label">检查更新</div>
                     <div class="setting-desc">检查是否有新版本可用</div>
                 </div>
                 <button class="btn btn-primary" onclick="checkUpdate()" id="checkBtn">检查更新</button>
             </div>
-            <div class="setting-item">
+            <div class="setting-item search-target" data-search="更新日志 changelog 版本说明">
                 <div class="setting-info">
                     <div class="setting-label">更新日志</div>
                     <div class="setting-desc">查看最近更新内容</div>
@@ -163,20 +202,19 @@
             </div>
         </div>
 
-        <!-- 更新状态 -->
-        <div class="settings-card" id="updateStatusCard" style="display: none;">
+        <div class="settings-card search-target" id="updateStatusCard" style="display:none;" data-search="更新状态 结果 success error">
             <div class="card-title">更新状态</div>
             <div id="updateStatus" class="update-status info"></div>
         </div>
+
+        <div id="searchNoResults" class="search-no-results">没有匹配到相关更新设置</div>
     </div>
 
     <script>
-        // 页面加载
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('更新页面已加载');
         });
 
-        // 检查更新
         async function checkUpdate() {
             const checkBtn = document.getElementById('checkBtn');
             const updateStatusCard = document.getElementById('updateStatusCard');
@@ -188,14 +226,14 @@
             try {
                 if (window.pywebview && window.pywebview.api) {
                     const result = await window.pywebview.api.checkUpdate();
-                    
+
                     if (result.success) {
                         if (result.isLatest) {
                             updateStatus.className = 'update-status success';
-                            updateStatus.innerHTML = `✓ 当前已是最新版本<br><span style="font-size: 12px;">v${result.latestVersion}</span>`;
+                            updateStatus.textContent = `✓ 当前已是最新版本\nv${result.latestVersion}`;
                         } else {
                             updateStatus.className = 'update-status info';
-                            updateStatus.innerHTML = `新版本可用：v${result.latestVersion}<br><span style="font-size: 12px;">点击下载更新</span>`;
+                            updateStatus.textContent = `新版本可用：v${result.latestVersion}\n点击下载更新`;
                         }
                         updateStatusCard.style.display = 'block';
                     } else {
@@ -218,7 +256,6 @@
             }
         }
 
-        // 显示更新日志
         async function showChangelog() {
             try {
                 if (window.pywebview && window.pywebview.api) {
@@ -235,7 +272,47 @@
             }
         }
 
-        // 禁用右键菜单
+        function applySearch(query) {
+            const q = (query || '').trim().toLowerCase();
+            const card = document.querySelector('.settings-card');
+            const itemNodes = Array.from(card.querySelectorAll('.setting-item'));
+            const statusCard = document.getElementById('updateStatusCard');
+            const noResults = document.getElementById('searchNoResults');
+
+            let visibleItems = 0;
+
+            itemNodes.forEach((item) => {
+                const text = [
+                    item.dataset.search || '',
+                    item.querySelector('.setting-label')?.textContent || '',
+                    item.querySelector('.setting-desc')?.textContent || ''
+                ].join(' ').toLowerCase();
+
+                const matched = !q || text.includes(q);
+                item.classList.toggle('search-hidden', !matched);
+                item.classList.toggle('search-match', Boolean(q && matched));
+                if (matched) visibleItems += 1;
+            });
+
+            const showMainCard = visibleItems > 0;
+            card.classList.toggle('search-hidden', !showMainCard);
+            card.classList.toggle('search-match', Boolean(q && showMainCard));
+
+            if (statusCard.style.display !== 'none') {
+                const statusText = [statusCard.dataset.search || '', document.getElementById('updateStatus')?.textContent || ''].join(' ').toLowerCase();
+                const statusMatched = !q || statusText.includes(q);
+                statusCard.classList.toggle('search-hidden', !statusMatched);
+                statusCard.classList.toggle('search-match', Boolean(q && statusMatched));
+            }
+
+            const hasVisible = Array.from(document.querySelectorAll('.settings-card')).some((node) => {
+                return getComputedStyle(node).display !== 'none' && !node.classList.contains('search-hidden');
+            });
+            noResults.classList.toggle('show', !hasVisible);
+        }
+
+        window.applySearch = applySearch;
+
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;

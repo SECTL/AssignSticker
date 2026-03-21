@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../../font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'CustomFont', sans-serif;
+        }
+
+        body {
+            background: #11151d;
+            color: #e6ebf8;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .settings-container {
+            max-width: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .settings-card {
+            background: #1a202b;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #2a3343;
+            width: 100%;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f4fd;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a3343;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #262f3f;
+            border-radius: 8px;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #e8edfa;
+            font-weight: 500;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: #8e98af;
+        }
+
+        .input-wrap {
+            display: flex;
+            gap: 8px;
+            width: min(520px, 100%);
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 0;
+            padding: 9px 12px;
+            border: 1px solid #2e394c;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #141a24;
+            color: #dce3f7;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4e8dff;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s ease, opacity 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #4e8dff;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #3d7ef3;
+        }
+
+        .btn-secondary {
+            background: #232c3c;
+            color: #d8dff2;
+            border: 1px solid #2f3a4d;
+        }
+
+        .btn-secondary:hover {
+            background: #2d384b;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.18);
+            color: #ffb3b3;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .subject-name {
+            font-size: 14px;
+            color: #e8edfa;
+            font-weight: 500;
+        }
+
+        .subject-count {
+            font-size: 12px;
+            color: #8e98af;
+        }
+
+        .status-text {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #8e98af;
+            min-height: 18px;
+        }
+
+        .status-text.ok {
+            color: #8dd8ac;
+        }
+
+        .status-text.err {
+            color: #ffb3b3;
+        }
+
+        .search-hidden {
+            display: none !important;
+        }
+
+        .search-match {
+            background: rgba(78, 141, 255, 0.08);
+            border-bottom-color: rgba(78, 141, 255, 0.28);
+        }
+
+        .search-no-results {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            color: #8e98af;
+            font-size: 13px;
+        }
+
+        .search-no-results.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <div class="settings-card" data-card="editor">
+            <div class="card-title">学科管理</div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">新增学科</div>
+                    <div class="setting-desc">新增后会立即出现在作业布置窗口的学科下拉框中</div>
+                </div>
+                <div class="input-wrap">
+                    <input id="newSubjectInput" class="input-field" type="text" placeholder="例如：信息技术 / 心理健康教育">
+                    <button class="btn btn-primary" onclick="addSubject()">添加学科</button>
+                </div>
+            </div>
+            <div id="statusText" class="status-text"></div>
+        </div>
+
+        <div class="settings-card" data-card="list">
+            <div class="card-title">已注册学科</div>
+            <div id="subjectCount" class="subject-count"></div>
+            <div id="subjectList"></div>
+        </div>
+
+        <div id="searchNoResults" class="search-no-results">没有匹配到相关学科项</div>
+    </div>
+
+    <script>
+        const DEFAULT_SUBJECTS = [
+            '语文', '数学', '英语', '地理', '科学', '生物', '历史',
+            '政治', '体育', '音乐', '美术', '语言'
+        ];
+
+        let subjects = [];
+        let activeSearchQuery = '';
+
+        function uniqueSubjects(list) {
+            const seen = new Set();
+            const result = [];
+            (list || []).forEach((item) => {
+                const name = String(item || '').trim();
+                const key = name.toLowerCase();
+                if (!name || seen.has(key)) return;
+                seen.add(key);
+                result.push(name);
+            });
+            return result;
+        }
+
+        function setStatus(message, type = '') {
+            const node = document.getElementById('statusText');
+            node.textContent = message || '';
+            node.classList.remove('ok', 'err');
+            if (type) node.classList.add(type);
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function loadSettings() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadSettings();
+                    if (result.success && result.data) {
+                        const loaded = Array.isArray(result.data.subjects) ? result.data.subjects : DEFAULT_SUBJECTS;
+                        subjects = uniqueSubjects(loaded);
+                        renderSubjects();
+                        return;
+                    }
+                }
+                subjects = uniqueSubjects(DEFAULT_SUBJECTS);
+                renderSubjects();
+            } catch (error) {
+                subjects = uniqueSubjects(DEFAULT_SUBJECTS);
+                renderSubjects();
+                setStatus(`读取设置失败：${error.message}`, 'err');
+            }
+        }
+
+        async function saveSubjects() {
+            const payload = { subjects: subjects };
+            if (window.pywebview && window.pywebview.api) {
+                const result = await window.pywebview.api.saveSettings(payload);
+                if (!result.success) {
+                    throw new Error(result.message || '保存失败');
+                }
+            }
+
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'settingsUpdated',
+                    settings: payload
+                }, '*');
+            }
+        }
+
+        function renderSubjects() {
+            const listNode = document.getElementById('subjectList');
+            const countNode = document.getElementById('subjectCount');
+
+            if (!subjects.length) {
+                listNode.innerHTML = '<div class="setting-item"><div class="setting-info"><div class="setting-label">暂无学科</div><div class="setting-desc">请先添加至少一个学科</div></div></div>';
+                countNode.textContent = '共 0 个学科';
+                applySearch(activeSearchQuery);
+                return;
+            }
+
+            listNode.innerHTML = subjects.map((subject, index) => {
+                const safeSubject = escapeHtml(subject);
+                const safeSearch = escapeHtml(subject.toLowerCase());
+                return `
+                    <div class="setting-item subject-row" data-search="${safeSearch}">
+                        <div class="setting-info">
+                            <div class="subject-name">${safeSubject}</div>
+                            <div class="setting-desc">用于作业布置窗口的学科选项</div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-secondary" onclick="editSubject(${index})">修改</button>
+                            <button class="btn btn-danger" onclick="deleteSubject(${index})">删除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            countNode.textContent = `共 ${subjects.length} 个学科`;
+            applySearch(activeSearchQuery);
+        }
+
+        async function addSubject() {
+            const input = document.getElementById('newSubjectInput');
+            const value = input.value.trim();
+            if (!value) {
+                setStatus('请输入学科名称', 'err');
+                return;
+            }
+
+            const exists = subjects.some((item) => item.toLowerCase() === value.toLowerCase());
+            if (exists) {
+                setStatus('该学科已存在', 'err');
+                return;
+            }
+
+            subjects.push(value);
+            subjects = uniqueSubjects(subjects);
+            try {
+                await saveSubjects();
+                renderSubjects();
+                input.value = '';
+                setStatus('学科已添加并保存', 'ok');
+            } catch (error) {
+                setStatus(`保存失败：${error.message}`, 'err');
+            }
+        }
+
+        async function editSubject(index) {
+            const oldName = subjects[index];
+            const newName = prompt('请输入新的学科名称', oldName);
+            if (newName === null) return;
+
+            const value = newName.trim();
+            if (!value) {
+                setStatus('学科名称不能为空', 'err');
+                return;
+            }
+
+            const exists = subjects.some((item, i) => i !== index && item.toLowerCase() === value.toLowerCase());
+            if (exists) {
+                setStatus('该学科已存在', 'err');
+                return;
+            }
+
+            subjects[index] = value;
+            subjects = uniqueSubjects(subjects);
+            try {
+                await saveSubjects();
+                renderSubjects();
+                setStatus('学科已修改并保存', 'ok');
+            } catch (error) {
+                setStatus(`保存失败：${error.message}`, 'err');
+            }
+        }
+
+        async function deleteSubject(index) {
+            if (subjects.length <= 1) {
+                setStatus('至少保留一个学科', 'err');
+                return;
+            }
+
+            const target = subjects[index];
+            if (!confirm(`确定删除学科「${target}」吗？`)) return;
+
+            subjects.splice(index, 1);
+            try {
+                await saveSubjects();
+                renderSubjects();
+                setStatus('学科已删除并保存', 'ok');
+            } catch (error) {
+                setStatus(`保存失败：${error.message}`, 'err');
+            }
+        }
+
+        function applySearch(query) {
+            activeSearchQuery = (query || '').trim().toLowerCase();
+            const rows = Array.from(document.querySelectorAll('.subject-row'));
+            const noResults = document.getElementById('searchNoResults');
+
+            let visible = 0;
+            rows.forEach((row) => {
+                const text = [row.dataset.search || '', row.textContent || ''].join(' ').toLowerCase();
+                const matched = !activeSearchQuery || text.includes(activeSearchQuery);
+                row.classList.toggle('search-hidden', !matched);
+                row.classList.toggle('search-match', Boolean(activeSearchQuery && matched));
+                if (matched) visible += 1;
+            });
+
+            const editorCard = document.querySelector('[data-card="editor"]');
+            const listCard = document.querySelector('[data-card="list"]');
+            editorCard.classList.toggle('search-hidden', false);
+            listCard.classList.toggle('search-hidden', rows.length > 0 && visible === 0);
+            noResults.classList.toggle('show', rows.length > 0 && visible === 0);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            const input = document.getElementById('newSubjectInput');
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSubject();
+                }
+            });
+        });
+
+        window.applySearch = applySearch;
+
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>

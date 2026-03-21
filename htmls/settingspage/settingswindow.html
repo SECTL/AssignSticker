@@ -23,238 +23,479 @@
         }
 
         :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --accent-color: #f093fb;
+            --accent: #4e8dff;
+            --bg: #0f1117;
+            --sidebar: #0b0d12;
+            --panel: #151922;
+            --panel-soft: #1a202b;
+            --line: #262d3a;
+            --text-main: #eaf0ff;
+            --text-sub: #8b96ad;
+            --hover: #1e2633;
         }
 
-        body {
-            background: #f5f5f5;
-            display: flex;
-            height: 100vh;
+        html, body {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
         }
 
-        /* 侧边导航栏 */
+        body {
+            background: radial-gradient(900px 420px at 12% -8%, rgba(78, 141, 255, 0.16), transparent 60%), var(--bg);
+            color: var(--text-main);
+            display: flex;
+        }
+
         .sidebar {
-            width: 200px;
-            min-width: 180px;
-            max-width: 280px;
-            background: white;
-            border-right: 1px solid #e0e0e0;
+            width: 280px;
+            min-width: 260px;
+            max-width: 320px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
-            padding: 20px 0;
-            flex-shrink: 0;
+            padding: 14px;
+            gap: 10px;
         }
 
         .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 6px;
         }
 
         .sidebar-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
         }
 
-        .sidebar-subtitle {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
+        .sidebar-toggle-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #273042;
+            border-radius: 8px;
+            background: #131826;
+            color: #d8e1f6;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: #1c2432;
+            border-color: #34445f;
+            transform: translateX(-1px);
+        }
+
+        .search-box {
+            background: #131826;
+            border: 1px solid #20283a;
+            border-radius: 14px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            margin: 4px 0 8px;
+        }
+
+        .search-box img {
+            width: 16px;
+            height: 16px;
+            opacity: 0.78;
+            filter: brightness(0) invert(1);
+        }
+
+        .search-box input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: #7d889f;
         }
 
         .nav-list {
             flex: 1;
             overflow-y: auto;
-            padding: 10px 0;
+            padding-right: 2px;
         }
 
         .nav-item {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 16px;
-            margin: 4px 12px;
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            border-radius: 8px;
+            transition: background 0.2s ease, transform 0.2s ease;
+            text-align: left;
         }
 
         .nav-item:hover {
-            background: #f5f5f5;
+            background: var(--hover);
+            transform: translateX(2px);
         }
 
         .nav-item.active {
-            background: var(--primary-color);
+            background: rgba(78, 141, 255, 0.2);
+            border: 1px solid rgba(78, 141, 255, 0.45);
+        }
+
+        .nav-item.hidden {
+            display: none;
+        }
+
+        .nav-item.with-divider {
+            margin-bottom: 12px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #262d3a;
         }
 
         .nav-item img {
-            width: 20px;
-            height: 20px;
-            opacity: 0.6;
-        }
-
-        .nav-item.active img {
-            opacity: 1;
+            width: 18px;
+            height: 18px;
+            opacity: 0.85;
             filter: brightness(0) invert(1);
         }
 
         .nav-item span {
-            font-size: 14px;
-            color: #555;
-        }
-
-        .nav-item.active span {
-            color: white;
+            font-size: 15px;
+            color: #d6ddf2;
             font-weight: 500;
         }
 
-        /* 主内容区域 */
+        .nav-item.active span {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            min-width: 0;
+            background: linear-gradient(180deg, rgba(21, 25, 34, 0.92) 0%, rgba(17, 21, 29, 0.92) 100%);
         }
 
         .content-header {
-            background: white;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e0e0e0;
+            height: 64px;
+            border-bottom: 1px solid var(--line);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
+            justify-content: space-between;
+            padding: 0 18px;
+            background: rgba(19, 23, 32, 0.9);
         }
 
         .content-title {
             font-size: 18px;
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-hint {
+            color: var(--text-sub);
+            font-size: 12px;
         }
 
         .close-btn {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border: none;
+            border-radius: 10px;
             background: transparent;
-            border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
         }
 
         .close-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: #2a3140;
         }
 
         .close-btn img {
             width: 16px;
             height: 16px;
-            opacity: 0.6;
+            opacity: 0.9;
+            filter: brightness(0) invert(1);
         }
 
         .content-body {
             flex: 1;
-            overflow-y: auto;
-            display: flex;
-        }
-
-        .content-body iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+            position: relative;
+            padding: 10px;
         }
 
         .settings-iframe {
             width: 100%;
             height: 100%;
             border: none;
-            background: transparent;
+            border-radius: 14px;
+            background: #11151d;
+        }
+
+        .loading-indicator {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 12px;
+            color: var(--text-sub);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .content-body.loading .loading-indicator {
+            opacity: 1;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: 76px;
+            min-width: 76px;
+            max-width: 76px;
+            padding: 14px 10px;
+        }
+
+        body.sidebar-collapsed .sidebar-title,
+        body.sidebar-collapsed .search-box,
+        body.sidebar-collapsed .nav-item span {
+            display: none;
+        }
+
+        body.sidebar-collapsed .sidebar-header {
+            justify-content: center;
+            padding: 4px 0;
+        }
+
+        body.sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 10px;
+        }
+
+        body.sidebar-collapsed .sidebar-toggle-btn {
+            transform: rotate(180deg);
         }
     </style>
 </head>
 <body>
-    <!-- 侧边导航栏 -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">设置</div>
+            <div class="sidebar-title">设置中心</div>
+            <button id="sidebarToggleBtn" class="sidebar-toggle-btn" title="收缩导航栏">‹</button>
         </div>
+
+        <div class="search-box">
+            <img src="../../icons/icons/search.svg" alt="搜索">
+            <input id="settingsSearch" type="text" placeholder="搜索设置...">
+        </div>
+
         <div class="nav-list">
-            <div class="nav-item active" onclick="switchTab(this, 'mainset')">
+            <button class="nav-item active" data-tab="mainset" onclick="switchTab('mainset')">
                 <img src="../../icons/icons/settings/home.svg" alt="主要设置">
                 <span>主要设置</span>
-            </div>
-            <div class="nav-item" onclick="switchTab(this, 'styleset')">
+            </button>
+            <button class="nav-item" data-tab="styleset" onclick="switchTab('styleset')">
                 <img src="../../icons/icons/settings/style.svg" alt="外观设置">
                 <span>外观设置</span>
-            </div>
-            <div class="nav-item" onclick="switchTab(this, 'update')">
+            </button>
+            <button class="nav-item" data-tab="templateset" onclick="switchTab('templateset')">
+                <img src="../../icons/icons/settings/Template.svg" alt="作业模板">
+                <span>作业模板</span>
+            </button>
+            <button class="nav-item with-divider" data-tab="subjectset" onclick="switchTab('subjectset')">
+                <img src="../../icons/icons/settings/subject.svg" alt="学科管理">
+                <span>学科管理</span>
+            </button>
+            <button class="nav-item" data-tab="update" onclick="switchTab('update')">
                 <img src="../../icons/icons/settings/update.svg" alt="软件更新">
                 <span>软件更新</span>
-            </div>
-            <div class="nav-item" onclick="switchTab(this, 'about')">
+            </button>
+            <button class="nav-item" data-tab="about" onclick="switchTab('about')">
                 <img src="../../icons/icons/settings/about.svg" alt="关于">
                 <span>关于</span>
-            </div>
+            </button>
         </div>
     </div>
 
-    <!-- 主内容区域 -->
     <div class="main-content">
         <div class="content-header">
             <div class="content-title" id="pageTitle">主要设置</div>
-            <button class="close-btn" onclick="closeSettings()" title="关闭">
-                <img src="../../icons/icons/minimize.svg" alt="关闭">
-            </button>
+            <div class="header-actions">
+                <span class="search-hint" id="searchHint"></span>
+                <button class="close-btn" onclick="closeSettings()" title="关闭">
+                    <img src="../../icons/icons/exit.svg" alt="关闭">
+                </button>
+            </div>
         </div>
-        <div class="content-body">
+
+        <div class="content-body" id="contentBody">
+            <div class="loading-indicator">页面加载中...</div>
             <iframe class="settings-iframe" id="contentFrame" src="mainset_interface.html"></iframe>
         </div>
     </div>
 
     <script>
-        // 切换标签页
-        function switchTab(element, tabName) {
-            // 移除所有active状态
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // 添加active状态到当前项
-            element.classList.add('active');
-            
-            // 更新页面标题
-            const titles = {
-                'mainset': '主要设置',
-                'styleset': '外观设置',
-                'update': '软件更新',
-                'about': '关于'
-            };
-            document.getElementById('pageTitle').textContent = titles[tabName] || '设置';
-            
-            // 切换iframe内容
-            const frameSrc = {
-                'mainset': 'mainset_interface.html',
-                'styleset': 'styleset_interface.html',
-                'update': 'update_interface.html',
-                'about': 'about_interface.html'
-            };
-            document.getElementById('contentFrame').src = frameSrc[tabName] || 'mainset_interface.html';
+        const TAB_STORAGE_KEY = 'assignsticker.settings.lastTab';
+        const SIDEBAR_COLLAPSED_KEY = 'assignsticker.settings.sidebarCollapsed';
+        const TABS = {
+            mainset: {
+                title: '主要设置',
+                src: 'mainset_interface.html',
+                keywords: ['主要', '启动', '提醒', '自动保存', '导入', '导出', '数据', 'start', 'reminder']
+            },
+            styleset: {
+                title: '外观设置',
+                src: 'styleset_interface.html',
+                keywords: ['外观', '主题', '字体', '缩放', '透明', '动画', 'toolbar', 'theme', 'style']
+            },
+            templateset: {
+                title: '作业模板',
+                src: 'templateset_interface.html',
+                keywords: ['模板', '作业模板', '字段', 'ui', 'yaml', 'yml', 'template']
+            },
+            subjectset: {
+                title: '学科管理',
+                src: 'subjectset_interface.html',
+                keywords: ['学科', '课程', '科目', '管理', '添加', '删除', '编辑', 'subject']
+            },
+            update: {
+                title: '软件更新',
+                src: 'update_interface.html',
+                keywords: ['更新', '版本', '日志', 'release', 'update']
+            },
+            about: {
+                title: '关于',
+                src: 'about_interface.html',
+                keywords: ['关于', '作者', '说明', 'github', 'about']
+            }
+        };
+
+        let activeTab = 'mainset';
+        const contentFrame = document.getElementById('contentFrame');
+        const contentBody = document.getElementById('contentBody');
+        const searchInput = document.getElementById('settingsSearch');
+        const searchHint = document.getElementById('searchHint');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+        function markLoading(loading) {
+            contentBody.classList.toggle('loading', loading);
         }
+
+        function switchTab(tabName) {
+            const tab = TABS[tabName] ? tabName : 'mainset';
+            activeTab = tab;
+
+            document.querySelectorAll('.nav-item').forEach((item) => {
+                item.classList.toggle('active', item.dataset.tab === tab);
+            });
+
+            document.getElementById('pageTitle').textContent = TABS[tab].title;
+            localStorage.setItem(TAB_STORAGE_KEY, tab);
+            window.location.hash = tab;
+
+            if (!contentFrame.src.includes(TABS[tab].src)) {
+                markLoading(true);
+                contentFrame.src = TABS[tab].src;
+            } else {
+                applySearchToFrame(searchInput.value.trim());
+            }
+        }
+
+        function applySearchToFrame(query) {
+            if (contentFrame.contentWindow && typeof contentFrame.contentWindow.applySearch === 'function') {
+                contentFrame.contentWindow.applySearch(query);
+            }
+            searchHint.textContent = query ? `搜索：${query}` : '';
+        }
+
+        function applyTabFilter(query) {
+            const q = query.toLowerCase();
+            let firstVisible = null;
+
+            document.querySelectorAll('.nav-item').forEach((item) => {
+                const tab = item.dataset.tab;
+                const info = TABS[tab];
+                const text = `${info.title} ${info.keywords.join(' ')}`.toLowerCase();
+                const matched = !q || text.includes(q);
+                item.classList.toggle('hidden', !matched);
+                if (matched && !firstVisible) firstVisible = tab;
+            });
+
+            if (query && firstVisible && !document.querySelector(`.nav-item[data-tab="${activeTab}"]`)?.classList.contains('hidden')) {
+                return;
+            }
+
+            if (firstVisible) {
+                switchTab(firstVisible);
+            }
+        }
+
+        function handleSearchInput() {
+            const query = searchInput.value.trim();
+            applyTabFilter(query);
+            applySearchToFrame(query);
+        }
+
+        function setSidebarCollapsed(collapsed) {
+            document.body.classList.toggle('sidebar-collapsed', collapsed);
+            sidebarToggleBtn.title = collapsed ? '展开导航栏' : '收缩导航栏';
+            localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+        }
+
+        function toggleSidebar() {
+            const collapsed = !document.body.classList.contains('sidebar-collapsed');
+            setSidebarCollapsed(collapsed);
+        }
+
+        function initSidebarState() {
+            const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+            setSidebarCollapsed(collapsed);
+        }
+
+        function initTab() {
+            const hashTab = (window.location.hash || '').replace('#', '').trim();
+            const storedTab = localStorage.getItem(TAB_STORAGE_KEY);
+            const initialTab = TABS[hashTab] ? hashTab : (TABS[storedTab] ? storedTab : 'mainset');
+            switchTab(initialTab);
+        }
+
+        contentFrame.addEventListener('load', () => {
+            markLoading(false);
+            applySearchToFrame(searchInput.value.trim());
+        });
+
+        searchInput.addEventListener('input', handleSearchInput);
+        sidebarToggleBtn.addEventListener('click', toggleSidebar);
 
         // 关闭设置窗口
         function closeSettings() {
-            // 如果是独立窗口，直接关闭
             if (window.pywebview) {
                 window.close();
             } else if (window.parent && window.parent.closeSettingsModal) {
-                // 兼容旧的弹窗模式
                 window.parent.closeSettingsModal();
             }
         }
@@ -269,24 +510,35 @@
                     document.documentElement.style.setProperty('--accent-color', theme.accent);
                 }
             }
-            
-            // 监听缩放更新消息
+
             if (event.data && event.data.type === 'zoomUpdated') {
                 const zoom = event.data.zoom;
-                if (zoom) {
-                    // 通知主窗口更新缩放
-                    if (window.pywebview && window.pywebview.api) {
-                        window.pywebview.api.setZoom(zoom);
-                    }
+                if (zoom && window.pywebview && window.pywebview.api) {
+                    window.pywebview.api.setZoom(zoom);
                 }
             }
         });
 
-        // 禁用右键菜单
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSettings();
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        });
+
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;
         });
+
+        initSidebarState();
+        initTab();
     </script>
 </body>
 </html>

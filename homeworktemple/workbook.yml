@@ -1,0 +1,5 @@
+name: 练习册
+body:
+  开始页: spinbox
+  结束页: spinbox
+  备注: rtftextbox

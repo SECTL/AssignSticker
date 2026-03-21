@@ -119,8 +119,7 @@
         .form-group select,
         .form-group input[type="text"],
         .form-group input[type="number"],
-        .form-group input[type="datetime-local"],
-        .form-group textarea {
+        .form-group input[type="datetime-local"] {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -145,6 +144,66 @@
         .form-group textarea {
             resize: vertical;
             min-height: 80px;
+        }
+
+        .rich-editor-wrapper {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fc;
+        }
+
+        .editor-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #d9dce6;
+            border-radius: 6px;
+            background: #fff;
+            color: #333;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .editor-btn:hover {
+            background: #eef3ff;
+            border-color: #b5c6f3;
+        }
+
+        .editor-btn[data-command="underline"] {
+            text-decoration: underline;
+        }
+
+        .editor-btn[data-command="strikeThrough"] {
+            text-decoration: line-through;
+        }
+
+        .rich-editor {
+            width: 100%;
+            min-height: 96px;
+            max-height: 220px;
+            padding: 10px 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #222;
+            outline: none;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .rich-editor:empty::before {
+            content: attr(data-placeholder);
+            color: #999;
+            pointer-events: none;
         }
 
         .tags-container {
@@ -282,29 +341,14 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>学科</label>
-                    <select id="subjectSelect">
-                        <option value="">请选择学科</option>
-                        <option value="语文">语文</option>
-                        <option value="数学">数学</option>
-                        <option value="英语">英语</option>
-                        <option value="地理">地理</option>
-                        <option value="科学">科学</option>
-                        <option value="生物">生物</option>
-                        <option value="历史">历史</option>
-                        <option value="政治">政治</option>
-                        <option value="体育">体育</option>
-                        <option value="音乐">音乐</option>
-                        <option value="美术">美术</option>
-                        <option value="语言">语言</option>
-                    </select>
+                    <select id="subjectSelect"></select>
                 </div>
                 <div class="form-group">
-                    <label>作业类型</label>
+                    <label>作业模板</label>
                     <select id="homeworkTypeSelect" onchange="toggleHomeworkType()">
-                        <option value="">请选择类型</option>
                         <option value="练习册">练习册</option>
                         <option value="预习">预习</option>
-                        <option value="作业">作业</option>
+                        <option value="自定义作业" selected>自定义作业</option>
                     </select>
                 </div>
             </div>
@@ -314,31 +358,8 @@
                 <input type="datetime-local" id="endTimeInput">
             </div>
 
-            <div class="homework-type-section" id="workbookSection" style="display: none;">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>开始页</label>
-                        <input type="number" id="startPage" placeholder="页码">
-                    </div>
-                    <div class="form-group">
-                        <label>结束页</label>
-                        <input type="number" id="endPage" placeholder="页码">
-                    </div>
-                </div>
-            </div>
-
-            <div class="homework-type-section" id="previewSection" style="display: none;">
-                <div class="form-group">
-                    <label>预习内容</label>
-                    <input type="text" id="previewContent" placeholder="请输入要预习的内容">
-                </div>
-            </div>
-
-            <div class="homework-type-section" id="homeworkSection" style="display: none;">
-                <div class="form-group">
-                    <label>作业内容</label>
-                    <textarea id="homeworkContent" rows="4" placeholder="请输入作业内容"></textarea>
-                </div>
+            <div class="homework-type-section" id="templateBodySection">
+                <div id="templateFieldsContainer"></div>
             </div>
 
             <div class="form-group">
@@ -367,11 +388,417 @@
     </div>
 
     <script>
+        const DEFAULT_SUBJECTS = [
+            '语文', '数学', '英语', '地理', '科学', '生物', '历史',
+            '政治', '体育', '音乐', '美术', '语言'
+        ];
+        const DEFAULT_TEMPLATES = [
+            {
+                name: '练习册',
+                body: { '开始页': 'spinbox', '结束页': 'spinbox', '备注': 'rtftextbox' }
+            },
+            {
+                name: '预习',
+                body: { '预习内容': 'rtftextbox' }
+            },
+            {
+                name: '自定义作业',
+                body: { '作业内容': 'rtftextbox' }
+            }
+        ];
+        const ALLOWED_RICH_TAGS = new Set(['B', 'STRONG', 'U', 'S', 'STRIKE', 'DEL', 'BR', 'DIV', 'P']);
+        let availableSubjects = [...DEFAULT_SUBJECTS];
+        let availableTemplates = [...DEFAULT_TEMPLATES];
+        let subjectsLoaded = false;
+        let templatesLoaded = false;
+
+        function escapeHtml(text) {
+            return (text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function sanitizeRichText(input) {
+            const source = input || '';
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div>${source}</div>`, 'text/html');
+            const root = doc.body.firstElementChild;
+
+            function walk(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return escapeHtml(node.textContent || '');
+                }
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    return '';
+                }
+
+                const tag = node.tagName.toUpperCase();
+                const children = Array.from(node.childNodes).map(walk).join('');
+
+                if (tag === 'BR') return '<br>';
+                if (!ALLOWED_RICH_TAGS.has(tag)) return children;
+                if (tag === 'STRIKE' || tag === 'DEL') return `<s>${children}</s>`;
+                if (tag === 'DIV' || tag === 'P') return `${children}<br>`;
+                if (tag === 'B') return `<strong>${children}</strong>`;
+                return `<${tag.toLowerCase()}>${children}</${tag.toLowerCase()}>`;
+            }
+
+            return Array.from(root.childNodes)
+                .map(walk)
+                .join('')
+                .replace(/(<br>\s*){3,}/g, '<br><br>')
+                .replace(/^(<br>\s*)+|(<br>\s*)+$/g, '');
+        }
+
+        function toRichHtml(textOrHtml) {
+            const source = textOrHtml || '';
+            if (!source) return '';
+            if (/<[a-z][\s\S]*>/i.test(source)) {
+                return sanitizeRichText(source);
+            }
+            return escapeHtml(source).replace(/\n/g, '<br>');
+        }
+
+        function getRichEditorValue(editorId) {
+            const editor = document.getElementById(editorId);
+            return sanitizeRichText(editor.innerHTML);
+        }
+
+        function setRichEditorValue(editorId, value) {
+            const editor = document.getElementById(editorId);
+            editor.innerHTML = toRichHtml(value);
+        }
+
+        function richHtmlToPlainText(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html || '';
+            return (div.textContent || '').trim();
+        }
+
+        function execEditorCommand(editorId, command) {
+            const editor = document.getElementById(editorId);
+            editor.focus();
+            document.execCommand(command, false, null);
+        }
+
+        function normalizeSubjects(list) {
+            const seen = new Set();
+            const result = [];
+            (list || []).forEach((item) => {
+                const name = String(item || '').trim();
+                const key = name.toLowerCase();
+                if (!name || seen.has(key)) return;
+                seen.add(key);
+                result.push(name);
+            });
+            return result;
+        }
+
+        function renderSubjectOptions(selected = '') {
+            const select = document.getElementById('subjectSelect');
+            select.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = '请选择学科';
+            select.appendChild(placeholder);
+
+            availableSubjects.forEach((subject) => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                select.appendChild(option);
+            });
+
+            if (selected) {
+                const exists = availableSubjects.some((subject) => subject === selected);
+                if (!exists) {
+                    const customOption = document.createElement('option');
+                    customOption.value = selected;
+                    customOption.textContent = `${selected}（已不在学科列表）`;
+                    select.appendChild(customOption);
+                }
+                select.value = selected;
+            } else {
+                select.value = '';
+            }
+        }
+
+        async function loadSubjects(selected = '', force = false) {
+            if (subjectsLoaded && !force) {
+                renderSubjectOptions(selected);
+                return;
+            }
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadSettings();
+                    if (result.success && result.data && Array.isArray(result.data.subjects)) {
+                        availableSubjects = normalizeSubjects(result.data.subjects);
+                        if (!availableSubjects.length) {
+                            availableSubjects = [...DEFAULT_SUBJECTS];
+                        }
+                    } else {
+                        availableSubjects = [...DEFAULT_SUBJECTS];
+                    }
+                } else {
+                    availableSubjects = [...DEFAULT_SUBJECTS];
+                }
+            } catch (error) {
+                availableSubjects = [...DEFAULT_SUBJECTS];
+            }
+            subjectsLoaded = true;
+            renderSubjectOptions(selected);
+        }
+
+        function normalizeTemplates(list) {
+            const result = [];
+            const seen = new Set();
+            (list || []).forEach((tpl) => {
+                const name = String(tpl?.name || '').trim();
+                const body = tpl?.body && typeof tpl.body === 'object' ? tpl.body : {};
+                if (!name || seen.has(name.toLowerCase())) return;
+                const normalizedBody = {};
+                Object.entries(body).forEach(([field, ui]) => {
+                    const fieldName = String(field || '').trim();
+                    const uiName = String(ui || '').trim().toLowerCase();
+                    if (!fieldName) return;
+                    if (!['combobox', 'textbox', 'spinbox', 'rtftextbox'].includes(uiName)) return;
+                    normalizedBody[fieldName] = uiName;
+                });
+                if (Object.keys(normalizedBody).length === 0) return;
+                seen.add(name.toLowerCase());
+                result.push({ name, body: normalizedBody });
+            });
+            return result;
+        }
+
+        function getSelectedTemplate() {
+            const selectedName = document.getElementById('homeworkTypeSelect').value;
+            return availableTemplates.find((tpl) => tpl.name === selectedName) || null;
+        }
+
+        function renderTemplateOptions(selected = '') {
+            const select = document.getElementById('homeworkTypeSelect');
+            select.innerHTML = '';
+            availableTemplates.forEach((tpl) => {
+                const option = document.createElement('option');
+                option.value = tpl.name;
+                option.textContent = tpl.name;
+                select.appendChild(option);
+            });
+            if (selected) {
+                const exists = availableTemplates.some((tpl) => tpl.name === selected);
+                if (!exists) {
+                    const missing = document.createElement('option');
+                    missing.value = selected;
+                    missing.textContent = `${selected}（模板缺失）`;
+                    select.appendChild(missing);
+                }
+                select.value = selected;
+            } else if (availableTemplates.length > 0) {
+                select.value = availableTemplates[0].name;
+            }
+            renderTemplateFields();
+        }
+
+        async function loadHomeworkTemplates(selected = '', force = false) {
+            if (templatesLoaded && !force) {
+                renderTemplateOptions(selected);
+                return;
+            }
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.loadHomeworkTemplates();
+                    if (result.success && Array.isArray(result.data)) {
+                        availableTemplates = normalizeTemplates(result.data);
+                    }
+                }
+            } catch (error) {
+                availableTemplates = [];
+            }
+            if (!availableTemplates.length) {
+                availableTemplates = [...DEFAULT_TEMPLATES];
+            }
+            templatesLoaded = true;
+            renderTemplateOptions(selected);
+        }
+
+        function ensureRuntimeTemplate(templateName, bodyData) {
+            const name = String(templateName || '').trim();
+            if (!name || !bodyData || typeof bodyData !== 'object') return;
+            if (availableTemplates.some((tpl) => tpl.name === name)) return;
+            const body = {};
+            Object.entries(bodyData).forEach(([field, info]) => {
+                const fieldName = String(field || '').trim();
+                const ui = String(info?.ui || '').toLowerCase();
+                if (!fieldName) return;
+                if (!['combobox', 'textbox', 'spinbox', 'rtftextbox'].includes(ui)) return;
+                body[fieldName] = ui;
+            });
+            if (Object.keys(body).length > 0) {
+                availableTemplates.push({ name, body });
+            }
+        }
+
+        function renderTemplateFields(existingData = null) {
+            const container = document.getElementById('templateFieldsContainer');
+            const template = getSelectedTemplate();
+            container.innerHTML = '';
+
+            if (!template) {
+                return;
+            }
+
+            Object.entries(template.body).forEach(([fieldLabel, uiType]) => {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                group.dataset.field = fieldLabel;
+                group.dataset.ui = uiType;
+
+                const label = document.createElement('label');
+                label.textContent = fieldLabel;
+                group.appendChild(label);
+
+                if (uiType === 'rtftextbox') {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'rich-editor-wrapper';
+
+                    const toolbar = document.createElement('div');
+                    toolbar.className = 'editor-toolbar';
+                    toolbar.innerHTML = `
+                        <button type="button" class="editor-btn" data-command="bold" title="粗体">B</button>
+                        <button type="button" class="editor-btn" data-command="underline" title="下划线">U</button>
+                        <button type="button" class="editor-btn" data-command="strikeThrough" title="删除线">S</button>
+                    `;
+                    wrapper.appendChild(toolbar);
+
+                    const editor = document.createElement('div');
+                    editor.className = 'rich-editor';
+                    editor.contentEditable = 'true';
+                    editor.dataset.placeholder = `请输入${fieldLabel}`;
+                    editor.dataset.field = fieldLabel;
+                    editor.dataset.ui = uiType;
+                    if (existingData && existingData[fieldLabel] && existingData[fieldLabel].html) {
+                        editor.innerHTML = toRichHtml(existingData[fieldLabel].html);
+                    } else if (existingData && existingData[fieldLabel] && existingData[fieldLabel].value) {
+                        editor.innerHTML = toRichHtml(existingData[fieldLabel].value);
+                    }
+                    wrapper.appendChild(editor);
+                    group.appendChild(wrapper);
+                } else if (uiType === 'spinbox') {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.className = 'input-field';
+                    input.dataset.field = fieldLabel;
+                    input.dataset.ui = uiType;
+                    input.placeholder = `请输入${fieldLabel}`;
+                    input.value = existingData && existingData[fieldLabel] ? (existingData[fieldLabel].value || '') : '';
+                    group.appendChild(input);
+                } else if (uiType === 'combobox') {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'input-field';
+                    input.dataset.field = fieldLabel;
+                    input.dataset.ui = uiType;
+                    input.placeholder = `请输入${fieldLabel}`;
+                    input.value = existingData && existingData[fieldLabel] ? (existingData[fieldLabel].value || '') : '';
+                    group.appendChild(input);
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'input-field';
+                    input.dataset.field = fieldLabel;
+                    input.dataset.ui = uiType;
+                    input.placeholder = `请输入${fieldLabel}`;
+                    input.value = existingData && existingData[fieldLabel] ? (existingData[fieldLabel].value || '') : '';
+                    group.appendChild(input);
+                }
+
+                container.appendChild(group);
+            });
+
+            container.querySelectorAll('.editor-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const editor = btn.closest('.rich-editor-wrapper')?.querySelector('.rich-editor');
+                    if (!editor) return;
+                    editor.focus();
+                    document.execCommand(btn.dataset.command, false, null);
+                });
+            });
+        }
+
+        function collectTemplateBodyData() {
+            const data = {};
+
+            document.querySelectorAll('#templateFieldsContainer [data-field]').forEach((node) => {
+                const field = node.dataset.field;
+                const ui = node.dataset.ui;
+                if (!field || !ui) return;
+                if (node.classList.contains('rich-editor')) {
+                    const html = sanitizeRichText(node.innerHTML);
+                    const text = richHtmlToPlainText(html);
+                    data[field] = { ui, value: text, html };
+                } else if (node.tagName === 'INPUT') {
+                    data[field] = { ui, value: (node.value || '').trim() };
+                }
+            });
+
+            return data;
+        }
+
+        function fillLegacyFieldsForCompatibility(homeworkData, templateName, templateBodyData) {
+            if (templateName === '练习册') {
+                homeworkData.startPage = templateBodyData['开始页']?.value || '';
+                homeworkData.endPage = templateBodyData['结束页']?.value || '';
+                homeworkData.workbookNote = templateBodyData['备注']?.value || '';
+                homeworkData.workbookNoteHtml = templateBodyData['备注']?.html || '';
+            } else if (templateName === '预习') {
+                homeworkData.previewContent = templateBodyData['预习内容']?.value || '';
+                homeworkData.previewContentHtml = templateBodyData['预习内容']?.html || '';
+            } else if (templateName === '自定义作业') {
+                const key = Object.keys(templateBodyData)[0];
+                homeworkData.homeworkContent = key ? (templateBodyData[key]?.value || '') : '';
+                homeworkData.homeworkContentHtml = key ? (templateBodyData[key]?.html || '') : '';
+            }
+        }
+
+        function buildTemplateBodyDataFromLegacy(homework, templateName) {
+            const data = {};
+            if (templateName === '练习册') {
+                data['开始页'] = { ui: 'spinbox', value: homework.startPage || '' };
+                data['结束页'] = { ui: 'spinbox', value: homework.endPage || '' };
+                data['备注'] = {
+                    ui: 'rtftextbox',
+                    value: homework.workbookNote || '',
+                    html: homework.workbookNoteHtml || ''
+                };
+            } else if (templateName === '预习') {
+                data['预习内容'] = {
+                    ui: 'rtftextbox',
+                    value: homework.previewContent || '',
+                    html: homework.previewContentHtml || ''
+                };
+            } else if (templateName === '自定义作业' || templateName === '作业') {
+                data['作业内容'] = {
+                    ui: 'rtftextbox',
+                    value: homework.homeworkContent || '',
+                    html: homework.homeworkContentHtml || ''
+                };
+            }
+            return data;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset());
             document.getElementById('endTimeInput').value = tomorrow.toISOString().slice(0, 16);
+            renderSubjectOptions('');
+            loadSubjects('');
+            loadHomeworkTemplates('');
         });
 
         function closeModal() {
@@ -381,10 +808,7 @@
         }
 
         function toggleHomeworkType() {
-            const type = document.getElementById('homeworkTypeSelect').value;
-            document.getElementById('workbookSection').style.display = type === '练习册' ? 'block' : 'none';
-            document.getElementById('previewSection').style.display = type === '预习' ? 'block' : 'none';
-            document.getElementById('homeworkSection').style.display = type === '作业' ? 'block' : 'none';
+            renderTemplateFields();
         }
 
         function addCustomTag() {
@@ -434,14 +858,13 @@
                 }
             });
 
-            if (type === '练习册') {
-                homeworkData.startPage = document.getElementById('startPage').value;
-                homeworkData.endPage = document.getElementById('endPage').value;
-            } else if (type === '预习') {
-                homeworkData.previewContent = document.getElementById('previewContent').value;
-            } else if (type === '作业') {
-                homeworkData.homeworkContent = document.getElementById('homeworkContent').value;
-            }
+            const templateBodyData = collectTemplateBodyData();
+            homeworkData.templateBodyData = templateBodyData;
+            fillLegacyFieldsForCompatibility(homeworkData, type, templateBodyData);
+            homeworkData.content = Object.entries(templateBodyData)
+                .map(([label, info]) => `${label}: ${info?.value || ''}`.trim())
+                .filter(Boolean)
+                .join('；');
 
             console.log('保存作业:', homeworkData);
 
@@ -458,22 +881,18 @@
             editingId = homework.id;
             document.getElementById('modalTitle').textContent = '编辑作业';
             
-            document.getElementById('subjectSelect').value = homework.subject;
-            document.getElementById('homeworkTypeSelect').value = homework.type;
+            loadSubjects(homework.subject || '');
+            const homeworkType = homework.type || '自定义作业';
             document.getElementById('endTimeInput').value = homework.endTime;
             
-            // 显示对应类型的输入区域
-            toggleHomeworkType();
-            
-            // 填充类型特定的数据
-            if (homework.type === '练习册') {
-                document.getElementById('startPage').value = homework.startPage || '';
-                document.getElementById('endPage').value = homework.endPage || '';
-            } else if (homework.type === '预习') {
-                document.getElementById('previewContent').value = homework.previewContent || '';
-            } else if (homework.type === '作业') {
-                document.getElementById('homeworkContent').value = homework.homeworkContent || '';
-            }
+            const bodyData = homework.templateBodyData && typeof homework.templateBodyData === 'object'
+                ? homework.templateBodyData
+                : buildTemplateBodyDataFromLegacy(homework, homeworkType);
+            loadHomeworkTemplates(homeworkType).then(() => {
+                ensureRuntimeTemplate(homeworkType, bodyData);
+                renderTemplateOptions(homeworkType);
+                renderTemplateFields(bodyData);
+            });
             
             // 填充标签
             document.querySelectorAll('.tag-checkbox input').forEach(cb => {
@@ -497,23 +916,19 @@
         function resetToCreateMode() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '新建作业';
+            resetForm();
         }
 
         window.loadHomeworkForEdit = loadHomeworkForEdit;
         window.resetToCreateMode = resetToCreateMode;
 
         function resetForm() {
-            document.getElementById('subjectSelect').value = '';
-            document.getElementById('homeworkTypeSelect').value = '';
+            loadSubjects('');
             document.getElementById('endTimeInput').value = '';
-            document.getElementById('startPage').value = '';
-            document.getElementById('endPage').value = '';
-            document.getElementById('previewContent').value = '';
-            document.getElementById('homeworkContent').value = '';
+            loadHomeworkTemplates('');
             document.getElementById('customTag').value = '';
             document.querySelectorAll('.tag-checkbox input').forEach(cb => cb.checked = false);
             document.getElementById('selectedTags').innerHTML = '';
-            toggleHomeworkType();
 
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);

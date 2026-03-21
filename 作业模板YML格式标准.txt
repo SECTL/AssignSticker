@@ -1,0 +1,73 @@
+作业模板 YML 文件格式标准（AssignSticker）
+
+1. 文件位置
+- 所有作业模板文件放在项目根目录下的 homeworktemple 目录。
+- 每个模板对应一个 .yml 文件（例如：workbook.yml、preview.yml、custom.yml）。
+
+2. 顶层结构
+模板文件必须包含以下两个顶层键：
+- name: 模板显示名称
+- body: 字段定义对象
+
+标准结构：
+name: 模板名称
+body:
+  字段名A: ui类型
+  字段名B: ui类型
+
+3. 字段说明
+3.1 name
+- 类型：字符串
+- 作用：显示在“布置作业”窗口“作业模板”下拉框中的文字。
+- 要求：不能为空。
+
+3.2 body
+- 类型：键值对对象（字典）
+- 作用：定义该模板在布置作业窗口里渲染出的输入项。
+- 要求：至少包含 1 个字段。
+
+4. 支持的 ui 类型
+当前支持以下 4 种（全小写）：
+- combobox
+- textbox
+- spinbox
+- rtftextbox
+
+说明：
+- combobox：组合框（当前版本按文本输入方式处理）
+- textbox：单行文本输入
+- spinbox：数字输入
+- rtftextbox：富文本输入（支持粗体、下划线、删除线）
+
+5. 命名建议
+- 字段名建议使用中文语义词，便于学生/老师理解（如：作业内容、开始页、备注）。
+- 建议避免重名字段。
+- yml 文件名建议使用英文或拼音，便于维护。
+
+6. 示例
+示例1：练习册模板（workbook.yml）
+name: 练习册
+body:
+  开始页: spinbox
+  结束页: spinbox
+  备注: rtftextbox
+
+示例2：预习模板（preview.yml）
+name: 预习
+body:
+  预习内容: rtftextbox
+
+示例3：自定义作业模板（custom.yml）
+name: 自定义作业
+body:
+  作业内容: rtftextbox
+
+7. 常见错误
+- name 缺失或为空
+- body 缺失
+- body 没有任何有效字段
+- ui 类型拼写错误（例如 TextBox、RichTextBox）
+
+8. 兼容性提示
+- 建议使用 UTF-8 编码保存 yml 文件。
+- 修改模板后，重新打开布置作业窗口即可看到更新后的模板。

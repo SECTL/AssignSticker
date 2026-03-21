@@ -19,8 +19,9 @@
         }
 
         body {
-            background: #f5f5f5;
-            padding: 20px;
+            background: #11151d;
+            color: #e6ebf8;
+            padding: 16px;
             min-height: 100vh;
         }
 
@@ -29,24 +30,24 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
         }
 
         .settings-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            background: #1a202b;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #2a3343;
             width: 100%;
         }
 
         .card-title {
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: #f1f4fd;
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #2a3343;
         }
 
         .setting-item {
@@ -54,7 +55,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 0;
-            border-bottom: 1px solid #f5f5f5;
+            border-bottom: 1px solid #262f3f;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            border-radius: 8px;
         }
 
         .setting-item:last-child {
@@ -69,13 +72,13 @@
 
         .setting-label {
             font-size: 14px;
-            color: #333;
+            color: #e8edfa;
             font-weight: 500;
         }
 
         .setting-desc {
             font-size: 12px;
-            color: #999;
+            color: #8e98af;
         }
 
         /* 开关样式 */
@@ -83,7 +86,7 @@
             position: relative;
             width: 48px;
             height: 26px;
-            background: #e0e0e0;
+            background: #2a3446;
             border-radius: 13px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -113,11 +116,11 @@
         /* 选择框样式 */
         .select-box {
             padding: 8px 16px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #2e394c;
             border-radius: 8px;
-            background: white;
+            background: #141a24;
             font-size: 14px;
-            color: #333;
+            color: #dce3f7;
             cursor: pointer;
             min-width: 120px;
         }
@@ -147,26 +150,49 @@
         }
 
         .btn-secondary {
-            background: #f5f5f5;
-            color: #666;
+            background: #232c3c;
+            color: #d8dff2;
         }
 
         .btn-secondary:hover {
-            background: #e8e8e8;
+            background: #2d384b;
         }
 
         /* 输入框样式 */
         .input-field {
             padding: 8px 12px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #2e394c;
             border-radius: 8px;
             font-size: 14px;
             width: 200px;
+            background: #141a24;
+            color: #dce3f7;
         }
 
         .input-field:focus {
             outline: none;
             border-color: #667eea;
+        }
+
+        .search-hidden {
+            display: none !important;
+        }
+
+        .search-match {
+            background: rgba(78, 141, 255, 0.08);
+            border-bottom-color: rgba(78, 141, 255, 0.28);
+        }
+
+        .search-no-results {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            color: #8e98af;
+            font-size: 13px;
+        }
+
+        .search-no-results.show {
+            display: block;
         }
     </style>
 </head>
@@ -280,6 +306,7 @@
             </div>
         </div>
     </div>
+    <div class="search-no-results" id="searchNoResults">没有找到匹配的设置项</div>
 
     <script>
         // 当前设置
@@ -481,6 +508,37 @@
         document.querySelectorAll('.select-box').forEach(select => {
             select.addEventListener('change', saveCurrentSettings);
         });
+
+        function applySearch(query) {
+            const q = (query || '').trim().toLowerCase();
+            const cards = document.querySelectorAll('.settings-card');
+            let matchedCount = 0;
+
+            cards.forEach(card => {
+                let cardMatched = 0;
+                card.querySelectorAll('.setting-item').forEach(item => {
+                    const label = item.querySelector('.setting-label')?.textContent || '';
+                    const desc = item.querySelector('.setting-desc')?.textContent || '';
+                    const text = `${label} ${desc}`.toLowerCase();
+                    const matched = !q || text.includes(q);
+
+                    item.classList.toggle('search-hidden', !matched);
+                    item.classList.toggle('search-match', !!q && matched);
+                    if (matched) {
+                        cardMatched += 1;
+                        matchedCount += 1;
+                    }
+                });
+                card.classList.toggle('search-hidden', !!q && cardMatched === 0);
+            });
+
+            const noResults = document.getElementById('searchNoResults');
+            if (noResults) {
+                noResults.classList.toggle('show', !!q && matchedCount === 0);
+            }
+        }
+
+        window.applySearch = applySearch;
 
         // 禁用右键菜单
         document.addEventListener('contextmenu', function(e) {
