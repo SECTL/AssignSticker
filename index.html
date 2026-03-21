@@ -667,7 +667,9 @@
             const seconds = String(now.getSeconds()).padStart(2, '0');
             
             // 根据设置决定是否显示秒数
-            const timeString = appSettings.showSeconds ? 
+            const showSeconds = (typeof appSettings !== 'undefined' && appSettings.showSeconds !== undefined) ? 
+                appSettings.showSeconds : true;
+            const timeString = showSeconds ? 
                 `${hours}:${minutes}:${seconds}` : 
                 `${hours}:${minutes}`;
             document.getElementById('timeDisplay').textContent = timeString;
