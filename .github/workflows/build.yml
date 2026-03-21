@@ -7,24 +7,35 @@ on:
   workflow_dispatch:
     inputs:
       build_windows:
-        description: 'Build Windows x64 executable'
+        description: Build Windows x64 executable
         required: true
         default: true
         type: boolean
       build_linux:
-        description: 'Build Linux x64 deb package'
+        description: Build Linux x64 deb package
         required: true
         default: true
         type: boolean
       create_release:
-        description: 'Create GitHub Release'
+        description: Create GitHub Release
         required: true
         default: false
         type: boolean
+      release_tag:
+        description: Release tag for manual run (example: v1.3.1)
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   APP_NAME: assignsticker
-  APP_VERSION: "1.3.0"
 
 jobs:
   build-windows:
@@ -33,25 +44,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        run: uv python install 3.13
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --frozen
           uv pip install pyinstaller
 
-      - name: Build
+      - name: Build Windows executable
         run: uv run python build.py
 
-      - name: Upload artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: AssignSticker-windows-x64
           path: dist/AssignSticker.exe
+          if-no-files-found: error
 
   build-linux:
     runs-on: ubuntu-latest
@@ -59,12 +75,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get version from tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: echo "APP_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Resolve app version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [[ -n "${{ inputs.release_tag }}" ]]; then
+            VERSION="${{ inputs.release_tag }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="0.0.0-dev"
+          fi
+          echo "app_version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Install system dependencies
         run: |
@@ -74,42 +107,39 @@ jobs:
             pkg-config \
             libcairo2-dev \
             libgirepository-2.0-dev \
-            gir1.2-girepository-2.0 \
             gir1.2-gtk-3.0 \
             gir1.2-webkit2-4.1 \
-            dpkg-dev \
             python3-gi \
             python3-gi-cairo \
             libwebkit2gtk-4.1-0 \
             libayatana-appindicator3-1 \
+            dpkg-dev
 
       - name: Build with PyInstaller
+        shell: bash
         run: |
-          # 安装依赖和 pyinstaller
-          uv sync
-          uv add --dev pyinstaller
+          uv sync --frozen
+          uv pip install pyinstaller
 
-          # 创建 pyinstaller spec 文件
           cat > assignsticker.spec << 'SPECEOF'
           # -*- mode: python ; coding: utf-8 -*-
-          import sys
-          from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
+          from PyInstaller.building.build_main import Analysis, PYZ, EXE
 
           block_cipher = None
 
-          # 数据文件
           datas = [
               ('htmls', 'htmls'),
               ('icons', 'icons'),
               ('saying', 'saying'),
               ('desktop_widgets', 'desktop_widgets'),
+              ('homeworktemple', 'homeworktemple'),
               ('font.ttf', '.'),
               ('icon.ico', '.'),
               ('introduce', '.'),
               ('banner.png', '.'),
+              ('作业模板YML格式标准.txt', '.'),
           ]
 
-          # 隐藏导入（Linux 特有）
           hiddenimports = [
               'gi',
               'gi.repository',
@@ -169,33 +199,31 @@ jobs:
           )
           SPECEOF
 
-          # 使用 pyinstaller 打包
           uv run pyinstaller assignsticker.spec
 
       - name: Build DEB package
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
         run: |
-          set -e
+          set -euo pipefail
           PKG="build/deb/${APP_NAME}"
 
-          # 创建 deb 包目录结构
           mkdir -p "${PKG}/opt/${APP_NAME}"
           mkdir -p "${PKG}/usr/bin"
           mkdir -p "${PKG}/usr/share/applications"
           mkdir -p "${PKG}/DEBIAN"
 
-          # 复制 PyInstaller 输出
           cp -r dist/assignsticker/* "${PKG}/opt/${APP_NAME}/"
 
-          # 创建启动脚本
-          cat > "${PKG}/usr/bin/${APP_NAME}" <<'EOF'
+          cat > "${PKG}/usr/bin/${APP_NAME}" <<'LAUNCHEOF'
           #!/bin/bash
           export GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0
           exec /opt/assignsticker/assignsticker "$@"
-          EOF
+          LAUNCHEOF
           chmod +x "${PKG}/usr/bin/${APP_NAME}"
 
-          # 创建 Desktop Entry
-          cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<EOF
+          cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<DESKTOPEOF
           [Desktop Entry]
           Name=AssignSticker
           Comment=Homework Kanban Application
@@ -205,41 +233,32 @@ jobs:
           Categories=Education;Office;
           Terminal=false
           StartupWMClass=assignsticker
-          EOF
+          DESKTOPEOF
 
-          # 计算大小并创建 control 文件
           SIZE=$(du -sk "${PKG}" | cut -f1)
-          cat > "${PKG}/DEBIAN/control" <<EOF
+          cat > "${PKG}/DEBIAN/control" <<CONTROLEOF
           Package: ${APP_NAME}
           Version: ${APP_VERSION}
           Section: education
           Priority: optional
           Architecture: amd64
           Installed-Size: ${SIZE}
-          Depends: gir1.2-gtk-3.0,
-                   gir1.2-webkit2-4.1,
-                   gir1.2-ayatanaappindicator3-0.1,
-                   libcairo2,
-                   libgtk-3-0,
-                   libwebkit2gtk-4.1-0,
-                   libgirepository-2.0-0
-                   gir1.2-girepository-2.0-dev
+          Depends: gir1.2-gtk-3.0, gir1.2-webkit2-4.1, libayatana-appindicator3-1, libcairo2, libgtk-3-0, libwebkit2gtk-4.1-0, libgirepository-2.0-0
           Maintainer: SECTL <sectl@example.com>
-          Homepage: https://github.com/sectl/AssignSticker
+          Homepage: https://github.com/SECTL/AssignSticker
           Description: Homework Showboard Application
-           AssignSticker is a homework management and display
-           application for classroom use.
-          EOF
+           AssignSticker is a homework management and display application for classroom use.
+          CONTROLEOF
 
-          # 打包
           dpkg-deb --root-owner-group --build "${PKG}"
           mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
 
-      - name: Upload artifact
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: AssignSticker-linux-amd64
-          path: "*.deb"
+          path: AssignSticker-*-amd64.deb
+          if-no-files-found: error
 
   release:
     needs: [build-windows, build-linux]
@@ -247,21 +266,48 @@ jobs:
     if: |
       always() &&
       (startsWith(github.ref, 'refs/tags/v') ||
-       (github.event_name == 'workflow_dispatch' && inputs.create_release))
+       (github.event_name == 'workflow_dispatch' && inputs.create_release)) &&
+      (needs.build-windows.result == 'success' || needs.build-linux.result == 'success') &&
+      (needs.build-windows.result != 'failure' && needs.build-linux.result != 'failure')
     steps:
-      - name: Download artifacts
+      - name: Resolve release tag
+        id: rel
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          elif [[ -n "${{ inputs.release_tag }}" ]]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            echo "Manual release must provide release_tag (example: v1.3.1)" >&2
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download Windows artifact
+        if: needs.build-windows.result == 'success'
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: AssignSticker-windows-x64
+          path: artifacts/windows
 
-      - name: List files
-        run: find artifacts -type f
+      - name: Download Linux artifact
+        if: needs.build-linux.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: AssignSticker-linux-amd64
+          path: artifacts/linux
 
-      - name: Create Release
+      - name: List release files
+        run: find artifacts -type f || true
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          tag_name: ${{ steps.rel.outputs.tag }}
+          files: |
+            artifacts/windows/*
+            artifacts/linux/*
           draft: false
           prerelease: false
           generate_release_notes: true
