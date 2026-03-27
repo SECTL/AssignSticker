@@ -85,6 +85,20 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Resolve app version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [[ -n "${{ inputs.release_tag }}" ]]; then
+            VERSION="${{ inputs.release_tag }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="0.0.0-dev"
+          fi
+          echo "app_version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -107,11 +121,80 @@ jobs:
           uv pip install nuitka
           uv run python build.py --backend nuitka
 
+      - name: Build DEB package
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          DIST_DIR="$(find dist -maxdepth 1 -type d -name '*.dist' | head -n1)"
+          if [[ -z "${DIST_DIR}" ]]; then
+            echo "Cannot find Nuitka dist directory under ./dist" >&2
+            exit 1
+          fi
+
+          PKG="build/deb/${APP_NAME}"
+          mkdir -p "${PKG}/opt/${APP_NAME}" "${PKG}/usr/bin" "${PKG}/usr/share/applications" "${PKG}/DEBIAN"
+          cp -a "${DIST_DIR}/." "${PKG}/opt/${APP_NAME}/"
+
+          BIN_NAME=""
+          for c in AssignSticker assignsticker; do
+            if [[ -f "${PKG}/opt/${APP_NAME}/${c}" ]]; then
+              BIN_NAME="${c}"
+              break
+            fi
+          done
+          if [[ -z "${BIN_NAME}" ]]; then
+            BIN_NAME="$(find "${PKG}/opt/${APP_NAME}" -maxdepth 1 -type f -executable | head -n1 | xargs -r basename)"
+          fi
+          if [[ -z "${BIN_NAME}" ]]; then
+            echo "Cannot detect executable in ${PKG}/opt/${APP_NAME}" >&2
+            exit 1
+          fi
+
+          cat > "${PKG}/usr/bin/${APP_NAME}" <<LAUNCHEOF
+          #!/bin/bash
+          exec /opt/${APP_NAME}/${BIN_NAME} "\$@"
+          LAUNCHEOF
+          chmod +x "${PKG}/usr/bin/${APP_NAME}"
+
+          cat > "${PKG}/usr/share/applications/${APP_NAME}.desktop" <<DESKTOPEOF
+          [Desktop Entry]
+          Name=AssignSticker
+          Comment=Homework Kanban Application
+          Exec=${APP_NAME}
+          Icon=/opt/${APP_NAME}/icon.png
+          Type=Application
+          Categories=Education;Office;
+          Terminal=false
+          StartupWMClass=assignsticker
+          DESKTOPEOF
+
+          SIZE=$(du -sk "${PKG}" | cut -f1)
+          cat > "${PKG}/DEBIAN/control" <<CONTROLEOF
+          Package: ${APP_NAME}
+          Version: ${APP_VERSION}
+          Section: education
+          Priority: optional
+          Architecture: amd64
+          Installed-Size: ${SIZE}
+          Depends: gobject-introspection, libayatana-appindicator3-1, gir1.2-ayatanaappindicator3-0.1, gir1.2-webkit2-4.1
+          Maintainer: SECTL <sectl@example.com>
+          Homepage: https://github.com/SECTL/AssignSticker
+          Description: Homework Showboard Application
+           AssignSticker is a homework management and display application for classroom use.
+          CONTROLEOF
+
+          dpkg-deb --root-owner-group --build "${PKG}"
+          mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: AssignSticker-linux-x64
-          path: release/AssignSticker-linux-x64-*.zip
+          path: |
+            release/AssignSticker-linux-x64-*.zip
+            AssignSticker-*-amd64.deb
           if-no-files-found: error
 
   release:
