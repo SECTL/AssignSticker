@@ -301,9 +301,15 @@ def create_release_package(build_output: Path) -> Path:
     release_dir.mkdir(parents=True, exist_ok=True)
 
     if build_output.is_dir():
-        target_dir = release_dir / build_output.name
-        shutil.copytree(build_output, target_dir)
-        print(f"  复制目录: {build_output.name}")
+        copied_count = 0
+        for item in build_output.iterdir():
+            target = release_dir / item.name
+            if item.is_dir():
+                shutil.copytree(item, target)
+            else:
+                shutil.copy2(item, target)
+            copied_count += 1
+        print(f"  已平铺复制目录内容: {build_output.name} ({copied_count} 项)")
     elif build_output.exists():
         shutil.copy2(build_output, release_dir / build_output.name)
         print(f"  复制文件: {build_output.name}")
