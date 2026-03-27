@@ -57,16 +57,16 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --frozen
-          uv pip install pyinstaller
+          uv pip install nuitka
 
       - name: Build Windows executable
-        run: uv run python build.py
+        run: uv run python build.py --backend nuitka
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: AssignSticker-windows-x64
-          path: dist/AssignSticker.exe
+          path: release/AssignSticker-windows-x64-*.zip
           if-no-files-found: error
 
   build-linux:

@@ -3,7 +3,7 @@ name = "assignsticker"
 version = "1.2.0"
 description = "一款简洁，易用的作业板"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "pillow>=12.1.1",
     "pygobject>=3.56.0 ; sys_platform == 'linux'",
@@ -16,3 +16,8 @@ dependencies = [
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 # 设置为默认索引
 default = true
+
+[dependency-groups]
+dev = [
+    "nuitka>=4.0.7",
+]

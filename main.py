@@ -1271,13 +1271,16 @@ class Api:
             elif system == 'Windows':
                 import winreg
                 key_path = r'Software\Microsoft\Windows\CurrentVersion\Run'
-                app_path = os.path.dirname(os.path.abspath(__file__))
-                exe_path = os.path.join(app_path, 'main.py')
+                is_frozen = getattr(sys, 'frozen', False) or '__compiled__' in globals()
+                if is_frozen:
+                    startup_cmd = f'"{sys.executable}" --restart'
+                else:
+                    startup_cmd = f'"{sys.executable}" "{os.path.abspath(__file__)}" --restart'
 
                 try:
                     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
                     if enabled:
-                        winreg.SetValueEx(key, 'AssignSticker', 0, winreg.REG_SZ, f'python "{exe_path}"')
+                        winreg.SetValueEx(key, 'AssignSticker', 0, winreg.REG_SZ, startup_cmd)
                         log("已启用开机自启动", "info")
                     else:
                         try:
