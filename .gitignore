@@ -3,6 +3,7 @@ logs/*
 dist
 release
 .venv
+logs
 *.pyc
 *.pyo
 __pycache__/
