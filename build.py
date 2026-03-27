@@ -3,7 +3,7 @@
 """
 AssignSticker 打包脚本
 
-默认使用 Nuitka（standalone）打包，保留 PyInstaller 作为回退方案：
+默认使用 Nuitka（standalone）打包，支持 Windows/Linux：
     python build.py
     python build.py --backend nuitka --onefile
     python build.py --backend pyinstaller
@@ -62,6 +62,31 @@ EXCLUDE_SUFFIXES = {
 }
 
 
+def get_platform_key() -> str:
+    if sys.platform == "win32":
+        return "windows"
+    if sys.platform.startswith("linux"):
+        return "linux"
+    if sys.platform == "darwin":
+        return "macos"
+    return sys.platform
+
+
+def get_arch_label() -> str:
+    machine = os.uname().machine.lower() if hasattr(os, "uname") else ""
+    if not machine and sys.platform == "win32":
+        machine = os.environ.get("PROCESSOR_ARCHITECTURE", "").lower()
+
+    aliases = {
+        "amd64": "x64",
+        "x86_64": "x64",
+        "x64": "x64",
+        "arm64": "arm64",
+        "aarch64": "arm64",
+    }
+    return aliases.get(machine, machine or "unknown")
+
+
 def get_project_root() -> Path:
     return Path(__file__).parent.absolute()
 
@@ -109,6 +134,7 @@ def collect_data_entries_nuitka() -> list[str]:
 def collect_data_entries_pyinstaller() -> list[str]:
     project_root = get_project_root()
     args: list[str] = []
+    separator = ";" if sys.platform == "win32" else ":"
 
     print("\n扫描并收集资源（PyInstaller）...")
     for item in sorted(project_root.iterdir(), key=lambda p: p.name.lower()):
@@ -122,7 +148,7 @@ def collect_data_entries_pyinstaller() -> list[str]:
             continue
 
         if item.is_dir():
-            args.append(f"--add-data={name};{name}")
+            args.append(f"--add-data={name}{separator}{name}")
             print(f"  包含目录: {name}")
             continue
 
@@ -130,7 +156,7 @@ def collect_data_entries_pyinstaller() -> list[str]:
             print(f"  排除文件: {name}")
             continue
 
-        args.append(f"--add-data={name};.")
+        args.append(f"--add-data={name}{separator}.")
         print(f"  包含文件: {name}")
 
     return args
@@ -140,9 +166,11 @@ def ensure_backend_installed(backend: str) -> bool:
     try:
         if backend == "nuitka":
             import nuitka  # noqa: F401
+
             print(f"Nuitka 已安装")
         else:
             import PyInstaller  # noqa: F401
+
             print(f"PyInstaller 已安装")
         return True
     except ImportError:
@@ -156,23 +184,41 @@ def ensure_backend_installed(backend: str) -> bool:
 def run_nuitka(onefile: bool) -> Path:
     data_args = collect_data_entries_nuitka()
     mode_arg = "--onefile" if onefile else "--standalone"
+    platform_key = get_platform_key()
 
     cmd = [
         sys.executable,
         "-m",
         "nuitka",
         mode_arg,
-        "--windows-console-mode=disable",
         f"--output-filename={APP_NAME}",
-        "--windows-icon-from-ico=icon.ico",
         "--enable-plugin=tk-inter",
         "--assume-yes-for-downloads",
-        "--include-module=webview.platforms.winforms",
-        "--include-module=webview.platforms.edgechromium",
-        "--include-module=webview.platforms.mshtml",
-        "--include-module=pystray._win32",
         "--output-dir=dist",
     ]
+
+    if platform_key == "windows":
+        cmd.extend(
+            [
+                "--windows-console-mode=disable",
+                "--windows-icon-from-ico=icon.ico",
+                "--include-module=webview.platforms.winforms",
+                "--include-module=webview.platforms.edgechromium",
+                "--include-module=webview.platforms.mshtml",
+                "--include-module=pystray._win32",
+            ]
+        )
+    elif platform_key == "linux":
+        cmd.extend(
+            [
+                "--include-module=webview.platforms.gtk",
+                "--include-module=pystray._appindicator",
+                "--include-module=pystray._gtk",
+            ]
+        )
+    else:
+        print(f"提示: 当前平台 {platform_key} 未设置专用 Nuitka 模块参数，使用通用配置")
+
     cmd.extend(data_args)
     cmd.append(MAIN_SCRIPT)
 
@@ -182,11 +228,31 @@ def run_nuitka(onefile: bool) -> Path:
 
     dist_root = get_project_root() / "dist"
     if onefile:
-        return dist_root / f"{APP_NAME}.exe"
+        onefile_candidates = [
+            dist_root / f"{APP_NAME}.exe",
+            dist_root / APP_NAME,
+            dist_root / f"{APP_NAME}.bin",
+        ]
+        for candidate in onefile_candidates:
+            if candidate.exists():
+                return candidate
+        recent_files = sorted(
+            [p for p in dist_root.iterdir() if p.is_file()],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if recent_files:
+            return recent_files[0]
+        raise FileNotFoundError("Nuitka 未生成 onefile 产物")
 
-    dist_dirs = sorted(dist_root.glob("*.dist"), key=lambda p: p.stat().st_mtime, reverse=True)
+    dist_dirs = sorted(
+        dist_root.glob("*.dist"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
     for folder in dist_dirs:
-        if (folder / f"{APP_NAME}.exe").exists():
+        if any(
+            (folder / name).exists()
+            for name in (f"{APP_NAME}.exe", APP_NAME, f"{APP_NAME}.bin")
+        ):
             return folder
     if dist_dirs:
         return dist_dirs[0]
@@ -212,13 +278,23 @@ def run_pyinstaller() -> Path:
     print("\n执行命令:")
     print(" ".join(cmd))
     subprocess.run(cmd, check=True, capture_output=False)
-    return get_project_root() / "dist" / f"{APP_NAME}.exe"
+    dist_root = get_project_root() / "dist"
+    candidates = [
+        dist_root / f"{APP_NAME}.exe",
+        dist_root / APP_NAME,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError("PyInstaller 未生成预期可执行文件")
 
 
 def create_release_package(build_output: Path) -> Path:
     print("\n创建发布包...")
     project_root = get_project_root()
-    release_dir = project_root / "release" / "AssignSticker-windows"
+    platform_key = get_platform_key()
+    arch = get_arch_label()
+    release_dir = project_root / "release" / f"{APP_NAME}-{platform_key}"
 
     if release_dir.exists():
         shutil.rmtree(release_dir)
@@ -235,7 +311,7 @@ def create_release_package(build_output: Path) -> Path:
         raise FileNotFoundError(f"找不到构建产物: {build_output}")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_name = f"AssignSticker-windows-x64-{timestamp}"
+    zip_name = f"{APP_NAME}-{platform_key}-{arch}-{timestamp}"
     zip_path = project_root / "release" / zip_name
     shutil.make_archive(str(zip_path), "zip", root_dir=str(release_dir))
     print(f"  创建压缩包: {zip_name}.zip")
@@ -260,6 +336,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    platform_key = get_platform_key()
 
     print("AssignSticker 打包工具")
     print(f"Python: {sys.version}")
@@ -269,9 +346,8 @@ def main() -> None:
         print(f"Nuitka 模式: {'onefile' if args.onefile else 'standalone'}")
     print()
 
-    if sys.platform != "win32":
-        print("警告: 此脚本主要用于 Windows 构建 EXE")
-        print("在 Linux/macOS 上构建的 EXE 无法直接在 Windows 运行")
+    if platform_key not in {"windows", "linux"}:
+        print(f"警告: 当前平台 {platform_key} 未正式支持，可能打包失败")
         response = input("是否继续? (y/N): ")
         if response.lower() != "y":
             print("已取消")
@@ -286,7 +362,7 @@ def main() -> None:
 
     try:
         print("\n" + "=" * 60)
-        print(f"开始构建 {APP_NAME} Windows 可执行文件")
+        print(f"开始构建 {APP_NAME} {platform_key} 可执行文件")
         print("=" * 60)
 
         if args.backend == "nuitka":
