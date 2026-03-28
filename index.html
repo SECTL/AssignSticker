@@ -832,6 +832,31 @@
         }
 
         // 作业数据管理
+        const fallbackStorage = Object.create(null);
+        function storageGet(key) {
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    return localStorage.getItem(key);
+                }
+            } catch (e) {
+                console.warn('localStorage.getItem 不可用，使用内存存储:', e);
+            }
+            return Object.prototype.hasOwnProperty.call(fallbackStorage, key) ? fallbackStorage[key] : null;
+        }
+
+        function storageSet(key, value) {
+            const normalizedValue = String(value);
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    localStorage.setItem(key, normalizedValue);
+                    return;
+                }
+            } catch (e) {
+                console.warn('localStorage.setItem 不可用，使用内存存储:', e);
+            }
+            fallbackStorage[key] = normalizedValue;
+        }
+
         // 作业数据缓存
         let homeworkCache = null;
 
@@ -843,7 +868,7 @@
                     if (result.success) {
                         homeworkCache = result.data || [];
                         // 同步到 localStorage
-                        localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
+                        storageSet('homeworkList', JSON.stringify(homeworkCache));
                         return homeworkCache;
                     }
                 }
@@ -851,7 +876,7 @@
                 console.error('从服务器加载作业失败:', error);
             }
             // 如果服务器加载失败，从 localStorage 加载
-            const data = localStorage.getItem('homeworkList');
+            const data = storageGet('homeworkList');
             homeworkCache = data ? JSON.parse(data) : [];
             return homeworkCache;
         }
@@ -862,7 +887,7 @@
                 return homeworkCache;
             }
             // 否则从 localStorage 加载
-            const data = localStorage.getItem('homeworkList');
+            const data = storageGet('homeworkList');
             return data ? JSON.parse(data) : [];
         }
 
@@ -889,14 +914,14 @@
                 list.push(homework);
             }
             
-            localStorage.setItem('homeworkList', JSON.stringify(list));
+            storageSet('homeworkList', JSON.stringify(list));
             homeworkCache = list;
         }
 
         function deleteHomework(id) {
             const list = getHomeworkList();
             const newList = list.filter(h => h.id !== id);
-            localStorage.setItem('homeworkList', JSON.stringify(newList));
+            storageSet('homeworkList', JSON.stringify(newList));
             homeworkCache = newList;
             syncHomeworkDataToServer();
             renderHomeworkCards();

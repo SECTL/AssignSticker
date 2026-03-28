@@ -60,6 +60,16 @@ DEFAULT_SETTINGS = {
 }
 
 
+def is_wsl_environment():
+    """检测是否运行在 WSL 环境"""
+    release = platform.release().lower()
+    return (
+        'WSL_DISTRO_NAME' in os.environ
+        or 'microsoft' in release
+        or 'wsl' in release
+    )
+
+
 def get_data_dir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
@@ -1271,13 +1281,16 @@ class Api:
             elif system == 'Windows':
                 import winreg
                 key_path = r'Software\Microsoft\Windows\CurrentVersion\Run'
-                app_path = os.path.dirname(os.path.abspath(__file__))
-                exe_path = os.path.join(app_path, 'main.py')
+                is_frozen = getattr(sys, 'frozen', False) or '__compiled__' in globals()
+                if is_frozen:
+                    startup_cmd = f'"{sys.executable}" --restart'
+                else:
+                    startup_cmd = f'"{sys.executable}" "{os.path.abspath(__file__)}" --restart'
 
                 try:
                     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
                     if enabled:
-                        winreg.SetValueEx(key, 'AssignSticker', 0, winreg.REG_SZ, f'python "{exe_path}"')
+                        winreg.SetValueEx(key, 'AssignSticker', 0, winreg.REG_SZ, startup_cmd)
                         log("已启用开机自启动", "info")
                     else:
                         try:
@@ -1518,6 +1531,15 @@ if __name__ == '__main__':
             except Exception as e:
                 log(f"读取启动设置失败: {str(e)}", "error")
 
+            # WSLg 下通常没有可用托盘，禁用托盘相关逻辑以避免初始化异常导致崩溃窗口
+            tray_enabled = True
+            if system == 'Linux' and is_wsl_environment():
+                tray_enabled = False
+                log("检测到 WSL 环境：禁用系统托盘", "warning")
+                if start_minimized:
+                    log("WSL 环境下托盘不可用：忽略启动最小化设置", "warning")
+                    start_minimized = False
+
             # 根据屏幕大小自适应主窗口尺寸，避免高缩放下超出可视区域被系统强制铺满
             base_width, base_height = 2296, 1136
             screen_width, screen_height = get_screen_size()
@@ -1553,7 +1575,12 @@ if __name__ == '__main__':
                 main_window.hide()
 
             # 在主线程设置托盘图标（必须在start之前）
-            setup_tray_icon(main_window)
+            if tray_enabled:
+                try:
+                    setup_tray_icon(main_window)
+                except Exception as e:
+                    tray_icon = None
+                    log(f"系统托盘初始化失败，继续无托盘运行: {str(e)}", "warning")
 
             # 注册拖拽区域
             def on_loaded():
@@ -1561,7 +1588,9 @@ if __name__ == '__main__':
                 # 仅允许在html标签内拖拽
                 main_window.evaluate_js("""
                     document.querySelector('html').addEventListener('mousedown', function(e) {
-                        window.dragStart();
+                        if (typeof window.dragStart === 'function') {
+                            window.dragStart();
+                        }
                     });
                 """)
                 

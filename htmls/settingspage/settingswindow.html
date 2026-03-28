@@ -396,13 +396,45 @@
 
         let activeTab = 'mainset';
         const contentFrame = document.getElementById('contentFrame');
+        const fallbackStorage = Object.create(null);
         const contentBody = document.getElementById('contentBody');
         const searchInput = document.getElementById('settingsSearch');
         const searchHint = document.getElementById('searchHint');
         const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
 
+        function storageGet(key) {
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    return localStorage.getItem(key);
+                }
+            } catch (e) {
+                console.warn('localStorage.getItem 不可用，使用内存存储:', e);
+            }
+            return Object.prototype.hasOwnProperty.call(fallbackStorage, key) ? fallbackStorage[key] : null;
+        }
+
+        function storageSet(key, value) {
+            const normalizedValue = String(value);
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    localStorage.setItem(key, normalizedValue);
+                    return;
+                }
+            } catch (e) {
+                console.warn('localStorage.setItem 不可用，使用内存存储:', e);
+            }
+            fallbackStorage[key] = normalizedValue;
+        }
+
         function markLoading(loading) {
             contentBody.classList.toggle('loading', loading);
+        }
+
+        function bindFrameLoad(frame) {
+            frame.addEventListener('load', () => {
+                markLoading(false);
+                applySearchToFrame(searchInput.value.trim());
+            });
         }
 
         function switchTab(tabName) {
@@ -414,7 +446,7 @@
             });
 
             document.getElementById('pageTitle').textContent = TABS[tab].title;
-            localStorage.setItem(TAB_STORAGE_KEY, tab);
+            storageSet(TAB_STORAGE_KEY, tab);
             window.location.hash = tab;
 
             if (!contentFrame.src.includes(TABS[tab].src)) {
@@ -463,7 +495,7 @@
         function setSidebarCollapsed(collapsed) {
             document.body.classList.toggle('sidebar-collapsed', collapsed);
             sidebarToggleBtn.title = collapsed ? '展开导航栏' : '收缩导航栏';
-            localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+            storageSet(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
         }
 
         function toggleSidebar() {
@@ -472,21 +504,18 @@
         }
 
         function initSidebarState() {
-            const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+            const collapsed = storageGet(SIDEBAR_COLLAPSED_KEY) === '1';
             setSidebarCollapsed(collapsed);
         }
 
         function initTab() {
             const hashTab = (window.location.hash || '').replace('#', '').trim();
-            const storedTab = localStorage.getItem(TAB_STORAGE_KEY);
+            const storedTab = storageGet(TAB_STORAGE_KEY);
             const initialTab = TABS[hashTab] ? hashTab : (TABS[storedTab] ? storedTab : 'mainset');
             switchTab(initialTab);
         }
 
-        contentFrame.addEventListener('load', () => {
-            markLoading(false);
-            applySearchToFrame(searchInput.value.trim());
-        });
+        bindFrameLoad(contentFrame);
 
         searchInput.addEventListener('input', handleSearchInput);
         sidebarToggleBtn.addEventListener('click', toggleSidebar);
