@@ -4,6 +4,7 @@ dist
 release
 .venv
 logs
+data
 *.pyc
 *.pyo
 __pycache__/

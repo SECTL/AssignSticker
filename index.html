@@ -1568,6 +1568,12 @@
         }
         init();
 
+        // pywebview API 就绪后，确保从后端重新拉取作业数据
+        window.addEventListener('pywebviewready', async function () {
+            await loadHomeworkFromServer();
+            renderHomeworkCards();
+        });
+
         // 点击弹窗外部关闭
         document.getElementById('homeworkModal').addEventListener('click', function(e) {
             if (e.target === this) {
