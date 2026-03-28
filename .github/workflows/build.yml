@@ -151,6 +151,7 @@ jobs:
             echo "Cannot detect executable in ${PKG}/opt/${APP_NAME}" >&2
             exit 1
           fi
+          chmod +x "${PKG}/opt/${APP_NAME}/${BIN_NAME}"
 
           cat > "${PKG}/usr/bin/${APP_NAME}" <<LAUNCHEOF
           #!/bin/bash
