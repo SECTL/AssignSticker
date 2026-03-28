@@ -31,6 +31,8 @@ log_entries = []
 main_window = None
 widget_window = None
 is_main_window_hidden = False
+widget_position = None
+widget_position_save_timer = None
 
 # 调试模式开关
 debug_mode = False
@@ -243,6 +245,61 @@ def save_settings_data(settings):
     settings_file = get_settings_file()
     with open(settings_file, 'w', encoding='utf-8') as f:
         json.dump(settings, f, ensure_ascii=False, indent=2)
+
+
+def load_widget_position_from_settings():
+    """从设置中读取小组件位置"""
+    try:
+        settings = load_settings_data()
+        x = settings.get("widgetX")
+        y = settings.get("widgetY")
+        if x is None or y is None:
+            return None
+        x = int(x)
+        y = int(y)
+        screen_width, screen_height = get_screen_size()
+        max_x = max(0, screen_width - 240)
+        max_y = max(0, screen_height - 60)
+        # 防止异常值（如 32767）导致窗口丢失到可视区域外
+        x = min(max(0, x), max_x)
+        y = min(max(0, y), max_y)
+        return x, y
+    except Exception as e:
+        log(f"读取小组件位置失败: {str(e)}", "warning")
+        return None
+
+
+def save_widget_position_to_settings(x, y):
+    """保存小组件位置到设置"""
+    try:
+        screen_width, screen_height = get_screen_size()
+        max_x = max(0, screen_width - 240)
+        max_y = max(0, screen_height - 60)
+        x = min(max(0, int(x)), max_x)
+        y = min(max(0, int(y)), max_y)
+        settings = load_settings_data()
+        settings["widgetX"] = x
+        settings["widgetY"] = y
+        save_settings_data(settings)
+    except Exception as e:
+        log(f"保存小组件位置失败: {str(e)}", "warning")
+
+
+def schedule_widget_position_save(x, y):
+    """防抖保存小组件位置，避免拖动时频繁写磁盘导致卡顿"""
+    global widget_position_save_timer
+
+    def _save():
+        save_widget_position_to_settings(x, y)
+
+    try:
+        if widget_position_save_timer is not None:
+            widget_position_save_timer.cancel()
+        widget_position_save_timer = threading.Timer(0.35, _save)
+        widget_position_save_timer.daemon = True
+        widget_position_save_timer.start()
+    except Exception as e:
+        log(f"调度保存小组件位置失败: {str(e)}", "warning")
 
 
 def save_homework_data(homework_list):
@@ -617,13 +674,19 @@ class WidgetApi:
     
     def move_widget(self, delta_x, delta_y):
         """移动小组件窗口"""
-        global widget_window
+        global widget_window, widget_position
         if widget_window:
             try:
                 x, y = widget_window.x, widget_window.y
-                widget_window.move(x + delta_x, y + delta_y)
+                new_x = int(x + delta_x)
+                new_y = int(y + delta_y)
+                widget_window.move(new_x, new_y)
+                widget_position = (new_x, new_y)
             except Exception as e:
-                log(f"移动小组件失败: {str(e)}", "error")
+                log(
+                    f"移动小组件失败: {str(e)} | delta=({delta_x}, {delta_y}) | current=({x}, {y})",
+                    "error"
+                )
 
 
 class Api:
@@ -794,7 +857,7 @@ class Api:
     def hideMainWindow(self):
         """隐藏主窗口并显示小组件"""
         try:
-            global is_main_window_hidden, widget_window
+            global is_main_window_hidden, widget_window, widget_position
             log("隐藏主窗口", "info")
             is_main_window_hidden = True
             
@@ -804,17 +867,43 @@ class Api:
             
             # 创建小组件窗口
             if widget_window is None:
+                if widget_position is None:
+                    widget_position = load_widget_position_from_settings()
+
+                if widget_position:
+                    widget_x, widget_y = widget_position
+                else:
+                    # 默认贴近主窗口位置，避免每次跳到屏幕右上角
+                    if self.window:
+                        try:
+                            widget_x = int(self.window.x + 40)
+                            widget_y = int(self.window.y + 40)
+                        except Exception:
+                            widget_x, widget_y = 80, 80
+                    else:
+                        widget_x, widget_y = 80, 80
+
                 widget_window = webview.create_window(
                     'AssignSticker Widget',
                     'desktop_widgets/desktop_widgets.html',
                     width=240,
                     height=60,
+                    x=widget_x,
+                    y=widget_y,
                     frameless=True,
+                    easy_drag=False,
                     on_top=True,
                     resizable=False,
-                    transparent=True,
+                    transparent=False,
                     js_api=WidgetApi()
                 )
+
+                def on_widget_moved(x, y):
+                    global widget_position
+                    widget_position = (int(x), int(y))
+                    schedule_widget_position_save(x, y)
+
+                widget_window.events.moved += on_widget_moved
             else:
                 widget_window.show()
             
