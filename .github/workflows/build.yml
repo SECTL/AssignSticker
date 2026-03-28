@@ -187,7 +187,9 @@ jobs:
           CONTROLEOF
 
           dpkg-deb --root-owner-group --build "${PKG}"
-          mv "build/deb/${APP_NAME}.deb" "AssignSticker-${APP_VERSION}-amd64.deb"
+          mkdir -p release
+          mv "build/deb/${APP_NAME}.deb" "release/AssignSticker-${APP_VERSION}-amd64.deb"
+          ls -lah release
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -195,7 +197,7 @@ jobs:
           name: AssignSticker-linux-x64
           path: |
             release/AssignSticker-linux-x64-*.zip
-            AssignSticker-*-amd64.deb
+            release/AssignSticker-*-amd64.deb
           if-no-files-found: error
 
   release:
@@ -244,8 +246,8 @@ jobs:
         with:
           tag_name: ${{ steps.rel.outputs.tag }}
           files: |
-            artifacts/windows/*
-            artifacts/linux/*
+            artifacts/windows/**/*
+            artifacts/linux/**/*
           draft: false
           prerelease: false
           generate_release_notes: true
