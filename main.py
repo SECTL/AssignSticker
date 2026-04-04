@@ -524,31 +524,24 @@ def setup_tray_icon(window):
     def on_toggle_devtools(icon, item):
         """切换开发人员工具"""
         log("托盘菜单: 切换开发人员工具", "info")
-        # 保存日志
-        save_logs()
-        # 停止托盘图标
-        icon.stop()
         # 使用子进程重新启动程序，启用调试模式
         subprocess.Popen(build_launch_command('--with-devtools'))
         # 退出当前程序
-        safe_destroy_webview_window(window, "主窗口")
+        shutdown_application(window)
+        schedule_force_exit()
         sys.exit(0)
 
     def on_trigger_crash(icon, item):
         """触发异常（测试崩溃窗口）"""
         log("托盘菜单: 触发异常测试", "warning")
-        # 保存日志
-        save_logs()
-        # 停止托盘图标
-        icon.stop()
         # 使用子进程显示崩溃窗口，然后退出主程序
         import subprocess
         error_msg = "这是从托盘菜单手动触发的测试异常，用于测试崩溃窗口功能"
         encoded_error = urllib.parse.quote(error_msg)
         subprocess.Popen(build_launch_command('--crash-window', encoded_error))
         # 退出主程序
-        safe_destroy_webview_window(window, "主窗口")
-        sys.exit(0)
+        shutdown_application(window)
+        schedule_force_exit()
 
     def on_open_logs(icon, item):
         """打开日志文件夹"""
@@ -566,9 +559,8 @@ def setup_tray_icon(window):
     def on_exit(icon, item):
         """退出程序"""
         log("托盘菜单: 退出程序", "info")
-        save_logs()
-        icon.stop()
-        safe_destroy_webview_window(window, "主窗口")
+        shutdown_application(window)
+        schedule_force_exit()
 
     # 创建托盘菜单
     menu = pystray.Menu(
@@ -691,6 +683,73 @@ def safe_destroy_webview_window(window, name="window"):
     except Exception as e:
         log(f"{name} 关闭失败: {str(e)}", "warning")
         return False
+
+
+def cancel_widget_position_save_timer():
+    """停止未完成的小组件位置保存定时器，避免退出时残留后台线程。"""
+    global widget_position_save_timer
+
+    if widget_position_save_timer is None:
+        return
+
+    try:
+        widget_position_save_timer.cancel()
+    except Exception as e:
+        log(f"停止小组件位置保存定时器失败: {str(e)}", "warning")
+    finally:
+        widget_position_save_timer = None
+
+
+def close_widget_window():
+    """关闭小组件窗口。"""
+    global widget_window, allow_widget_close, is_main_window_hidden
+
+    allow_widget_close = True
+    is_main_window_hidden = False
+    cancel_widget_position_save_timer()
+
+    current_widget_window = widget_window
+    if safe_destroy_webview_window(current_widget_window, "小组件"):
+        widget_window = None
+        return True
+
+    if current_widget_window is None:
+        widget_window = None
+
+    return False
+
+
+def shutdown_application(window=None, *, stop_tray=True, save_state=True):
+    """统一执行应用退出前的资源清理。"""
+    global tray_icon, allow_widget_close
+
+    allow_widget_close = True
+
+    if save_state:
+        save_logs()
+
+    if stop_tray and tray_icon:
+        try:
+            tray_icon.stop()
+        except Exception as e:
+            log(f"停止托盘图标失败: {str(e)}", "warning")
+        finally:
+            tray_icon = None
+
+    widget_closed = close_widget_window()
+    main_closed = safe_destroy_webview_window(window, "主窗口")
+    return widget_closed or main_closed
+
+
+def schedule_force_exit(delay=0.5):
+    """在短暂延迟后强制结束进程，作为窗口事件循环未正常退出时的兜底。"""
+
+    def _force_exit():
+        os._exit(0)
+
+    timer = threading.Timer(delay, _force_exit)
+    timer.daemon = True
+    timer.start()
 
 
 class WidgetApi:
@@ -858,14 +917,8 @@ class Api:
             allow_widget_close = True
             # 先标记需要重启
             should_restart = True
-            # 保存日志
-            save_logs()
-            # 停止托盘图标
-            global tray_icon
-            if tray_icon:
-                tray_icon.stop()
             # 关闭当前窗口，让主循环自然退出后在 finally 中完成重启
-            if safe_destroy_webview_window(self.window, "主窗口"):
+            if shutdown_application(self.window):
                 return {"success": True, "message": "正在重启程序"}
 
             # 理论上不会走到这里；兜底直接拉起新进程并退出
@@ -879,19 +932,10 @@ class Api:
     def exitApp(self):
         """退出应用程序"""
         try:
-            global allow_widget_close
             log("用户触发退出", "info")
-            allow_widget_close = True
-            # 保存日志
-            save_logs()
-            # 停止托盘图标
-            global tray_icon
-            if tray_icon:
-                tray_icon.stop()
-            # 关闭窗口并退出进程
-            safe_destroy_webview_window(self.window, "主窗口")
-            # 强制退出进程
-            os._exit(0)
+            shutdown_application(self.window)
+            schedule_force_exit()
+            return {"success": True, "message": "正在退出程序"}
         except Exception as e:
             error_msg = str(e)
             log(f"退出失败: {error_msg}", "error")
