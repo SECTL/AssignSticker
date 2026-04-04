@@ -403,6 +403,17 @@ def check_single_instance():
     except socket.error:
         return False
 
+
+def build_launch_command(*args):
+    """构建当前程序的启动命令，兼容源码运行和打包运行。"""
+    is_frozen = getattr(sys, 'frozen', False) or '__compiled__' in globals()
+    command = [sys.executable]
+    if not is_frozen:
+        command.append(os.path.abspath(__file__))
+    command.extend(args)
+    return command
+
+
 def create_tray_icon():
     """创建托盘图标"""
     # 尝试加载 icon.png 文件
@@ -462,9 +473,8 @@ def show_crash_window(error_msg):
             # 关闭崩溃窗口
             crash_window.destroy()
             # 重新启动主程序（使用--restart参数跳过多开检测）
-            import sys
             import subprocess
-            subprocess.Popen([sys.executable, __file__, '--restart'])
+            subprocess.Popen(build_launch_command('--restart'))
             # 退出当前进程
             sys.exit(0)
 
@@ -509,7 +519,7 @@ def setup_tray_icon(window):
         # 停止托盘图标
         icon.stop()
         # 使用子进程重新启动程序，启用调试模式
-        subprocess.Popen([sys.executable, __file__, '--with-devtools'])
+        subprocess.Popen(build_launch_command('--with-devtools'))
         # 退出当前程序
         if window:
             window.destroy()
@@ -526,7 +536,7 @@ def setup_tray_icon(window):
         import subprocess
         error_msg = "这是从托盘菜单手动触发的测试异常，用于测试崩溃窗口功能"
         encoded_error = urllib.parse.quote(error_msg)
-        subprocess.Popen([sys.executable, __file__, '--crash-window', encoded_error])
+        subprocess.Popen(build_launch_command('--crash-window', encoded_error))
         # 退出主程序
         if window:
             window.destroy()
@@ -596,7 +606,7 @@ def show_crash_window_standalone(encoded_error):
         def restart_app():
             """重启应用程序"""
             crash_window.destroy()
-            subprocess.Popen([sys.executable, __file__, '--restart'])
+            subprocess.Popen(build_launch_command('--restart'))
             sys.exit(0)
 
         def open_url(url):
@@ -824,11 +834,14 @@ class Api:
             global tray_icon
             if tray_icon:
                 tray_icon.stop()
-            # 关闭当前窗口并强制退出进程
+            # 关闭当前窗口，让主循环自然退出后在 finally 中完成重启
             if self.window:
                 self.window.destroy()
-            # 强制退出当前进程
-            os._exit(0)
+                return {"success": True, "message": "正在重启程序"}
+
+            # 理论上不会走到这里；兜底直接拉起新进程并退出
+            subprocess.Popen(build_launch_command('--restart'))
+            sys.exit(0)
         except Exception as e:
             error_msg = str(e)
             log(f"重启失败: {error_msg}", "error")
@@ -1712,7 +1725,7 @@ if __name__ == '__main__':
         # 检查是否需要重启（重启时已在restartApp中处理）
         if should_restart:
             log("正在重启应用程序...", "info")
-            subprocess.Popen([sys.executable, __file__])
+            subprocess.Popen(build_launch_command('--restart'))
             sys.exit(0)
         
         # 程序退出时保存日志

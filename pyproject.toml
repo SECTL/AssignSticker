@@ -11,11 +11,11 @@ dependencies = [
     "pywebview==4.4.1",
 ]
 
-[[tool.uv.index]]
-# 使用清华大学PyPI镜像源以提高下载速度
-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-# 设置为默认索引
-default = true
+# [[tool.uv.index]]
+# # 使用清华大学PyPI镜像源以提高下载速度
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+# # 设置为默认索引
+# default = true
 
 [dependency-groups]
 dev = [
