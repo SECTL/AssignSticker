@@ -33,6 +33,7 @@ widget_window = None
 is_main_window_hidden = False
 widget_position = None
 widget_position_save_timer = None
+allow_widget_close = False
 
 # 调试模式开关
 debug_mode = False
@@ -824,8 +825,10 @@ class Api:
     def restartApp(self):
         """重启应用程序"""
         try:
+            global allow_widget_close
             log("用户触发重启", "info")
             global should_restart
+            allow_widget_close = True
             # 先标记需要重启
             should_restart = True
             # 保存日志
@@ -850,7 +853,9 @@ class Api:
     def exitApp(self):
         """退出应用程序"""
         try:
+            global allow_widget_close
             log("用户触发退出", "info")
+            allow_widget_close = True
             # 保存日志
             save_logs()
             # 停止托盘图标
@@ -899,8 +904,8 @@ class Api:
                 widget_window = webview.create_window(
                     'AssignSticker Widget',
                     'desktop_widgets/desktop_widgets.html',
-                    width=240,
-                    height=60,
+                    width=176,
+                    height=44,
                     x=widget_x,
                     y=widget_y,
                     frameless=True,
@@ -916,7 +921,20 @@ class Api:
                     widget_position = (int(x), int(y))
                     schedule_widget_position_save(x, y)
 
+                def on_widget_closing():
+                    if allow_widget_close:
+                        return True
+
+                    log("已拦截小组件关闭请求", "info")
+                    return False
+
+                def on_widget_closed():
+                    global widget_window
+                    widget_window = None
+
                 widget_window.events.moved += on_widget_moved
+                widget_window.events.closing += on_widget_closing
+                widget_window.events.closed += on_widget_closed
             else:
                 widget_window.show()
             
