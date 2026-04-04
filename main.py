@@ -1,5 +1,6 @@
 import webview
 import webview.http as http
+from webview.util import WebViewException
 import socket
 import platform
 import os
@@ -67,9 +68,9 @@ def is_wsl_environment():
     """检测是否运行在 WSL 环境"""
     release = platform.release().lower()
     return (
-        'WSL_DISTRO_NAME' in os.environ
-        or 'microsoft' in release
-        or 'wsl' in release
+            'WSL_DISTRO_NAME' in os.environ
+            or 'microsoft' in release
+            or 'wsl' in release
     )
 
 
@@ -323,6 +324,7 @@ def get_screen_size():
         log(f"获取屏幕分辨率失败，使用默认值: {str(e)}", "warning")
         return 1920, 1080
 
+
 def log(message, level="info"):
     """
     记录日志
@@ -338,13 +340,16 @@ def log(message, level="info"):
         # Windows 控制台编码问题，使用 ASCII 字符
         print(f"{timestamp} | {level} | {message.encode('ascii', 'replace').decode('ascii')}")
 
+
 # 导入通知库
 try:
     from plyer import notification
+
     HAS_PLYER = True
 except ImportError:
     HAS_PLYER = False
     log("plyer库未安装，通知功能将不可用", "warning")
+
 
 def save_logs():
     """
@@ -353,33 +358,34 @@ def save_logs():
     """
     if not log_entries:
         return
-    
+
     # 创建logs目录
     logs_dir = "logs"
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
-    
+
     # 获取当前日期
     date_str = datetime.now().strftime('%Y%m%d')
-    
+
     # 查找当天的日志文件数量
     pattern = os.path.join(logs_dir, f"{date_str}_*.log")
     existing_files = glob.glob(pattern)
     count = len(existing_files) + 1
-    
+
     # 生成文件名
     filename = os.path.join(logs_dir, f"{date_str}_{count}.log")
-    
+
     # 写入日志
     with open(filename, 'w', encoding='utf-8') as f:
         f.write("时间（日期+时间）| 类型（info/error/warning）| 内容\n")
         for entry in log_entries:
             f.write(entry + "\n")
-    
+
     try:
         print(f"日志已保存到: {filename}")
     except UnicodeEncodeError:
         print(f"Logs saved to: {filename}")
+
 
 def print_system_info():
     """打印系统信息"""
@@ -392,6 +398,7 @@ def print_system_info():
     log(f"Python版本: {platform.python_version()}", "info")
     log(f"当前时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", "info")
     log("=" * 50, "info")
+
 
 def check_single_instance():
     # 创建一个套接字用于检测程序是否已运行
@@ -428,29 +435,30 @@ def create_tray_icon():
             return image
         except Exception as e:
             log(f"加载 icon.png 失败: {str(e)}，使用默认图标", "warning")
-    
+
     # 如果加载失败，创建默认图标
     width = 64
     height = 64
     image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     dc = ImageDraw.Draw(image)
-    
+
     # 绘制渐变圆形背景
     for i in range(width):
         for j in range(height):
             # 计算是否在圆内
-            if (i - width//2)**2 + (j - height//2)**2 <= (width//2)**2:
+            if (i - width // 2) ** 2 + (j - height // 2) ** 2 <= (width // 2) ** 2:
                 # 渐变效果
                 ratio = j / height
                 r = int(102 + (118 - 102) * ratio)
                 g = int(126 + (75 - 126) * ratio)
                 b = int(234 + 162 * ratio)
                 dc.point((i, j), fill=(r, g, b, 255))
-    
+
     # 绘制字母 "A"
-    dc.text((width//2 - 12, height//2 - 18), "A", fill=(255, 255, 255, 255), font=None)
-    
+    dc.text((width // 2 - 12, height // 2 - 18), "A", fill=(255, 255, 255, 255), font=None)
+
     return image
+
 
 def show_crash_window(error_msg):
     """显示崩溃窗口"""
@@ -501,6 +509,7 @@ def show_crash_window(error_msg):
     except Exception as e:
         log(f"显示崩溃窗口失败: {str(e)}", "error")
 
+
 def setup_tray_icon(window):
     """设置系统托盘图标"""
     global tray_icon
@@ -522,8 +531,7 @@ def setup_tray_icon(window):
         # 使用子进程重新启动程序，启用调试模式
         subprocess.Popen(build_launch_command('--with-devtools'))
         # 退出当前程序
-        if window:
-            window.destroy()
+        safe_destroy_webview_window(window, "主窗口")
         sys.exit(0)
 
     def on_trigger_crash(icon, item):
@@ -539,8 +547,7 @@ def setup_tray_icon(window):
         encoded_error = urllib.parse.quote(error_msg)
         subprocess.Popen(build_launch_command('--crash-window', encoded_error))
         # 退出主程序
-        if window:
-            window.destroy()
+        safe_destroy_webview_window(window, "主窗口")
         sys.exit(0)
 
     def on_open_logs(icon, item):
@@ -561,8 +568,7 @@ def setup_tray_icon(window):
         log("托盘菜单: 退出程序", "info")
         save_logs()
         icon.stop()
-        if window:
-            window.destroy()
+        safe_destroy_webview_window(window, "主窗口")
 
     # 创建托盘菜单
     menu = pystray.Menu(
@@ -592,6 +598,7 @@ def setup_tray_icon(window):
     icon.run_detached()
 
     log("系统托盘图标已启动", "info")
+
 
 def show_crash_window_standalone(encoded_error):
     """独立显示崩溃窗口（用于子进程模式）"""
@@ -627,23 +634,24 @@ def show_crash_window_standalone(encoded_error):
     except Exception as e:
         print(f"显示崩溃窗口失败: {str(e)}")
 
+
 def ensure_data_directory():
     """确保data目录和homework_save、homework_save_auto目录存在，不存在则创建"""
     data_dir = get_data_dir()
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
         log(f"创建data目录: {data_dir}", "info")
-    
+
     homework_save_dir = os.path.join(data_dir, 'homework_save')
     if not os.path.exists(homework_save_dir):
         os.makedirs(homework_save_dir)
         log(f"创建homework_save目录: {homework_save_dir}", "info")
-    
+
     homework_save_auto_dir = os.path.join(data_dir, 'homework_save_auto')
     if not os.path.exists(homework_save_auto_dir):
         os.makedirs(homework_save_auto_dir)
         log(f"创建homework_save_auto目录: {homework_save_auto_dir}", "info")
-    
+
     # 确保 settings.json 存在
     settings_file = get_settings_file()
     if not os.path.exists(settings_file):
@@ -652,7 +660,7 @@ def ensure_data_directory():
         log(f"创建默认设置文件: {settings_file}", "info")
 
     ensure_default_homework_templates()
-    
+
     return data_dir
 
 
@@ -666,23 +674,42 @@ def get_homework_save_auto_dir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save_auto')
 
 
+def safe_destroy_webview_window(window, name="window"):
+    """安全销毁 pywebview 窗口，避免重复 destroy 导致异常。"""
+    if not window:
+        return False
+
+    try:
+        window.destroy()
+        return True
+    except KeyError:
+        log(f"{name} 已经销毁，跳过重复关闭", "warning")
+        return False
+    except WebViewException as e:
+        log(f"{name} 关闭失败，已忽略: {str(e)}", "warning")
+        return False
+    except Exception as e:
+        log(f"{name} 关闭失败: {str(e)}", "warning")
+        return False
+
+
 class WidgetApi:
     """小组件窗口的API"""
-    
+
     def show_main_window(self):
         """显示主窗口"""
         global is_main_window_hidden, widget_window, main_window
         log("小组件: 显示主窗口", "info")
         is_main_window_hidden = False
-        
+
         if main_window:
             main_window.show()
             main_window.restore()
-        
+
         # 隐藏小组件
         if widget_window:
             widget_window.hide()
-    
+
     def move_widget(self, delta_x, delta_y):
         """移动小组件窗口"""
         global widget_window, widget_position
@@ -702,7 +729,7 @@ class WidgetApi:
 
 class Api:
     """暴露给前端调用的API"""
-    
+
     def __init__(self):
         self.window = None
         self.should_restart = False
@@ -717,7 +744,7 @@ class Api:
                 )
         except Exception as e:
             log(f"下发设置到主窗口失败: {str(e)}", "warning")
-    
+
     def saveHomeworkToFile(self, homework_data):
         """
         保存作业数据到JSON文件
@@ -725,35 +752,35 @@ class Api:
         """
         try:
             save_dir = get_homework_save_dir()
-            
+
             # 生成文件名：时间戳_随机数.json
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             import random
             random_num = random.randint(1000, 9999)
             filename = f"homework_{timestamp}_{random_num}.json"
             filepath = os.path.join(save_dir, filename)
-            
+
             # 写入JSON文件
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(homework_data, f, ensure_ascii=False, indent=2)
 
             # 同步主作业文件，保证导入导出和下次启动可读取
             save_homework_data(homework_data)
-            
+
             log(f"作业已保存到: {filepath}", "info")
             return {"success": True, "message": f"作业已保存到: {filename}", "filepath": filepath}
         except Exception as e:
             error_msg = str(e)
             log(f"保存作业失败: {error_msg}", "error")
             return {"success": False, "message": f"保存失败: {error_msg}"}
-    
+
     def getSavedHomeworkFiles(self):
         """获取已保存的作业文件列表"""
         try:
             save_dir = get_homework_save_dir()
             if not os.path.exists(save_dir):
                 return {"success": True, "files": []}
-            
+
             files = []
             for filename in os.listdir(save_dir):
                 if filename.endswith('.json'):
@@ -764,7 +791,7 @@ class Api:
                         "created": datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
                         "size": stat.st_size
                     })
-            
+
             # 按创建时间排序
             files.sort(key=lambda x: x["created"], reverse=True)
             return {"success": True, "files": files}
@@ -772,29 +799,29 @@ class Api:
             error_msg = str(e)
             log(f"获取作业文件列表失败: {error_msg}", "error")
             return {"success": False, "message": f"获取失败: {error_msg}"}
-    
+
     def loadHomeworkFromFile(self, filename):
         """从文件加载作业数据"""
         try:
             save_dir = get_homework_save_dir()
             filepath = os.path.join(save_dir, filename)
-            
+
             # 安全检查：确保文件在保存目录内
             if not filepath.startswith(save_dir):
                 return {"success": False, "message": "非法文件路径"}
-            
+
             if not os.path.exists(filepath):
                 return {"success": False, "message": "文件不存在"}
-            
+
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             return {"success": True, "data": data}
         except Exception as e:
             error_msg = str(e)
             log(f"加载作业文件失败: {error_msg}", "error")
             return {"success": False, "message": f"加载失败: {error_msg}"}
-    
+
     def autoSaveHomework(self, homework_data):
         """
         自动保存作业数据到JSON文件
@@ -802,26 +829,26 @@ class Api:
         """
         try:
             save_dir = get_homework_save_auto_dir()
-            
+
             # 生成文件名：auto_时间戳.json
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"auto_{timestamp}.json"
             filepath = os.path.join(save_dir, filename)
-            
+
             # 写入JSON文件
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(homework_data, f, ensure_ascii=False, indent=2)
 
             # 同步主作业文件
             save_homework_data(homework_data)
-            
+
             log(f"作业已自动保存到: {filepath}", "info")
             return {"success": True, "message": f"自动保存成功: {filename}", "filepath": filepath}
         except Exception as e:
             error_msg = str(e)
             log(f"自动保存作业失败: {error_msg}", "error")
             return {"success": False, "message": f"自动保存失败: {error_msg}"}
-    
+
     def restartApp(self):
         """重启应用程序"""
         try:
@@ -838,8 +865,7 @@ class Api:
             if tray_icon:
                 tray_icon.stop()
             # 关闭当前窗口，让主循环自然退出后在 finally 中完成重启
-            if self.window:
-                self.window.destroy()
+            if safe_destroy_webview_window(self.window, "主窗口"):
                 return {"success": True, "message": "正在重启程序"}
 
             # 理论上不会走到这里；兜底直接拉起新进程并退出
@@ -849,7 +875,7 @@ class Api:
             error_msg = str(e)
             log(f"重启失败: {error_msg}", "error")
             return {"success": False, "message": f"重启失败: {error_msg}"}
-    
+
     def exitApp(self):
         """退出应用程序"""
         try:
@@ -863,8 +889,7 @@ class Api:
             if tray_icon:
                 tray_icon.stop()
             # 关闭窗口并退出进程
-            if self.window:
-                self.window.destroy()
+            safe_destroy_webview_window(self.window, "主窗口")
             # 强制退出进程
             os._exit(0)
         except Exception as e:
@@ -878,11 +903,11 @@ class Api:
             global is_main_window_hidden, widget_window, widget_position
             log("隐藏主窗口", "info")
             is_main_window_hidden = True
-            
+
             # 隐藏主窗口
             if self.window:
                 self.window.hide()
-            
+
             # 创建小组件窗口
             if widget_window is None:
                 if widget_position is None:
@@ -904,8 +929,9 @@ class Api:
                 widget_window = webview.create_window(
                     'AssignSticker Widget',
                     'desktop_widgets/desktop_widgets.html',
-                    width=176,
-                    height=44,
+                    width=222,
+                    height=30,
+                    min_size=(0,0),
                     x=widget_x,
                     y=widget_y,
                     frameless=True,
@@ -937,7 +963,7 @@ class Api:
                 widget_window.events.closed += on_widget_closed
             else:
                 widget_window.show()
-            
+
             return {"success": True, "message": "主窗口已隐藏"}
         except Exception as e:
             error_msg = str(e)
@@ -950,16 +976,16 @@ class Api:
             global is_main_window_hidden, widget_window
             log("显示主窗口", "info")
             is_main_window_hidden = False
-            
+
             # 显示主窗口
             if self.window:
                 self.window.show()
                 self.window.restore()
-            
+
             # 隐藏小组件
             if widget_window:
                 widget_window.hide()
-            
+
             return {"success": True, "message": "主窗口已显示"}
         except Exception as e:
             error_msg = str(e)
@@ -1054,7 +1080,7 @@ class Api:
         try:
             if not homework_list:
                 return {"success": True, "reminders": []}
-            
+
             # 加载设置
             enable_reminder = True
             reminder_time = '30分钟'
@@ -1062,10 +1088,10 @@ class Api:
             settings = load_settings_data()
             enable_reminder = settings.get('enableReminder', True)
             reminder_time = settings.get('reminderTime', '30分钟')
-            
+
             if not enable_reminder:
                 return {"success": True, "reminders": [], "message": "提醒功能已禁用"}
-            
+
             # 解析提醒时间
             time_map = {
                 '15分钟': 15,
@@ -1075,35 +1101,35 @@ class Api:
                 '1天': 1440
             }
             reminder_minutes = time_map.get(reminder_time, 30)
-            
+
             # 检查每个作业
             reminders = []
             now = datetime.now()
-            
+
             for homework in homework_list:
                 if homework.get('completed', False):
                     continue
-                
+
                 deadline_str = homework.get('endTime', '')
                 if not deadline_str:
                     continue
 
                 content = (
-                    homework.get('homeworkContent')
-                    or homework.get('previewContent')
-                    or (
-                        f"练习册 {homework.get('startPage', '')}-{homework.get('endPage', '')} 页"
-                        if homework.get('type') == '练习册'
-                        else ''
-                    )
-                    or '作业'
+                        homework.get('homeworkContent')
+                        or homework.get('previewContent')
+                        or (
+                            f"练习册 {homework.get('startPage', '')}-{homework.get('endPage', '')} 页"
+                            if homework.get('type') == '练习册'
+                            else ''
+                        )
+                        or '作业'
                 )
-                
+
                 try:
                     deadline = datetime.fromisoformat(deadline_str)
                     time_diff = deadline - now
                     minutes_left = time_diff.total_seconds() / 60
-                    
+
                     # 如果在提醒时间范围内且未过期
                     if 0 < minutes_left <= reminder_minutes:
                         reminders.append({
@@ -1113,7 +1139,7 @@ class Api:
                             'deadline': deadline_str,
                             'minutes_left': int(minutes_left)
                         })
-                        
+
                         # 发送通知
                         if HAS_PLYER:
                             time_str = f"{int(minutes_left)}分钟" if minutes_left >= 1 else "即将"
@@ -1127,7 +1153,7 @@ class Api:
                 except Exception as e:
                     log(f"解析截止时间失败: {str(e)}", "error")
                     continue
-            
+
             return {"success": True, "reminders": reminders}
         except Exception as e:
             error_msg = str(e)
@@ -1443,25 +1469,25 @@ class Api:
             try:
                 request = urllib.request.Request(api_url)
                 request.add_header('User-Agent', 'AssignSticker')
-                
+
                 with urllib.request.urlopen(request, timeout=10) as response:
                     data = json_module.loads(response.read().decode('utf-8'))
-                
+
                 latest_version = data.get('tag_name', 'v1.0.0').lstrip('v')
                 current_version = "1.3.0"
-                
+
                 # 比较版本
                 is_latest = self.compare_versions(current_version, latest_version) >= 0
-                
+
                 log(f"检查更新完成：当前版本 {current_version}，最新版本 {latest_version}", "info")
-                
+
                 return {
                     "success": True,
                     "isLatest": is_latest,
                     "latestVersion": latest_version,
                     "message": "检查完成" if is_latest else "有新版本可用"
                 }
-                
+
             except Exception as e:
                 error_msg = str(e)
                 log(f"检查更新失败: {error_msg}", "error")
@@ -1484,20 +1510,20 @@ class Api:
                     except ValueError:
                         result.append(0)
                 return result
-            
+
             v1_parts = parse_version(v1)
             v2_parts = parse_version(v2)
-            
+
             # 补齐长度
             max_len = max(len(v1_parts), len(v2_parts))
             v1_parts.extend([0] * (max_len - len(v1_parts)))
             v2_parts.extend([0] * (max_len - len(v2_parts)))
-            
+
             # 逐位比较
             for i in range(max_len):
                 if v1_parts[i] != v2_parts[i]:
                     return v1_parts[i] - v2_parts[i]
-            
+
             return 0
         except Exception:
             return 0
@@ -1514,15 +1540,15 @@ class Api:
             try:
                 request = urllib.request.Request(api_url)
                 request.add_header('User-Agent', 'AssignSticker')
-                
+
                 with urllib.request.urlopen(request, timeout=10) as response:
                     data = json_module.loads(response.read().decode('utf-8'))
-                
+
                 changelog = data.get('body', '暂无更新日志')
-                
+
                 log("获取更新日志成功", "info")
                 return {"success": True, "changelog": changelog}
-                
+
             except Exception as e:
                 error_msg = str(e)
                 log(f"获取更新日志失败: {error_msg}", "error")
@@ -1605,6 +1631,7 @@ class Api:
             log(f"自动保存作业失败: {error_msg}", "error")
             return {"success": False, "message": f"自动保存失败: {error_msg}"}
 
+
 if __name__ == '__main__':
     # 检查是否是崩溃窗口模式
     if '--crash-window' in sys.argv:
@@ -1642,7 +1669,7 @@ if __name__ == '__main__':
             log("程序启动成功", "info")
             # 创建API实例
             api = Api()
-            
+
             # 检查是否启动时最小化
             start_minimized = False
             try:
@@ -1672,7 +1699,7 @@ if __name__ == '__main__':
                 f"窗口={window_width}x{window_height}",
                 "info"
             )
-            
+
             # 创建无边框窗口
             main_window = webview.create_window(
                 'Wow 伙伴！',
@@ -1685,10 +1712,10 @@ if __name__ == '__main__':
                 js_api=api,
                 hidden=start_minimized
             )
-            
+
             # 将窗口对象保存到API中，以便API方法可以访问
             api.window = main_window
-            
+
             # 如果启动时最小化，隐藏窗口并显示托盘图标
             if start_minimized:
                 log("启动时最小化模式", "info")
@@ -1702,6 +1729,7 @@ if __name__ == '__main__':
                     tray_icon = None
                     log(f"系统托盘初始化失败，继续无托盘运行: {str(e)}", "warning")
 
+
             # 注册拖拽区域
             def on_loaded():
                 log("注册拖拽区域", "info")
@@ -1713,7 +1741,7 @@ if __name__ == '__main__':
                         }
                     });
                 """)
-                
+
                 # 加载并应用缩放设置
                 try:
                     settings = load_settings_data()
@@ -1725,6 +1753,7 @@ if __name__ == '__main__':
                     log("启动时已应用设置", "info")
                 except Exception as e:
                     log(f"启动应用设置失败: {str(e)}", "error")
+
 
             # 启动程序（根据参数决定是否启用开发者工具）
             webview.start(
@@ -1745,7 +1774,7 @@ if __name__ == '__main__':
             log("正在重启应用程序...", "info")
             subprocess.Popen(build_launch_command('--restart'))
             sys.exit(0)
-        
+
         # 程序退出时保存日志
         save_logs()
         # 停止托盘图标
