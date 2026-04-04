@@ -123,11 +123,22 @@
             color: #dce3f7;
             cursor: pointer;
             min-width: 120px;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%238e9bb6' d='M7 10l5 5l5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px 14px;
+            padding-right: 34px;
         }
 
         .select-box:focus {
             outline: none;
             border-color: #667eea;
+        }
+
+        .select-box::-ms-expand {
+            display: none;
         }
 
         /* 颜色选择器样式 */
@@ -225,6 +236,19 @@
 
         .btn-secondary:hover {
             background: #2d384b;
+        }
+
+        .font-preview-box {
+            margin-top: 12px;
+            padding: 14px 16px;
+            border: 1px dashed #31405a;
+            border-radius: 10px;
+            background: #141b27;
+            color: #d9e2f6;
+            text-align: center;
+            white-space: pre-line;
+            line-height: 1.65;
+            font-size: 15px;
         }
 
         /* 主题选项 */
@@ -340,10 +364,13 @@
             <div class="setting-item">
                 <div class="setting-info">
                     <div class="setting-label">自定义字体</div>
-                    <div class="setting-desc">使用自定义字体文件（.ttf 格式）</div>
+                    <div class="setting-desc">从系统字体列表选择应用字体</div>
                 </div>
-                <button class="btn btn-secondary" onclick="selectFontFile()">选择文件</button>
+                <select class="select-box" id="fontFamilySelect" onchange="updateFontFamily(this.value)">
+                    <option>HarmonyOS Sans SC</option>
+                </select>
             </div>
+            <div class="font-preview-box" id="fontPreviewText"></div>
         </div>
 
         <!-- 窗口透明度 -->
@@ -400,7 +427,7 @@
                     <div class="setting-label">浮动工具栏位置</div>
                     <div class="setting-desc">选择浮动工具栏的显示位置</div>
                 </div>
-                <select class="select-box">
+                <select class="select-box" id="toolbarPositionSelect">
                     <option>底部居中</option>
                     <option>底部左侧</option>
                     <option>底部右侧</option>
@@ -423,7 +450,7 @@
                     <div class="setting-label">动画速度</div>
                     <div class="setting-desc">调整界面动画的播放速度</div>
                 </div>
-                <select class="select-box">
+                <select class="select-box" id="animationSpeedSelect">
                     <option>慢速</option>
                     <option selected>正常</option>
                     <option>快速</option>
@@ -438,6 +465,7 @@
         let currentSettings = {
             theme: 'blue',
             fontSize: 14,
+            fontFamily: 'HarmonyOS Sans SC',
             zoom: 100,
             opacity: 100,
             glassEffect: false,
@@ -450,8 +478,61 @@
 
         // 页面加载时加载设置
         document.addEventListener('DOMContentLoaded', async function() {
+            await loadFontPreviewText();
+            await loadSystemFonts();
             await loadSettings();
         });
+
+        async function loadFontPreviewText() {
+            const fallbackText = `一起向前走吧，不论有多远。\nLet's move forward together, no matter how far.\n一只敏捷的棕色狐狸跳过一只懒惰的狗\nThe quick brown fox jumps over the lazy dog.\nABCDEFGHIJKLMNOPQRSTUVWXYZ\n1234567890`;
+            const previewEl = document.getElementById('fontPreviewText');
+            if (!previewEl) return;
+
+            try {
+                const res = await fetch('../../previewtext?' + Date.now());
+                if (res.ok) {
+                    const text = (await res.text()).trim();
+                    previewEl.textContent = text || fallbackText;
+                } else {
+                    previewEl.textContent = fallbackText;
+                }
+            } catch (_) {
+                previewEl.textContent = fallbackText;
+            }
+        }
+
+        async function loadSystemFonts() {
+            const select = document.getElementById('fontFamilySelect');
+            if (!select) return;
+
+            let fonts = [];
+            try {
+                if (window.pywebview && window.pywebview.api && window.pywebview.api.getSystemFonts) {
+                    const result = await window.pywebview.api.getSystemFonts();
+                    if (result && result.success && Array.isArray(result.data)) {
+                        fonts = result.data;
+                    }
+                }
+            } catch (e) {
+                console.warn('读取系统字体失败:', e);
+            }
+
+            if (!fonts.length) {
+                fonts = ['HarmonyOS Sans SC', 'Arial', 'Times New Roman'];
+            }
+            if (!fonts.includes('HarmonyOS Sans SC')) {
+                fonts.unshift('HarmonyOS Sans SC');
+            }
+
+            select.innerHTML = '';
+            fonts.forEach((name) => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                option.style.fontFamily = `"${name}", "CustomFont", sans-serif`;
+                select.appendChild(option);
+            });
+        }
 
         // 加载设置
         async function loadSettings() {
@@ -485,6 +566,19 @@
             // 应用字体大小
             document.getElementById('fontSizeSlider').value = currentSettings.fontSize;
             document.getElementById('fontSizeValue').textContent = currentSettings.fontSize + 'px';
+
+            const fontSelect = document.getElementById('fontFamilySelect');
+            if (fontSelect) {
+                const wanted = currentSettings.fontFamily || 'HarmonyOS Sans SC';
+                const exists = Array.from(fontSelect.options).some(opt => opt.value === wanted);
+                if (exists) {
+                    fontSelect.value = wanted;
+                } else {
+                    fontSelect.value = 'HarmonyOS Sans SC';
+                    currentSettings.fontFamily = 'HarmonyOS Sans SC';
+                }
+            }
+            applyFontPreview();
 
             // 应用缩放比例
             document.getElementById('zoomSlider').value = currentSettings.zoom;
@@ -525,7 +619,7 @@
             }
 
             // 应用浮动工具栏位置
-            const toolbarSelect = document.querySelectorAll('.select-box')[0];
+            const toolbarSelect = document.getElementById('toolbarPositionSelect');
             if (toolbarSelect) {
                 const positionMap = {
                     'center': '底部居中',
@@ -546,7 +640,7 @@
             }
 
             // 应用动画速度
-            const speedSelect = document.querySelectorAll('.select-box')[1];
+            const speedSelect = document.getElementById('animationSpeedSelect');
             if (speedSelect) {
                 const speedMap = {
                     'slow': '慢速',
@@ -604,10 +698,17 @@
             saveCurrentSettings();
         }
 
-        // 选择字体文件
-        function selectFontFile() {
-            console.log('选择字体文件');
-            // 这里可以调用 Python API 选择文件
+        function updateFontFamily(value) {
+            currentSettings.fontFamily = value || 'HarmonyOS Sans SC';
+            applyFontPreview();
+            saveCurrentSettings();
+        }
+
+        function applyFontPreview() {
+            const previewEl = document.getElementById('fontPreviewText');
+            if (!previewEl) return;
+            const family = currentSettings.fontFamily || 'HarmonyOS Sans SC';
+            previewEl.style.fontFamily = `"${family}", "CustomFont", sans-serif`;
         }
 
         // 保存当前设置
@@ -619,7 +720,7 @@
             currentSettings.enableAnimation = document.querySelectorAll('.toggle-switch')[3].classList.contains('active');
 
             // 获取工具栏位置
-            const toolbarSelect = document.querySelectorAll('.select-box')[0];
+            const toolbarSelect = document.getElementById('toolbarPositionSelect');
             if (toolbarSelect) {
                 const positionMap = {
                     '底部居中': 'center',
@@ -630,7 +731,7 @@
             }
 
             // 获取动画速度
-            const speedSelect = document.querySelectorAll('.select-box')[1];
+            const speedSelect = document.getElementById('animationSpeedSelect');
             if (speedSelect) {
                 const speedMap = {
                     '慢速': 'slow',
@@ -668,9 +769,8 @@
         }
 
         // 监听下拉框变化
-        document.querySelectorAll('.select-box').forEach(select => {
-            select.addEventListener('change', saveCurrentSettings);
-        });
+        document.getElementById('toolbarPositionSelect')?.addEventListener('change', saveCurrentSettings);
+        document.getElementById('animationSpeedSelect')?.addEventListener('change', saveCurrentSettings);
 
         function applySearch(query) {
             const q = (query || '').trim().toLowerCase();

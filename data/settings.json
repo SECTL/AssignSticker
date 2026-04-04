@@ -1,6 +1,7 @@
 {
   "theme": "blue",
   "fontSize": 14,
+  "fontFamily": "HarmonyOS Sans SC",
   "zoom": 100,
   "opacity": 100,
   "glassEffect": false,
@@ -13,5 +14,6 @@
   "startMinimized": false,
   "enableReminder": true,
   "reminderTime": "30分钟",
-  "autoSaveInterval": "5分钟"
+  "autoSaveInterval": "5分钟",
+  "widgetEngine": "qt"
 }

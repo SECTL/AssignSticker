@@ -11,6 +11,9 @@ import threading
 import json
 import random
 import re
+import time
+import queue
+import tempfile
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw
 import pystray
@@ -30,6 +33,12 @@ log_entries = []
 # 全局窗口对象
 main_window = None
 widget_window = None
+settings_window = None
+widget_process = None
+widget_ui_thread = None
+widget_command_queue = queue.Queue()
+widget_show_request_event = threading.Event()
+widget_signal_watcher_started = False
 is_main_window_hidden = False
 
 # 调试模式开关
@@ -44,6 +53,7 @@ should_restart = False
 DEFAULT_SETTINGS = {
     "theme": "blue",
     "fontSize": 14,
+    "fontFamily": "HarmonyOS Sans SC",
     "zoom": 100,
     "opacity": 100,
     "glassEffect": False,
@@ -56,12 +66,24 @@ DEFAULT_SETTINGS = {
     "startMinimized": False,
     "enableReminder": True,
     "reminderTime": "30分钟",
-    "autoSaveInterval": "5分钟"
+    "autoSaveInterval": "5分钟",
+    "widgetEngine": "qt"
 }
 
 
+def get_runtime_dir():
+    """
+    获取程序运行目录（强制数据目录基于此路径）：
+    1. 打包运行时使用可执行文件所在目录
+    2. 脚本运行时使用入口脚本所在目录
+    """
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.abspath(sys.argv[0]))
+
+
 def get_data_dir():
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    return os.path.join(get_runtime_dir(), 'data')
 
 
 def get_settings_file():
@@ -74,6 +96,188 @@ def get_homework_file():
 
 def get_homework_template_dir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'homeworktemple')
+
+
+def get_pyside_widget_logo():
+    return os.path.join(get_runtime_dir(), 'desktop_widgets', 'widgets.png')
+
+
+def get_widget_signal_file():
+    return os.path.join(tempfile.gettempdir(), 'assignsticker_widget_show.signal')
+
+
+def get_pyside_widget_script():
+    return os.path.join(get_runtime_dir(), 'desktop_widgets', 'pyside_widget.py')
+
+
+def stop_pyside_widget_process():
+    global widget_process
+    # 优先停止 Qt 小组件子进程（稳定）
+    if widget_process:
+        try:
+            if widget_process.poll() is None:
+                widget_process.terminate()
+                try:
+                    widget_process.wait(timeout=2)
+                except Exception:
+                    widget_process.kill()
+        except Exception as e:
+            log(f"停止 PySide6 小组件进程失败: {str(e)}", "warning")
+        finally:
+            widget_process = None
+
+    # 兼容旧逻辑：尝试通知同进程 UI 关闭
+    try:
+        widget_command_queue.put_nowait("stop")
+    except Exception:
+        pass
+
+
+def _start_inprocess_pyside_widget():
+    global widget_ui_thread
+    if widget_ui_thread and widget_ui_thread.is_alive():
+        return
+
+    def _runner():
+        try:
+            from PySide6.QtCore import QPoint, Qt, QTimer
+            from PySide6.QtGui import QPixmap
+            from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QWidget
+        except Exception as e:
+            log(f"加载 PySide6 失败: {str(e)}", "error")
+            return
+
+        class DesktopWidget(QWidget):
+            def __init__(self):
+                super().__init__()
+                self._drag_pos = None
+
+                self.setWindowTitle("AssignSticker Widget")
+                self.setFixedSize(80, 80)
+                self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+                self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+                root = QHBoxLayout(self)
+                root.setContentsMargins(0, 0, 0, 0)
+
+                card = QFrame()
+                card.setObjectName("card")
+                card_layout = QHBoxLayout(card)
+                card_layout.setContentsMargins(12, 12, 12, 12)
+                card_layout.setSpacing(0)
+
+                logo_label = QLabel()
+                logo_label.setFixedSize(56, 56)
+                logo_path = get_pyside_widget_logo()
+                if os.path.exists(logo_path):
+                    pix = QPixmap(logo_path).scaled(56, 56, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+                    logo_label.setPixmap(pix)
+                logo_label.setCursor(Qt.PointingHandCursor)
+
+                logo_label.mousePressEvent = lambda e: self._request_show_main() if e.button() == Qt.LeftButton else None
+
+                card_layout.addWidget(logo_label, 0, Qt.AlignCenter)
+                root.addWidget(card)
+
+                self.setStyleSheet("""
+                    #card {
+                        background: rgba(255, 255, 255, 0.96);
+                        border: 1px solid rgba(88, 112, 165, 0.25);
+                        border-radius: 18px;
+                    }
+                """)
+
+            def _request_show_main(self):
+                widget_show_request_event.set()
+                self.hide()
+
+            def mousePressEvent(self, event):
+                if event.button() == Qt.LeftButton:
+                    self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                    event.accept()
+
+            def mouseMoveEvent(self, event):
+                if self._drag_pos and event.buttons() & Qt.LeftButton:
+                    self.move(event.globalPosition().toPoint() - self._drag_pos)
+                    event.accept()
+
+            def mouseReleaseEvent(self, event):
+                self._drag_pos = None
+                event.accept()
+
+        app = QApplication.instance()
+        owns_app = False
+        if app is None:
+            app = QApplication(sys.argv)
+            owns_app = True
+        app.setQuitOnLastWindowClosed(False)
+
+        widget = DesktopWidget()
+
+        screen = app.primaryScreen()
+        if screen:
+            geo = screen.availableGeometry()
+            x = geo.right() - widget.width() - 24
+            y = geo.bottom() - widget.height() - 80
+            widget.move(QPoint(x, y))
+
+        def _poll_commands():
+            try:
+                while True:
+                    cmd = widget_command_queue.get_nowait()
+                    if cmd == "show":
+                        widget.show()
+                        widget.raise_()
+                        widget.activateWindow()
+                    elif cmd == "hide":
+                        widget.hide()
+                    elif cmd == "stop":
+                        widget.hide()
+                        if owns_app:
+                            app.quit()
+                        return
+            except queue.Empty:
+                pass
+
+        timer = QTimer()
+        timer.timeout.connect(_poll_commands)
+        timer.start(80)
+
+        if owns_app:
+            app.exec()
+        else:
+            widget.show()
+
+    widget_ui_thread = threading.Thread(target=_runner, daemon=True, name="pyside-widget-ui")
+    widget_ui_thread.start()
+
+
+def start_widget_signal_watcher(api_instance):
+    global widget_signal_watcher_started
+    if widget_signal_watcher_started:
+        return
+
+    def _watch():
+        signal_file = get_widget_signal_file()
+        while True:
+            try:
+                if os.path.exists(signal_file):
+                    try:
+                        os.remove(signal_file)
+                    except Exception:
+                        pass
+                    api_instance.showMainWindow()
+
+                if widget_show_request_event.is_set():
+                    widget_show_request_event.clear()
+                    api_instance.showMainWindow()
+                time.sleep(0.25)
+            except Exception:
+                time.sleep(0.5)
+
+    watcher = threading.Thread(target=_watch, daemon=True, name='widget-signal-watcher')
+    watcher.start()
+    widget_signal_watcher_started = True
 
 
 DEFAULT_HOMEWORK_TEMPLATES = [
@@ -580,12 +784,12 @@ def ensure_data_directory():
 
 def get_homework_save_dir():
     """获取作业保存目录路径"""
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save')
+    return os.path.join(get_data_dir(), 'homework_save')
 
 
 def get_homework_save_auto_dir():
     """获取自动保存作业目录路径"""
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework_save_auto')
+    return os.path.join(get_data_dir(), 'homework_save_auto')
 
 
 class WidgetApi:
@@ -742,6 +946,7 @@ class Api:
         """重启应用程序"""
         try:
             log("用户触发重启", "info")
+            stop_pyside_widget_process()
             global should_restart
             # 先标记需要重启
             should_restart = True
@@ -765,6 +970,7 @@ class Api:
         """退出应用程序"""
         try:
             log("用户触发退出", "info")
+            stop_pyside_widget_process()
             # 保存日志
             save_logs()
             # 停止托盘图标
@@ -784,7 +990,7 @@ class Api:
     def hideMainWindow(self):
         """隐藏主窗口并显示小组件"""
         try:
-            global is_main_window_hidden, widget_window
+            global is_main_window_hidden, widget_window, widget_process
             log("隐藏主窗口", "info")
             is_main_window_hidden = True
             
@@ -792,21 +998,81 @@ class Api:
             if self.window:
                 self.window.hide()
             
-            # 创建小组件窗口
-            if widget_window is None:
-                widget_window = webview.create_window(
-                    'AssignSticker Widget',
-                    'desktop_widgets/desktop_widgets.html',
-                    width=240,
-                    height=60,
-                    frameless=True,
-                    on_top=True,
-                    resizable=False,
-                    transparent=True,
-                    js_api=WidgetApi()
-                )
+            # 兼容旧版 webview 小组件：若存在则隐藏
+            if widget_window:
+                try:
+                    widget_window.hide()
+                except Exception:
+                    pass
+
+            current_system = platform.system()
+            settings = load_settings_data()
+            configured_engine = str(settings.get("widgetEngine", "qt")).strip().lower()
+            widget_engine = configured_engine if configured_engine in ("qt", "webview") else "qt"
+            # macOS 上仅支持 webview 小组件
+            if current_system == 'Darwin':
+                widget_engine = "webview"
+
+            if widget_engine == "webview":
+                stop_pyside_widget_process()
+                try:
+                    widget_command_queue.put_nowait("hide")
+                except Exception:
+                    pass
+
+                if widget_window is None:
+                    widget_window = webview.create_window(
+                        'AssignSticker Widget',
+                        'desktop_widgets/desktop_widgets.html',
+                        width=80,
+                        height=80,
+                        frameless=True,
+                        on_top=True,
+                        resizable=False,
+                        transparent=True,
+                        js_api=WidgetApi()
+                    )
+                else:
+                    widget_window.show()
+                log(f"已显示 WebView 小组件（{current_system}）", "info")
+            elif current_system in ('Windows', 'Linux'):
+                # Windows/Linux：Qt 小组件与应用本体同进程
+                if widget_process and widget_process.poll() is None:
+                    stop_pyside_widget_process()
+                _start_inprocess_pyside_widget()
+                try:
+                    widget_command_queue.put_nowait("show")
+                except Exception:
+                    pass
+                log("已显示 Qt 小组件（同进程）", "info")
             else:
-                widget_window.show()
+                # 其他平台：Qt 小组件维持子进程模式，避免线程/事件循环冲突
+                if widget_process is None or widget_process.poll() is not None:
+                    script_path = get_pyside_widget_script()
+                    logo_path = get_pyside_widget_logo()
+                    signal_file = get_widget_signal_file()
+
+                    if not os.path.exists(script_path):
+                        return {"success": False, "message": f"未找到 Qt 小组件脚本: {script_path}"}
+
+                    try:
+                        if os.path.exists(signal_file):
+                            os.remove(signal_file)
+                    except Exception:
+                        pass
+
+                    widget_process = subprocess.Popen(
+                        [
+                            sys.executable,
+                            script_path,
+                            '--signal-file',
+                            signal_file,
+                            '--logo',
+                            logo_path
+                        ],
+                        cwd=get_runtime_dir()
+                    )
+                    log("已显示 Qt 小组件（子进程）", "info")
             
             return {"success": True, "message": "主窗口已隐藏"}
         except Exception as e:
@@ -829,6 +1095,16 @@ class Api:
             # 隐藏小组件
             if widget_window:
                 widget_window.hide()
+            current_system = platform.system()
+            if current_system in ('Windows', 'Linux'):
+                try:
+                    widget_command_queue.put_nowait("hide")
+                except Exception:
+                    pass
+            elif current_system == 'Darwin':
+                stop_pyside_widget_process()
+            else:
+                stop_pyside_widget_process()
             
             return {"success": True, "message": "主窗口已显示"}
         except Exception as e:
@@ -863,7 +1139,18 @@ class Api:
     def openSettingsWindow(self):
         """打开设置窗口"""
         try:
+            global settings_window
             log("打开设置窗口", "info")
+
+            # 若已存在设置窗口，直接激活，避免重复创建导致状态异常
+            if settings_window:
+                try:
+                    settings_window.show()
+                    settings_window.restore()
+                    return {"success": True, "message": "设置窗口已激活"}
+                except Exception:
+                    settings_window = None
+
             # 创建设置窗口
             settings_window = webview.create_window(
                 '设置 - AssignSticker',
@@ -875,11 +1162,36 @@ class Api:
                 background_color='#f5f5f5',
                 js_api=self
             )
+
+            # 监听关闭事件，及时清理引用，避免主窗口交互异常
+            try:
+                def _on_settings_closed(*_):
+                    global settings_window
+                    settings_window = None
+                    log("设置窗口已关闭", "info")
+                settings_window.events.closed += _on_settings_closed
+            except Exception as event_err:
+                log(f"绑定设置窗口关闭事件失败: {str(event_err)}", "warning")
+
             return {"success": True, "message": "设置窗口已打开"}
         except Exception as e:
             error_msg = str(e)
             log(f"打开设置窗口失败: {error_msg}", "error")
             return {"success": False, "message": f"打开设置窗口失败: {error_msg}"}
+
+    def closeSettingsWindow(self):
+        """关闭设置窗口（由设置页前端调用，避免直接 window.close 引发状态异常）"""
+        try:
+            global settings_window
+            if settings_window:
+                settings_window.destroy()
+                settings_window = None
+                log("设置窗口已关闭（API）", "info")
+            return {"success": True, "message": "设置窗口已关闭"}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"关闭设置窗口失败: {error_msg}", "error")
+            return {"success": False, "message": f"关闭设置窗口失败: {error_msg}"}
 
     def setZoom(self, zoom):
         """设置主窗口缩放比例"""
@@ -1032,6 +1344,41 @@ class Api:
             log(f"加载设置失败: {error_msg}", "error")
             return {"success": False, "message": f"加载设置失败: {error_msg}"}
 
+    def getSystemFonts(self):
+        """获取系统字体列表（用于外观设置字体下拉框）"""
+        try:
+            fonts = []
+            try:
+                import tkinter as tk
+                from tkinter import font as tkfont
+
+                root = tk.Tk()
+                root.withdraw()
+                fonts = sorted(set(tkfont.families(root)))
+                root.destroy()
+            except Exception as e:
+                log(f"读取系统字体失败，使用兜底列表: {str(e)}", "warning")
+
+            if not fonts:
+                fonts = [
+                    "HarmonyOS Sans SC",
+                    "PingFang SC",
+                    "Microsoft YaHei",
+                    "Arial",
+                    "Times New Roman"
+                ]
+
+            if "HarmonyOS Sans SC" in fonts:
+                fonts = ["HarmonyOS Sans SC"] + [f for f in fonts if f != "HarmonyOS Sans SC"]
+            else:
+                fonts.insert(0, "HarmonyOS Sans SC")
+
+            return {"success": True, "data": fonts}
+        except Exception as e:
+            error_msg = str(e)
+            log(f"获取系统字体失败: {error_msg}", "error")
+            return {"success": False, "message": f"获取系统字体失败: {error_msg}", "data": ["HarmonyOS Sans SC"]}
+
     def loadHomeworkTemplates(self):
         """加载作业模板YML"""
         try:
@@ -1126,7 +1473,7 @@ class Api:
             from datetime import datetime
 
             # 获取作业数据
-            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            homework_file = get_homework_file()
             if not os.path.exists(homework_file):
                 return {"success": False, "message": "没有找到作业数据"}
 
@@ -1188,7 +1535,7 @@ class Api:
                 return {"success": False, "message": "无效的数据格式"}
 
             # 保存到作业文件
-            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            homework_file = get_homework_file()
             with open(homework_file, 'w', encoding='utf-8') as f:
                 json.dump(imported_data, f, ensure_ascii=False, indent=2)
 
@@ -1204,12 +1551,12 @@ class Api:
         """清除所有数据"""
         try:
             # 清除作业数据
-            homework_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'homework.json')
+            homework_file = get_homework_file()
             if os.path.exists(homework_file):
                 os.remove(homework_file)
 
             # 清除设置数据
-            settings_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
+            settings_file = get_settings_file()
             if os.path.exists(settings_file):
                 os.remove(settings_file)
 
@@ -1509,6 +1856,7 @@ if __name__ == '__main__':
             log("程序启动成功", "info")
             # 创建API实例
             api = Api()
+            start_widget_signal_watcher(api)
             
             # 检查是否启动时最小化
             start_minimized = False
@@ -1591,6 +1939,7 @@ if __name__ == '__main__':
         # 显示崩溃窗口
         show_crash_window(error_msg)
     finally:
+        stop_pyside_widget_process()
         # 检查是否需要重启（重启时已在restartApp中处理）
         if should_restart:
             log("正在重启应用程序...", "info")

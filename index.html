@@ -1163,16 +1163,22 @@
             }
 
             if (homework.type === '练习册') {
-                const base = normalizeContentText(`练习册 ${homework.startPage || ''}-${homework.endPage || ''} 页`);
+                const startPage = homework.startPage || '';
+                const endPage = homework.endPage || '';
                 const noteRich = homework.workbookNoteHtml
                     ? sanitizeRichText(homework.workbookNoteHtml)
                     : normalizeContentText(homework.workbookNote || '');
-                return noteRich ? `${base}<br>备注: ${noteRich}` : base;
+                
+                let result = `练习册 ${startPage}-${endPage}`;
+                if (noteRich) {
+                    result += ` (${noteRich})`;
+                }
+                return result;
             } else if (homework.type === '预习') {
                 const rich = homework.previewContentHtml
                     ? sanitizeRichText(homework.previewContentHtml)
                     : normalizeContentText(homework.previewContent || '');
-                return `预习: ${rich}`;
+                return `预习 ${rich}`;
             } else if (homework.type === '自定义作业' || homework.type === '作业') {
                 if (homework.homeworkContentHtml) {
                     return sanitizeRichText(homework.homeworkContentHtml);

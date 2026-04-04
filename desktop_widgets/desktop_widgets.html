@@ -29,48 +29,24 @@
 
         .widget-container {
             display: flex;
-            flex-direction: row;
             align-items: center;
-            padding: 10px 12px;
-            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
         }
 
         .logo {
-            width: 120px;
-            height: 40px;
-            border-radius: 6px;
-            object-fit: contain;
-        }
-
-        .show-button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
-            background: rgba(102, 126, 234, 0.9);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-size: 11px;
-            font-weight: 500;
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            object-fit: cover;
             cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+            transition: transform 0.18s ease;
         }
 
-        .show-button:hover {
-            background: rgba(102, 126, 234, 1);
-            transform: scale(1.02);
-        }
-
-        .show-button:active {
-            transform: scale(0.98);
-        }
-
-        .show-button svg {
-            width: 14px;
-            height: 14px;
-            fill: currentColor;
+        .logo:hover {
+            transform: scale(1.03);
         }
 
         .drag-area {
@@ -78,7 +54,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 20px;
+            height: 16px;
             cursor: move;
             z-index: 100;
         }
@@ -87,13 +63,7 @@
 <body>
     <div class="drag-area"></div>
     <div class="widget-container">
-        <img src="widgets.logo.png" alt="Logo" class="logo">
-        <button class="show-button" id="showButton">
-            <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 9a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm0-5a10 10 0 0 1 9.7 7.56.75.75 0 1 1-1.45.37 8.5 8.5 0 0 0-16.5 0 .75.75 0 0 1-1.45-.36A10 10 0 0 1 12 5.5Z" fill="currentColor"/>
-            </svg>
-            显示作业板
-        </button>
+        <img src="widgets.png" alt="Logo" class="logo" id="showLogo">
     </div>
 
     <script>
@@ -120,8 +90,8 @@
             isDragging = false;
         });
 
-        // 显示主窗口按钮
-        document.getElementById('showButton').addEventListener('click', () => {
+        // 点击图标显示主窗口
+        document.getElementById('showLogo').addEventListener('click', () => {
             if (window.pywebview && window.pywebview.api) {
                 window.pywebview.api.show_main_window();
             }
