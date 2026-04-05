@@ -488,8 +488,8 @@ def save_logs():
     if not log_entries:
         return
 
-    # 创建logs目录
-    logs_dir = "logs"
+    # 创建logs目录（在程序运行目录下）
+    logs_dir = os.path.join(get_runtime_dir(), "logs")
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
 
@@ -682,7 +682,7 @@ def setup_tray_icon(window):
         log("托盘菜单: 打开日志文件夹", "info")
         import subprocess
 
-        logs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+        logs_path = os.path.join(get_runtime_dir(), "logs")
         if os.path.exists(logs_path):
             subprocess.call(["open", logs_path])
             log("已打开日志文件夹", "info")
@@ -969,20 +969,31 @@ class Api:
         try:
             log("用户触发重启", "info")
             stop_pyside_widget_process()
-            global should_restart
-            # 先标记需要重启
-            should_restart = True
-            # 保存日志
+
+            # 先保存日志
             save_logs()
+
             # 停止托盘图标
             global tray_icon
             if tray_icon:
-                tray_icon.stop()
-            # 关闭当前窗口并强制退出进程
+                try:
+                    tray_icon.stop()
+                except Exception as e:
+                    log(f"停止托盘图标失败: {str(e)}", "warning")
+
+            # 关闭窗口
             if self.window:
-                self.window.destroy()
-            # 强制退出当前进程
-            os._exit(0)
+                try:
+                    self.window.destroy()
+                except Exception as e:
+                    log(f"关闭窗口失败: {str(e)}", "warning")
+
+            # 启动新进程（带--restart参数）
+            log("正在启动新进程...", "info")
+            subprocess.Popen([sys.executable, __file__, "--restart"])
+
+            # 退出当前进程
+            sys.exit(0)
         except Exception as e:
             error_msg = str(e)
             log(f"重启失败: {error_msg}", "error")
@@ -1777,12 +1788,15 @@ class Api:
             from datetime import datetime, timedelta
 
             homework_file = get_homework_file()
+            log(f"加载作业文件: {homework_file}", "info")
 
             if not os.path.exists(homework_file):
                 return {"success": True, "data": [], "message": "没有作业数据"}
 
             with open(homework_file, "r", encoding="utf-8") as f:
                 homework_list = json.load(f)
+
+            log(f"原始作业数量: {len(homework_list)}", "info")
 
             # 获取当前时间
             now = datetime.now()
@@ -1793,21 +1807,34 @@ class Api:
 
             for homework in homework_list:
                 if homework.get("endTime"):
-                    end_time = datetime.fromisoformat(
-                        homework["endTime"].replace("Z", "")
-                    )
-                    # 计算截止日期的当天24:00
-                    deadline = end_time.replace(
-                        hour=23, minute=59, second=59, microsecond=999999
-                    )
+                    try:
+                        end_time = datetime.fromisoformat(
+                            homework["endTime"].replace("Z", "")
+                        )
+                        # 计算截止日期的当天24:00
+                        deadline = end_time.replace(
+                            hour=23, minute=59, second=59, microsecond=999999
+                        )
 
-                    if now <= deadline:
+                        if now <= deadline:
+                            valid_homework.append(homework)
+                        else:
+                            expired_homework.append(homework)
+                            log(
+                                f"作业已过期: {homework.get('subject')} 截止时间: {homework.get('endTime')}",
+                                "info",
+                            )
+                    except Exception as e:
+                        log(f"解析作业时间失败: {str(e)}", "warning")
                         valid_homework.append(homework)
-                    else:
-                        expired_homework.append(homework)
                 else:
                     # 没有截止日期的作业默认保留
                     valid_homework.append(homework)
+
+            log(
+                f"有效作业数量: {len(valid_homework)}, 过期作业: {len(expired_homework)}",
+                "info",
+            )
 
             # 如果有过期作业，更新文件
             if expired_homework:
@@ -1973,14 +2000,12 @@ if __name__ == "__main__":
         show_crash_window(error_msg)
     finally:
         stop_pyside_widget_process()
-        # 检查是否需要重启（重启时已在restartApp中处理）
-        if should_restart:
-            log("正在重启应用程序...", "info")
-            subprocess.Popen([sys.executable, __file__])
-            sys.exit(0)
 
         # 程序退出时保存日志
         save_logs()
         # 停止托盘图标
         if tray_icon:
-            tray_icon.stop()
+            try:
+                tray_icon.stop()
+            except Exception:
+                pass

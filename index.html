@@ -838,38 +838,60 @@
         }
 
         // 作业数据管理
-        // 作业数据缓存
-        let homeworkCache = null;
+        // 作业数据缓存 - 初始化时从 localStorage 加载
+        let homeworkCache = [];
 
-        // 从服务器加载作业数据
+        // 从服务器加载作业数据（刷新缓存）- 优先从服务器加载
         async function loadHomeworkFromServer() {
             try {
                 if (window.pywebview && window.pywebview.api) {
+                    console.log('正在从服务器加载作业数据...');
                     const result = await window.pywebview.api.loadHomeworkData();
-                    if (result.success) {
+                    console.log('服务器返回:', result);
+                    if (result.success && result.data) {
                         homeworkCache = result.data || [];
                         // 同步到 localStorage
                         localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
+                        console.log('已从服务器更新作业数据:', homeworkCache.length, '个');
                         return homeworkCache;
                     }
                 }
             } catch (error) {
                 console.error('从服务器加载作业失败:', error);
             }
-            // 如果服务器加载失败，从 localStorage 加载
+            
+            // 服务器加载失败，尝试从 localStorage 加载
+            console.log('从 localStorage 加载...');
             const data = localStorage.getItem('homeworkList');
-            homeworkCache = data ? JSON.parse(data) : [];
+            if (data) {
+                try {
+                    homeworkCache = JSON.parse(data);
+                    console.log('已从 localStorage 加载作业数据:', homeworkCache.length, '个');
+                } catch (e) {
+                    console.error('解析 localStorage 作业数据失败:', e);
+                    homeworkCache = [];
+                }
+            }
             return homeworkCache;
         }
 
-        function getHomeworkList() {
-            // 如果有缓存，返回缓存
-            if (homeworkCache !== null) {
-                return homeworkCache;
-            }
-            // 否则从 localStorage 加载
+        // 初始化时加载本地缓存（同步执行，作为后备）
+        (function() {
             const data = localStorage.getItem('homeworkList');
-            return data ? JSON.parse(data) : [];
+            if (data) {
+                try {
+                    homeworkCache = JSON.parse(data);
+                    console.log('初始化时已从 localStorage 加载作业数据:', homeworkCache.length, '个');
+                } catch (e) {
+                    console.error('解析 localStorage 作业数据失败:', e);
+                    homeworkCache = [];
+                }
+            }
+        })();
+
+        function getHomeworkList() {
+            // 返回缓存数据
+            return homeworkCache || [];
         }
 
         function saveHomework(homeworkData) {
@@ -1598,6 +1620,14 @@
             if (!settings || typeof settings !== 'object') return;
             appSettings = { ...appSettings, ...settings };
             applySettings();
+        };
+
+        // 给 Python 侧调用：实时下发作业数据并立即生效
+        window.applyHomeworkFromBackend = function(homeworkList) {
+            if (!Array.isArray(homeworkList)) return;
+            homeworkCache = homeworkList;
+            localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
+            renderHomeworkCards();
         };
 
         // 初始化
