@@ -68,6 +68,7 @@ DEFAULT_SETTINGS = {
     "reminderTime": "30分钟",
     "autoSaveInterval": "5分钟",
     "widgetEngine": "qt",
+    "debugMode": False,
 }
 
 
@@ -80,6 +81,13 @@ def get_runtime_dir():
     if getattr(sys, "frozen", False):
         return os.path.dirname(os.path.abspath(sys.executable))
     return os.path.dirname(os.path.abspath(sys.argv[0]))
+
+
+def get_main_script_path():
+    """获取主脚本路径"""
+    if getattr(sys, "frozen", False):
+        return sys.executable
+    return sys.argv[0] if sys.argv[0] else __file__
 
 
 def get_data_dir():
@@ -432,8 +440,10 @@ def save_settings_data(settings):
 
 def save_homework_data(homework_list):
     homework_file = get_homework_file()
+    log(f"保存作业到: {homework_file}", "info")
     with open(homework_file, "w", encoding="utf-8") as f:
         json.dump(homework_list, f, ensure_ascii=False, indent=2)
+    log(f"保存成功，作业数量: {len(homework_list)}", "info")
 
 
 def get_screen_size():
@@ -606,7 +616,7 @@ def show_crash_window(error_msg):
             import sys
             import subprocess
 
-            subprocess.Popen([sys.executable, __file__, "--restart"])
+            subprocess.Popen([sys.executable, get_main_script_path(), "--restart"])
             # 退出当前进程
             sys.exit(0)
 
@@ -653,7 +663,7 @@ def setup_tray_icon(window):
         # 停止托盘图标
         icon.stop()
         # 使用子进程重新启动程序，启用调试模式
-        subprocess.Popen([sys.executable, __file__, "--with-devtools"])
+        subprocess.Popen([sys.executable, get_main_script_path(), "--with-devtools"])
         # 退出当前程序
         if window:
             window.destroy()
@@ -671,7 +681,9 @@ def setup_tray_icon(window):
 
         error_msg = "这是从托盘菜单手动触发的测试异常，用于测试崩溃窗口功能"
         encoded_error = urllib.parse.quote(error_msg)
-        subprocess.Popen([sys.executable, __file__, "--crash-window", encoded_error])
+        subprocess.Popen(
+            [sys.executable, get_main_script_path(), "--crash-window", encoded_error]
+        )
         # 退出主程序
         if window:
             window.destroy()
@@ -700,20 +712,38 @@ def setup_tray_icon(window):
             window.destroy()
 
     # 创建托盘菜单
-    menu = pystray.Menu(
-        pystray.MenuItem("显示主窗口", on_show_window),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem(
-            "调试",
-            pystray.Menu(
-                pystray.MenuItem("开发人员工具", on_toggle_devtools),
-                pystray.MenuItem("触发异常（测试）", on_trigger_crash),
+    # 检查调试模式设置
+    try:
+        settings = load_settings_data()
+    except:
+        settings = {}
+
+    is_debug = settings.get("debugMode", False)
+    is_dev = getattr(sys, "frozen", False) == False
+
+    # 在开发环境或调试模式开启时显示调试菜单
+    if is_dev or is_debug:
+        menu = pystray.Menu(
+            pystray.MenuItem("显示主窗口", on_show_window),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                "调试",
+                pystray.Menu(
+                    pystray.MenuItem("开发人员工具", on_toggle_devtools),
+                    pystray.MenuItem("触发异常（测试）", on_trigger_crash),
+                ),
             ),
-        ),
-        pystray.MenuItem("打开日志文件夹", on_open_logs),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("退出", on_exit),
-    )
+            pystray.MenuItem("打开日志文件夹", on_open_logs),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("退出", on_exit),
+        )
+    else:
+        menu = pystray.Menu(
+            pystray.MenuItem("显示主窗口", on_show_window),
+            pystray.MenuItem("打开日志文件夹", on_open_logs),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("退出", on_exit),
+        )
 
     # 创建托盘图标
     icon = pystray.Icon("AssignSticker", create_tray_icon(), "AssignSticker", menu)
@@ -741,7 +771,8 @@ def show_crash_window_standalone(encoded_error):
         def restart_app():
             """重启应用程序"""
             crash_window.destroy()
-            subprocess.Popen([sys.executable, __file__, "--restart"])
+            script_path = get_main_script_path()
+            subprocess.Popen([sys.executable, script_path, "--restart"])
             sys.exit(0)
 
         def open_url(url):
@@ -834,7 +865,6 @@ class Api:
 
     def __init__(self):
         self.window = None
-        self.should_restart = False
 
     def _push_settings_to_main_window(self, settings):
         """将设置实时下发到主窗口"""
@@ -990,10 +1020,11 @@ class Api:
 
             # 启动新进程（带--restart参数）
             log("正在启动新进程...", "info")
-            subprocess.Popen([sys.executable, __file__, "--restart"])
+            script_path = sys.argv[0] if sys.argv[0] else __file__
+            subprocess.Popen([sys.executable, script_path, "--restart"])
 
-            # 退出当前进程
-            sys.exit(0)
+            # 退出当前进程（使用os._exit确保立即退出）
+            os._exit(0)
         except Exception as e:
             error_msg = str(e)
             log(f"重启失败: {error_msg}", "error")
@@ -1202,6 +1233,7 @@ class Api:
         try:
             if not isinstance(homework_list, list):
                 return {"success": False, "message": "作业数据格式错误"}
+            log(f"接收到保存请求，作业数量: {len(homework_list)}", "info")
             save_homework_data(homework_list)
             return {"success": True, "message": "作业数据已保存"}
         except Exception as e:
@@ -1423,6 +1455,83 @@ class Api:
             error_msg = str(e)
             log(f"加载设置失败: {error_msg}", "error")
             return {"success": False, "message": f"加载设置失败: {error_msg}"}
+
+    def getDebugInfo(self):
+        """获取调试信息"""
+        try:
+            import platform
+            import os
+            import sys
+
+            info = {
+                "os": f"{platform.system()} {platform.release()}",
+                "processor": f"{platform.processor()}",
+                "python_version": sys.version,
+                "architecture": platform.machine(),
+            }
+
+            # 尝试获取内存信息
+            try:
+                if platform.system() == "Windows":
+                    import ctypes
+
+                    kernel32 = ctypes.windll.kernel32
+                    ctypes.c_ulong()
+                    kernel32.GetSystemInfo.argtypes = []
+                    kernel32.GetSystemInfo.restype = ctypes.c_ulong
+                    sysinfo = {}
+                    kernel32.GetSystemInfo(ctypes.byref(sysinfo))
+                    info["memory_total"] = f"{sysinfo.ullTotalPhys / (1024**3):.2f} GB"
+                else:
+                    import subprocess
+
+                    result = subprocess.run(
+                        ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True
+                    )
+                    if result.returncode == 0:
+                        mem = int(result.stdout.strip())
+                        info["memory_total"] = f"{mem / (1024**3):.2f} GB"
+            except:
+                info["memory_total"] = "未知"
+
+            # 尝试获取磁盘信息
+            try:
+                if platform.system() == "Windows":
+                    import ctypes
+
+                    free_bytes = ctypes.c_ulonglong(0)
+                    ctypes.windll.kernel32.GetDiskFreeSpaceExW(
+                        None, None, None, ctypes.byref(free_bytes)
+                    )
+                    info["disk_free"] = f"{free_bytes.value / (1024**3):.2f} GB"
+                else:
+                    stat = os.statvfs("/")
+                    info["disk_free"] = (
+                        f"{stat.f_bavail * stat.f_frsize / (1024**3):.2f} GB"
+                    )
+            except:
+                info["disk_free"] = "未知"
+
+            # 获取前台窗口
+            try:
+                if platform.system() == "Windows":
+                    user32 = ctypes.windll.user32
+                    hwnd = user32.GetForegroundWindow()
+                    length = user32.GetWindowTextLengthW(hwnd)
+                    if length > 0:
+                        buffer = ctypes.create_unicode_buffer(length + 1)
+                        user32.GetWindowTextW(hwnd, buffer, length + 1)
+                        info["foreground_window"] = buffer.value
+                    else:
+                        info["foreground_window"] = "无标题窗口"
+                else:
+                    info["foreground_window"] = "不支持"
+            except:
+                info["foreground_window"] = "未知"
+
+            return {"success": True, "data": info}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
 
     def getSystemFonts(self):
         """获取系统字体列表（用于外观设置字体下拉框）"""
@@ -1783,12 +1892,12 @@ class Api:
             return {"success": False, "message": f"获取异常: {error_msg}"}
 
     def loadHomeworkData(self):
-        """加载作业数据，过滤掉已过期的作业"""
+        """加载作业数据（暂不过滤过期作业）"""
         try:
-            from datetime import datetime, timedelta
-
             homework_file = get_homework_file()
-            log(f"加载作业文件: {homework_file}", "info")
+            runtime_dir = get_runtime_dir()
+            log(f"运行时目录: {runtime_dir}", "info")
+            log(f"作业文件路径: {homework_file}", "info")
 
             if not os.path.exists(homework_file):
                 return {"success": True, "data": [], "message": "没有作业数据"}
@@ -1796,56 +1905,13 @@ class Api:
             with open(homework_file, "r", encoding="utf-8") as f:
                 homework_list = json.load(f)
 
-            log(f"原始作业数量: {len(homework_list)}", "info")
+            log(f"作业数量: {len(homework_list)}", "info")
 
-            # 获取当前时间
-            now = datetime.now()
-
-            # 过滤未过期的作业（截止日期当天24:00之前都算未过期）
-            valid_homework = []
-            expired_homework = []
-
-            for homework in homework_list:
-                if homework.get("endTime"):
-                    try:
-                        end_time = datetime.fromisoformat(
-                            homework["endTime"].replace("Z", "")
-                        )
-                        # 计算截止日期的当天24:00
-                        deadline = end_time.replace(
-                            hour=23, minute=59, second=59, microsecond=999999
-                        )
-
-                        if now <= deadline:
-                            valid_homework.append(homework)
-                        else:
-                            expired_homework.append(homework)
-                            log(
-                                f"作业已过期: {homework.get('subject')} 截止时间: {homework.get('endTime')}",
-                                "info",
-                            )
-                    except Exception as e:
-                        log(f"解析作业时间失败: {str(e)}", "warning")
-                        valid_homework.append(homework)
-                else:
-                    # 没有截止日期的作业默认保留
-                    valid_homework.append(homework)
-
-            log(
-                f"有效作业数量: {len(valid_homework)}, 过期作业: {len(expired_homework)}",
-                "info",
-            )
-
-            # 如果有过期作业，更新文件
-            if expired_homework:
-                with open(homework_file, "w", encoding="utf-8") as f:
-                    json.dump(valid_homework, f, ensure_ascii=False, indent=2)
-                log(f"已清理 {len(expired_homework)} 个过期作业", "info")
-
+            # 直接返回所有作业，不过滤
             return {
                 "success": True,
-                "data": valid_homework,
-                "message": f"加载了 {len(valid_homework)} 个作业",
+                "data": homework_list,
+                "message": f"加载了 {len(homework_list)} 个作业",
             }
 
         except Exception as e:

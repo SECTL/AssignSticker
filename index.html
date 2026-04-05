@@ -413,12 +413,6 @@
             overflow-y: auto;
             padding: 20px;
             z-index: 100;
-            transition: top 0.3s, bottom 0.3s;
-        }
-
-        .homework-container.fullscreen {
-            top: 0;
-            bottom: 80px;
         }
 
         .homework-grid {
@@ -624,7 +618,7 @@
                 <img src="icons/icons/save.svg" alt="保存">
             </button>
             <div class="submenu" id="save-submenu">
-                <button class="submenu-item">
+                <button class="submenu-item" onclick="saveAsImage()">
                     <img src="icons/icons/image.svg" alt="图片">
                     <span>保存为图片</span>
                 </button>
@@ -663,7 +657,7 @@
         <div class="toolbar-divider"></div>
 
         <!-- 锁定 -->
-        <button class="toolbar-btn" data-tooltip="锁定">
+        <button class="toolbar-btn" data-tooltip="锁定" onclick="toggleLock()">
             <img src="icons/icons/lock.svg" alt="锁定">
         </button>
 
@@ -777,6 +771,15 @@
             }
         });
 
+        function saveAsImage() {
+            showToast('提示', '保存为图片功能开发中');
+            document.getElementById('save-submenu').classList.remove('show');
+        }
+
+        function toggleLock() {
+            showToast('提示', '锁定功能开发中');
+        }
+
         // 作业编辑弹窗功能
         function openHomeworkModal() {
             const iframe = document.getElementById('homeworkIframe');
@@ -838,60 +841,63 @@
         }
 
         // 作业数据管理
-        // 作业数据缓存 - 初始化时从 localStorage 加载
-        let homeworkCache = [];
+        const fallbackStorage = Object.create(null);
+        function storageGet(key) {
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    return localStorage.getItem(key);
+                }
+            } catch (e) {
+                console.warn('localStorage.getItem 不可用，使用内存存储:', e);
+            }
+            return Object.prototype.hasOwnProperty.call(fallbackStorage, key) ? fallbackStorage[key] : null;
+        }
 
-        // 从服务器加载作业数据（刷新缓存）- 优先从服务器加载
+        function storageSet(key, value) {
+            const normalizedValue = String(value);
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage !== null) {
+                    localStorage.setItem(key, normalizedValue);
+                    return;
+                }
+            } catch (e) {
+                console.warn('localStorage.setItem 不可用，使用内存存储:', e);
+            }
+            fallbackStorage[key] = normalizedValue;
+        }
+
+        // 作业数据缓存
+        let homeworkCache = null;
+
+        // 从服务器加载作业数据
         async function loadHomeworkFromServer() {
             try {
                 if (window.pywebview && window.pywebview.api) {
-                    console.log('正在从服务器加载作业数据...');
                     const result = await window.pywebview.api.loadHomeworkData();
-                    console.log('服务器返回:', result);
-                    if (result.success && result.data) {
+                    if (result.success) {
                         homeworkCache = result.data || [];
                         // 同步到 localStorage
-                        localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
-                        console.log('已从服务器更新作业数据:', homeworkCache.length, '个');
+                        storageSet('homeworkList', JSON.stringify(homeworkCache));
                         return homeworkCache;
                     }
                 }
             } catch (error) {
                 console.error('从服务器加载作业失败:', error);
             }
-            
-            // 服务器加载失败，尝试从 localStorage 加载
-            console.log('从 localStorage 加载...');
-            const data = localStorage.getItem('homeworkList');
-            if (data) {
-                try {
-                    homeworkCache = JSON.parse(data);
-                    console.log('已从 localStorage 加载作业数据:', homeworkCache.length, '个');
-                } catch (e) {
-                    console.error('解析 localStorage 作业数据失败:', e);
-                    homeworkCache = [];
-                }
-            }
+            // 如果服务器加载失败，从 localStorage 加载
+            const data = storageGet('homeworkList');
+            homeworkCache = data ? JSON.parse(data) : [];
             return homeworkCache;
         }
 
-        // 初始化时加载本地缓存（同步执行，作为后备）
-        (function() {
-            const data = localStorage.getItem('homeworkList');
-            if (data) {
-                try {
-                    homeworkCache = JSON.parse(data);
-                    console.log('初始化时已从 localStorage 加载作业数据:', homeworkCache.length, '个');
-                } catch (e) {
-                    console.error('解析 localStorage 作业数据失败:', e);
-                    homeworkCache = [];
-                }
-            }
-        })();
-
         function getHomeworkList() {
-            // 返回缓存数据
-            return homeworkCache || [];
+            // 如果有缓存，返回缓存
+            if (homeworkCache !== null) {
+                return homeworkCache;
+            }
+            // 否则从 localStorage 加载
+            const data = storageGet('homeworkList');
+            return data ? JSON.parse(data) : [];
         }
 
         function saveHomework(homeworkData) {
@@ -917,14 +923,14 @@
                 list.push(homework);
             }
             
-            localStorage.setItem('homeworkList', JSON.stringify(list));
+            storageSet('homeworkList', JSON.stringify(list));
             homeworkCache = list;
         }
 
         function deleteHomework(id) {
             const list = getHomeworkList();
             const newList = list.filter(h => h.id !== id);
-            localStorage.setItem('homeworkList', JSON.stringify(newList));
+            storageSet('homeworkList', JSON.stringify(newList));
             homeworkCache = newList;
             syncHomeworkDataToServer();
             renderHomeworkCards();
@@ -1175,96 +1181,45 @@
         }
 
         function formatHomeworkContent(homework) {
-            const type = homework.type || '';
+            const type = homework.type;
+            const body = homework.templateBodyData;
             
-            if (type === '练习册' && homework.templateBodyData) {
-                const startPage = homework.templateBodyData['开始页']?.value || homework.startPage || '';
-                const endPage = homework.templateBodyData['结束页']?.value || homework.endPage || '';
-                const noteInfo = homework.templateBodyData['备注'];
+            if (type === '练习册' && body) {
+                const startPage = body['开始页']?.value || homework.startPage || '';
+                const endPage = body['结束页']?.value || homework.endPage || '';
+                const noteInfo = body['备注'];
                 const note = noteInfo?.value || '';
                 const noteHtml = noteInfo?.html || '';
                 
                 let result = `练习册 ${startPage}-${endPage}`;
                 if (note) {
-                    const noteRich = noteHtml ? sanitizeRichText(noteHtml) : normalizeContentText(note);
-                    result += ` ${noteRich}`;
+                    result += ` ${noteHtml ? sanitizeRichText(noteHtml) : note}`;
                 }
                 return result;
-            } else if (type === '预习' && homework.templateBodyData) {
-                const previewInfo = homework.templateBodyData['预习内容'];
+            } else if (type === '预习' && body) {
+                const previewInfo = body['预习内容'];
                 const previewContent = previewInfo?.value || '';
                 const previewHtml = previewInfo?.html || '';
-                const noteInfo = homework.templateBodyData['备注'];
+                const noteInfo = body['备注'];
                 const note = noteInfo?.value || '';
                 const noteHtml = noteInfo?.html || '';
                 
-                const rich = previewHtml ? sanitizeRichText(previewHtml) : normalizeContentText(previewContent);
-                let result = `预习 ${rich}`;
+                let result = `预习 ${previewHtml ? sanitizeRichText(previewHtml) : previewContent}`;
                 if (note) {
-                    const noteRich = noteHtml ? sanitizeRichText(noteHtml) : normalizeContentText(note);
-                    result += ` ${noteRich}`;
-                }
-                return result;
-            } else if ((type === '自定义作业' || type === '作业') && homework.templateBodyData) {
-                const contentInfo = homework.templateBodyData['作业内容'];
-                const content = contentInfo?.value || '';
-                const contentHtml = contentInfo?.html || '';
-                
-                if (contentHtml) {
-                    return sanitizeRichText(contentHtml);
-                }
-                return normalizeContentText(content);
-            }
-
-            if (homework.templateBodyData && typeof homework.templateBodyData === 'object') {
-                const lines = Object.entries(homework.templateBodyData).map(([label, info]) => {
-                    const ui = String(info?.ui || '').toLowerCase();
-                    const value = info?.value || '';
-                    const html = info?.html || '';
-                    const rendered = ui === 'rtftextbox'
-                        ? sanitizeRichText(html || normalizeContentText(value))
-                        : normalizeContentText(value);
-                    return `${escapeHtml(label)}: ${rendered}`;
-                }).filter(Boolean);
-                if (lines.length > 0) {
-                    return lines.join('<br>');
-                }
-            }
-
-            if (type === '练习册') {
-                const startPage = homework['开始页'] || homework.startPage || '';
-                const endPage = homework['结束页'] || homework.endPage || '';
-                const note = homework['备注'] || homework.workbookNote || '';
-                
-                let result = `练习册 ${startPage}-${endPage}`;
-                if (note) {
-                    const noteRich = homework.workbookNoteHtml
-                        ? sanitizeRichText(homework.workbookNoteHtml)
-                        : normalizeContentText(note);
-                    result += ` ${noteRich}`;
-                }
-                return result;
-            } else if (type === '预习') {
-                const previewContent = homework['预习内容'] || homework.previewContent || '';
-                const note = homework['备注'] || '';
-                const rich = homework.previewContentHtml
-                    ? sanitizeRichText(homework.previewContentHtml)
-                    : normalizeContentText(previewContent);
-                
-                let result = `预习 ${rich}`;
-                if (note) {
-                    const noteRich = homework.previewNoteHtml
-                        ? sanitizeRichText(homework.previewNoteHtml)
-                        : normalizeContentText(note);
-                    result += ` ${noteRich}`;
+                    result += ` ${noteHtml ? sanitizeRichText(noteHtml) : note}`;
                 }
                 return result;
             } else if (type === '自定义作业' || type === '作业') {
-                const content = homework['作业内容'] || homework.homeworkContent || '';
+                if (body && body['作业内容']) {
+                    const contentHtml = body['作业内容'].html || '';
+                    const contentValue = body['作业内容'].value || '';
+                    if (contentHtml) return sanitizeRichText(contentHtml);
+                    return normalizeContentText(contentValue);
+                }
                 if (homework.homeworkContentHtml) {
                     return sanitizeRichText(homework.homeworkContentHtml);
                 }
-                return normalizeContentText(content);
+                return normalizeContentText(homework.homeworkContent || '');
             }
             return '';
         }
@@ -1371,6 +1326,19 @@
 
         // 应用设置
         function applySettings() {
+            // 检查是否为开发环境
+            const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // 根据 debugMode 显示/隐藏开发中水印
+            const debugMode = appSettings.debugMode === true;
+            if (!isDev && !debugMode) {
+                document.querySelector('.footer-info').style.display = 'none';
+                document.querySelector('.saying-container').style.display = 'none';
+            } else {
+                document.querySelector('.footer-info').style.display = '';
+                document.querySelector('.saying-container').style.display = '';
+            }
+
             // 应用主题
             applyTheme(appSettings.theme);
 
@@ -1622,13 +1590,12 @@
             applySettings();
         };
 
-        // 给 Python 侧调用：实时下发作业数据并立即生效
-        window.applyHomeworkFromBackend = function(homeworkList) {
-            if (!Array.isArray(homeworkList)) return;
-            homeworkCache = homeworkList;
-            localStorage.setItem('homeworkList', JSON.stringify(homeworkCache));
-            renderHomeworkCards();
-        };
+        // 全屏切换功能
+        function toggleFullscreen() {
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.toggleFullscreen();
+            }
+        }
 
         // 初始化
         async function init() {
@@ -1637,6 +1604,12 @@
             renderHomeworkCards();
         }
         init();
+
+        // pywebview API 就绪后，确保从后端重新拉取作业数据
+        window.addEventListener('pywebviewready', async function () {
+            await loadHomeworkFromServer();
+            renderHomeworkCards();
+        });
 
         // 点击弹窗外部关闭
         document.getElementById('homeworkModal').addEventListener('click', function(e) {
@@ -1650,13 +1623,6 @@
             e.preventDefault();
             return false;
         });
-
-        // 全屏切换功能
-        function toggleFullscreen() {
-            if (window.pywebview && window.pywebview.api) {
-                window.pywebview.api.toggleFullscreen();
-            }
-        }
     </script>
 </body>
 </html>

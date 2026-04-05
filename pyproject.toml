@@ -1,18 +1,22 @@
 [project]
 name = "assignsticker"
-version = "1.2.0"
+version = "1.3.0"
 description = "一款简洁，易用的作业板"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pillow>=12.1.1",
-    "pygobject>=3.56.0 ; sys_platform == 'linux'",
     "pystray>=0.19.5",
     "pywebview==4.4.1",
+    "PySide6>=6.9.0",
+    "plyer>=2.1.0",
+]
+
+[project.optional-dependencies]
+linux = [
+    "pygobject>=3.56.0",
 ]
 
 [[tool.uv.index]]
-# 使用清华大学PyPI镜像源以提高下载速度
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-# 设置为默认索引
 default = true

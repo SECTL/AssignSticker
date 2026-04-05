@@ -57,7 +57,6 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --frozen
-          uv pip install pyinstaller
 
       - name: Build Windows executable
         run: uv run python build.py
@@ -113,12 +112,19 @@ jobs:
             python3-gi-cairo \
             libwebkit2gtk-4.1-0 \
             libayatana-appindicator3-1 \
-            dpkg-dev
+            dpkg-dev \
+            libegl1 \
+            libgl1-mesa-glx \
+            libxkbcommon0 \
+            libxcb-cursor0
+
+      - name: Install Python dependencies
+        run: |
+          uv sync --frozen --all-extras
 
       - name: Build with PyInstaller
         shell: bash
         run: |
-          uv sync --frozen
           uv pip install pyinstaller
 
           cat > assignsticker.spec << 'SPECEOF'
@@ -157,6 +163,10 @@ jobs:
               'PIL',
               'PIL._imagingtk',
               'PIL._tkinter_finder',
+              'PySide6',
+              'PySide6.QtCore',
+              'PySide6.QtGui',
+              'PySide6.QtWidgets',
           ]
 
           a = Analysis(
@@ -243,7 +253,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Installed-Size: ${SIZE}
-          Depends: gir1.2-gtk-3.0, gir1.2-webkit2-4.1, libayatana-appindicator3-1, libcairo2, libgtk-3-0, libwebkit2gtk-4.1-0, libgirepository-2.0-0
+          Depends: gir1.2-gtk-3.0, gir1.2-webkit2-4.1, libayatana-appindicator3-1, libcairo2, libgtk-3-0, libwebkit2gtk-4.1-0, libgirepository-2.0-0, libegl1, libgl1-mesa-gl, libxkbcommon0, libxcb-cursor0, python3-pyside6
           Maintainer: SECTL <sectl@example.com>
           Homepage: https://github.com/SECTL/AssignSticker
           Description: Homework Showboard Application

@@ -112,11 +112,70 @@
             align-items: center;
             gap: 8px;
             padding: 0 12px;
-            width: clamp(360px, 72vw, 820px) !important;
-            min-width: 360px !important;
-            max-width: 820px !important;
+            width: clamp(300px, 60vw, 700px) !important;
+            min-width: 300px !important;
+            max-width: 700px !important;
             flex: 0 1 auto !important;
-            margin: 0 auto !important;
+            margin: 0 auto 0 0 !important;
+        }
+
+        .topbar-more-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+        }
+
+        .topbar-more-btn:hover {
+            background: #f3f3f6;
+        }
+
+        .topbar-more-btn img {
+            width: 20px;
+            height: 20px;
+            opacity: 0.78;
+        }
+
+        .topbar-menu {
+            position: absolute;
+            top: 52px;
+            right: 0;
+            background: white;
+            border: 1px solid #d8d8de;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            min-width: 160px;
+            z-index: 1000;
+        }
+
+        .topbar-menu.show {
+            display: block;
+        }
+
+        .topbar-menu-item {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .topbar-menu-item:hover {
+            background: #f3f3f6;
+        }
+
+        .topbar-menu-item input {
+            width: 18px;
+            height: 18px;
+            margin-left: 10px;
         }
 
         .top-search-box img {
@@ -171,6 +230,39 @@
         .nav-item.active {
             background: #e8f2ff;
             border: 1px solid #c8dcff;
+        }
+
+        .debug-tab {
+            border-left: 3px solid #ff9800;
+        }
+
+        .debug-page {
+            padding: 24px;
+        }
+
+        .debug-page h1 {
+            margin: 0 0 16px;
+            color: var(--text-main);
+        }
+
+        .debug-page p {
+            color: var(--text-sub);
+            margin: 8px 0;
+        }
+
+        .debug-info {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .debug-info p {
+            margin: 8px 0;
+        }
+
+        .debug-info strong {
+            color: var(--text-main);
         }
 
         .nav-item.hidden {
@@ -407,7 +499,7 @@
                 <span>外观设置</span>
             </button>
             <button class="nav-item disabled" data-tab="templateset" onclick="handleDisabledTab()">
-                <img src="../../icons/icons/settings/Template.svg" alt="作业模板">
+                <img src="../../icons/icons/settings/template.svg" alt="作业模板">
                 <span>作业模板</span>
             </button>
             <button class="nav-item with-divider" data-tab="subjectset" onclick="switchTab('subjectset')">
@@ -422,6 +514,10 @@
                 <img src="../../icons/icons/settings/about.svg" alt="关于">
                 <span>关于</span>
             </button>
+            <button class="nav-item debug-tab" data-tab="debug" onclick="switchTab('debug')" style="display: none;">
+                <img src="../../icons/icons/debug.svg" alt="调试">
+                <span>调试</span>
+            </button>
         </div>
     </div>
 
@@ -430,6 +526,15 @@
             <div class="top-search-box">
                 <img src="../../icons/icons/search.svg" alt="搜索">
                 <input id="settingsSearch" type="text" placeholder="搜索应用设置...">
+            </div>
+            <div class="topbar-more-btn" id="topbarMoreBtn" onclick="toggleTopbarMenu()">
+                <img src="../../icons/icons/info.svg" alt="更多">
+            </div>
+            <div class="topbar-menu" id="topbarMenu">
+                <div class="topbar-menu-item" onclick="toggleDebugMode()">
+                    <span>调试模式</span>
+                    <input type="checkbox" id="debugModeToggle">
+                </div>
             </div>
         </div>
         <div class="content-body" id="contentBody">
@@ -452,6 +557,17 @@
             </div>
             <div class="tab-panel" data-tab="about">
                 <iframe class="settings-iframe tab-frame" id="frame-about"></iframe>
+            </div>
+            <div class="tab-panel" data-tab="debug" id="debugPanel">
+                <div class="debug-page">
+                    <h1>调试页面</h1>
+                    <p>此页面仅在调试模式开启时可见</p>
+                    <div class="debug-info">
+                        <p><strong>版本:</strong> <span id="debugVersion"></span></p>
+                        <p><strong>运行环境:</strong> <span id="debugRuntime"></span></p>
+                        <p><strong>窗口状态:</strong> <span id="debugWindowState"></span></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -494,6 +610,10 @@
             about: {
                 title: '关于',
                 keywords: ['关于', '作者', '说明', 'github', 'about']
+            },
+            debug: {
+                title: '调试页面',
+                keywords: ['调试', '开发', 'debug', 'dev', 'test']
             }
         };
 
@@ -509,10 +629,11 @@
         const PAGE_HEADER_META = {
             mainset: { title: '基本', subtitle: '行为' },
             styleset: { title: '外观', subtitle: '界面' },
-            templateset: { title: '作业模板', subtitle: '模板管理' },
-            subjectset: { title: '学科管理', subtitle: '科目列表' },
-            update: { title: '更新', subtitle: '版本与检查' },
-            about: { title: '关于', subtitle: '应用信息' }
+            templateset: { title: '作业模板', subtitle: '自定义' },
+            subjectset: { title: '学科', subtitle: '管理' },
+            update: { title: '更新', subtitle: '日志' },
+            about: { title: '关于', subtitle: '说明' },
+            debug: { title: '调试', subtitle: '开发' }
         };
         const LIGHT_SUBPAGE_STYLE = `
 <style id="light-mode-override">
@@ -737,6 +858,11 @@ body > .about-container {
             const frame = getFrameByTab(tab);
             markLoading(!frameLoadedMap.get(tab));
             applySearchToFrame(searchInput.value.trim());
+            
+            // 加载调试页面数据
+            if (tab === 'debug') {
+                loadDebugPage();
+            }
         }
 
         function handleDisabledTab() {
@@ -994,7 +1120,70 @@ body > .about-container {
 
         initSidebarState();
         initTab();
-        initWidgetEngineSetting();
+        initDebugModeFromSettings();
+
+        // 调试模式菜单功能
+        function toggleTopbarMenu() {
+            document.getElementById('topbarMenu').classList.toggle('show');
+        }
+
+        async function loadDebugPage() {
+            try {
+                if (window.pywebview && window.pywebview.api) {
+                    const result = await window.pywebview.api.getDebugInfo();
+                    if (result && result.success && result.data) {
+                        const info = result.data;
+                        document.getElementById('debugVersion').textContent = '1.3.0';
+                        document.getElementById('debugRuntime').textContent = info.os + ' | ' + info.architecture;
+                        document.getElementById('debugWindowState').textContent = '处理器: ' + info.processor + ' | 内存: ' + (info.memory_total || '未知') + ' | 磁盘可用: ' + (info.disk_free || '未知') + ' | Python: ' + info.python_version + ' | 前台窗口: ' + (info.foreground_window || '未知');
+                    }
+                }
+            } catch (e) {
+                console.error('加载调试信息失败:', e);
+            }
+        }
+
+        function initDebugModeFromSettings() {
+            const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const checkbox = document.getElementById('debugModeToggle');
+            const debugTab = document.querySelector('.debug-tab');
+            
+            if (isDev) {
+                checkbox.checked = true;
+                if (debugTab) debugTab.style.display = '';
+            } else {
+                window.pywebview && window.pywebview.api && window.pywebview.api.loadSettings().then(result => {
+                    if (result && result.success && result.data) {
+                        checkbox.checked = result.data.debugMode === true;
+                        if (result.data.debugMode === true && debugTab) {
+                            debugTab.style.display = '';
+                        }
+                    }
+                });
+            }
+        }
+
+        function toggleDebugMode() {
+            const checkbox = document.getElementById('debugModeToggle');
+            const newValue = checkbox.checked;
+            
+            window.pywebview && window.pywebview.api && window.pywebview.api.saveSettings({ debugMode: newValue }).then(() => {
+                // 提示用户需要重启
+                alert('调试模式已更改，需要重启应用生效。');
+            });
+            
+            // 关闭菜单
+            document.getElementById('topbarMenu').classList.remove('show');
+        }
+
+        // 点击外部关闭菜单
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('topbarMenu');
+            const btn = document.getElementById('topbarMoreBtn');
+            if (menu.classList.contains('show') && !menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
     </script>
 </body>
 </html>
