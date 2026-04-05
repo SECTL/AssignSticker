@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1775393026342,
+    "subject": "语文",
+    "type": "自定义作业",
+    "endTime": "2026-04-06T20:43",
+    "tags": [],
+    "templateBodyData": {
+      "作业内容": {
+        "ui": "rtftextbox",
+        "value": "123",
+        "html": "123"
+      }
+    },
+    "homeworkContent": "123",
+    "homeworkContentHtml": "123",
+    "content": "作业内容: 123",
+    "createdAt": "2026-04-05T12:43:46.342Z"
+  }
+]

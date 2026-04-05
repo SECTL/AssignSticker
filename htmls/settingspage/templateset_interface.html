@@ -212,13 +212,47 @@
 </head>
 <body>
     <div class="settings-container">
+        <!-- 模板编辑器已禁用
         <div class="settings-card" data-card="editor">
             <div class="card-title">作业模板编辑器</div>
             <div class="setting-item">
                 <div class="setting-info">
                     <div class="setting-label">模板名称</div>
-                    <div class="setting-desc">显示在布置作业窗口“作业模板”下拉框中</div>
+                    <div class="setting-desc">显示在布置作业窗口"作业模板"下拉框中</div>
                 </div>
+                <input id="templateNameInput" class="input-field" type="text" placeholder="例如：自定义作业" style="width:min(360px,100%);">
+            </div>
+
+            <div class="setting-item" style="align-items:flex-start; flex-direction:column;">
+                <div class="setting-info">
+                    <div class="setting-label">模板字段（body）</div>
+                    <div class="setting-desc">格式为 字段名: ui类型（combobox/textbox/spinbox/rtftextbox）</div>
+                </div>
+                <div id="fieldList" class="field-list"></div>
+                <button class="btn btn-secondary" onclick="addFieldRow()">添加字段</button>
+            </div>
+
+            <div class="setting-item" style="border-bottom:none; padding-bottom:0;">
+                <div class="setting-info">
+                    <div class="setting-label">操作</div>
+                    <div class="setting-desc">保存后会写入 homeworktemple/*.yml 并自动用于作业布置窗口</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-secondary" onclick="newTemplate()">新建模板</button>
+                    <button class="btn btn-primary" onclick="saveTemplate()">保存模板</button>
+                </div>
+            </div>
+            <div id="statusText" class="status-text"></div>
+        </div>
+        -->
+
+        <div class="settings-card" data-card="list">
+            <div class="card-title">已加载模板（YML）</div>
+            <div id="templateList"></div>
+        </div>
+
+        <div id="searchNoResults" class="search-no-results">没有匹配到相关模板项</div>
+    </div>
                 <input id="templateNameInput" class="input-field" type="text" placeholder="例如：自定义作业" style="width:min(360px,100%);">
             </div>
 
@@ -253,6 +287,8 @@
     </div>
 
     <script>
+        /*
+        // 自定义模板功能已禁用
         const UI_OPTIONS = ['combobox', 'textbox', 'spinbox', 'rtftextbox'];
         let templates = [];
         let activeFilename = '';
@@ -337,6 +373,92 @@
             }
             entries.forEach(([field, ui]) => addFieldRow(field, ui));
         }
+        */
+
+        let templates = [];
+        let activeSearchQuery = '';
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        /*
+        function setStatus(message, type = '') {
+            const node = document.getElementById('statusText');
+            node.textContent = message || '';
+            node.classList.remove('ok', 'err');
+            if (type) node.classList.add(type);
+        }
+
+        function addFieldRow(field = '', ui = 'textbox') {
+            const list = document.getElementById('fieldList');
+            const row = document.createElement('div');
+            row.className = 'field-row';
+
+            const input = document.createElement('input');
+            input.className = 'input-field';
+            input.type = 'text';
+            input.placeholder = '字段名（例如：作业内容）';
+            input.value = field;
+
+            const select = document.createElement('select');
+            select.className = 'select-box';
+            UI_OPTIONS.forEach((opt) => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (opt === ui) option.selected = true;
+                select.appendChild(option);
+            });
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger';
+            delBtn.textContent = '删除';
+            delBtn.onclick = () => row.remove();
+
+            row.appendChild(input);
+            row.appendChild(select);
+            row.appendChild(delBtn);
+            list.appendChild(row);
+        }
+
+        function clearFieldRows() {
+            document.getElementById('fieldList').innerHTML = '';
+        }
+
+        function collectBodyFromEditor() {
+            const rows = Array.from(document.querySelectorAll('#fieldList .field-row'));
+            const body = {};
+            for (const row of rows) {
+                const field = row.querySelector('input')?.value?.trim() || '';
+                const ui = row.querySelector('select')?.value || '';
+                if (!field) continue;
+                if (!UI_OPTIONS.includes(ui)) {
+                    throw new Error(`不支持的字段类型：${ui}`);
+                }
+                body[field] = ui;
+            }
+            return body;
+        }
+
+        function fillEditor(template) {
+            activeFilename = template?.filename || '';
+            document.getElementById('templateNameInput').value = template?.name || '';
+            clearFieldRows();
+            const body = template?.body || {};
+            const entries = Object.entries(body);
+            if (entries.length === 0) {
+                addFieldRow('', 'textbox');
+                return;
+            }
+            entries.forEach(([field, ui]) => addFieldRow(field, ui));
+        }
+        */
 
         async function loadTemplates() {
             try {
@@ -351,23 +473,20 @@
                     templates = [];
                 }
                 renderTemplateList();
-                if (templates.length > 0 && !activeFilename) {
-                    fillEditor(templates[0]);
-                }
             } catch (error) {
-                setStatus(`加载模板失败：${error.message}`, 'err');
+                console.error('加载模板失败:', error);
             }
         }
 
         function renderTemplateList() {
             const node = document.getElementById('templateList');
             if (!templates.length) {
-                node.innerHTML = '<div class="template-row"><div class="setting-info"><div class="setting-label">暂无模板</div><div class="setting-desc">请新建并保存模板</div></div></div>';
+                node.innerHTML = '<div class="template-row"><div class="setting-info"><div class="setting-label">暂无模板</div><div class="setting-desc">请联系开发者</div></div></div>';
                 applySearch(activeSearchQuery);
                 return;
             }
 
-            node.innerHTML = templates.map((tpl, index) => {
+            node.innerHTML = templates.map((tpl) => {
                 const fields = Object.entries(tpl.body || {}).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' / ');
                 const safeName = escapeHtml(tpl.name || '未命名模板');
                 const safeFilename = escapeHtml(tpl.filename || '');
@@ -379,10 +498,6 @@
                             <div class="setting-desc">${safeFilename}</div>
                             <div class="setting-desc">${fields || '无字段'}</div>
                         </div>
-                        <div class="template-actions">
-                            <button class="btn btn-secondary" onclick="editTemplate(${index})">编辑</button>
-                            <button class="btn btn-danger" onclick="deleteTemplate(${index})">删除</button>
-                        </div>
                     </div>
                 `;
             }).join('');
@@ -390,6 +505,7 @@
             applySearch(activeSearchQuery);
         }
 
+        /*
         function editTemplate(index) {
             const tpl = templates[index];
             if (!tpl) return;
@@ -470,6 +586,7 @@
                 setStatus(`删除失败：${error.message}`, 'err');
             }
         }
+        */
 
         function applySearch(query) {
             activeSearchQuery = (query || '').trim().toLowerCase();
@@ -493,7 +610,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            addFieldRow('', 'textbox');
             await loadTemplates();
         });
 

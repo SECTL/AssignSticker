@@ -413,6 +413,12 @@
             overflow-y: auto;
             padding: 20px;
             z-index: 100;
+            transition: top 0.3s, bottom 0.3s;
+        }
+
+        .homework-container.fullscreen {
+            top: 0;
+            bottom: 80px;
         }
 
         .homework-grid {
@@ -630,7 +636,7 @@
         </div>
 
         <!-- 全屏 -->
-        <button class="toolbar-btn" data-tooltip="全屏">
+        <button class="toolbar-btn" data-tooltip="全屏" onclick="toggleFullscreen()">
             <img src="icons/icons/fullscreen.svg" alt="全屏">
         </button>
 
@@ -1147,6 +1153,47 @@
         }
 
         function formatHomeworkContent(homework) {
+            const type = homework.type || '';
+            
+            if (type === '练习册' && homework.templateBodyData) {
+                const startPage = homework.templateBodyData['开始页']?.value || homework.startPage || '';
+                const endPage = homework.templateBodyData['结束页']?.value || homework.endPage || '';
+                const noteInfo = homework.templateBodyData['备注'];
+                const note = noteInfo?.value || '';
+                const noteHtml = noteInfo?.html || '';
+                
+                let result = `练习册 ${startPage}-${endPage}`;
+                if (note) {
+                    const noteRich = noteHtml ? sanitizeRichText(noteHtml) : normalizeContentText(note);
+                    result += ` ${noteRich}`;
+                }
+                return result;
+            } else if (type === '预习' && homework.templateBodyData) {
+                const previewInfo = homework.templateBodyData['预习内容'];
+                const previewContent = previewInfo?.value || '';
+                const previewHtml = previewInfo?.html || '';
+                const noteInfo = homework.templateBodyData['备注'];
+                const note = noteInfo?.value || '';
+                const noteHtml = noteInfo?.html || '';
+                
+                const rich = previewHtml ? sanitizeRichText(previewHtml) : normalizeContentText(previewContent);
+                let result = `预习 ${rich}`;
+                if (note) {
+                    const noteRich = noteHtml ? sanitizeRichText(noteHtml) : normalizeContentText(note);
+                    result += ` ${noteRich}`;
+                }
+                return result;
+            } else if ((type === '自定义作业' || type === '作业') && homework.templateBodyData) {
+                const contentInfo = homework.templateBodyData['作业内容'];
+                const content = contentInfo?.value || '';
+                const contentHtml = contentInfo?.html || '';
+                
+                if (contentHtml) {
+                    return sanitizeRichText(contentHtml);
+                }
+                return normalizeContentText(content);
+            }
+
             if (homework.templateBodyData && typeof homework.templateBodyData === 'object') {
                 const lines = Object.entries(homework.templateBodyData).map(([label, info]) => {
                     const ui = String(info?.ui || '').toLowerCase();
@@ -1162,28 +1209,40 @@
                 }
             }
 
-            if (homework.type === '练习册') {
-                const startPage = homework.startPage || '';
-                const endPage = homework.endPage || '';
-                const noteRich = homework.workbookNoteHtml
-                    ? sanitizeRichText(homework.workbookNoteHtml)
-                    : normalizeContentText(homework.workbookNote || '');
+            if (type === '练习册') {
+                const startPage = homework['开始页'] || homework.startPage || '';
+                const endPage = homework['结束页'] || homework.endPage || '';
+                const note = homework['备注'] || homework.workbookNote || '';
                 
                 let result = `练习册 ${startPage}-${endPage}`;
-                if (noteRich) {
-                    result += ` (${noteRich})`;
+                if (note) {
+                    const noteRich = homework.workbookNoteHtml
+                        ? sanitizeRichText(homework.workbookNoteHtml)
+                        : normalizeContentText(note);
+                    result += ` ${noteRich}`;
                 }
                 return result;
-            } else if (homework.type === '预习') {
+            } else if (type === '预习') {
+                const previewContent = homework['预习内容'] || homework.previewContent || '';
+                const note = homework['备注'] || '';
                 const rich = homework.previewContentHtml
                     ? sanitizeRichText(homework.previewContentHtml)
-                    : normalizeContentText(homework.previewContent || '');
-                return `预习 ${rich}`;
-            } else if (homework.type === '自定义作业' || homework.type === '作业') {
+                    : normalizeContentText(previewContent);
+                
+                let result = `预习 ${rich}`;
+                if (note) {
+                    const noteRich = homework.previewNoteHtml
+                        ? sanitizeRichText(homework.previewNoteHtml)
+                        : normalizeContentText(note);
+                    result += ` ${noteRich}`;
+                }
+                return result;
+            } else if (type === '自定义作业' || type === '作业') {
+                const content = homework['作业内容'] || homework.homeworkContent || '';
                 if (homework.homeworkContentHtml) {
                     return sanitizeRichText(homework.homeworkContentHtml);
                 }
-                return normalizeContentText(homework.homeworkContent || '');
+                return normalizeContentText(content);
             }
             return '';
         }
@@ -1561,6 +1620,13 @@
             e.preventDefault();
             return false;
         });
+
+        // 全屏切换功能
+        function toggleFullscreen() {
+            if (window.pywebview && window.pywebview.api) {
+                window.pywebview.api.toggleFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
