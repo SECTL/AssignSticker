@@ -1,3 +1,8 @@
 .DS_Store
 logs/
 output.txt
+data/
+
+
+htmls/.DS_Store
+__pycache__/devmode_loader.cpython-313.pyc

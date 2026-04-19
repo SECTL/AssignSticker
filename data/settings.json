@@ -2,7 +2,7 @@
   "theme": "blue",
   "fontSize": 14,
   "fontFamily": "HarmonyOS Sans SC",
-  "zoom": 90,
+  "zoom": 100,
   "opacity": 100,
   "glassEffect": false,
   "showSaying": true,

@@ -718,11 +718,23 @@ def setup_tray_icon(window):
     except:
         settings = {}
 
-    is_debug = settings.get("debugMode", False)
-    is_dev = getattr(sys, "frozen", False) == False
+    # 尝试加载 devmode_loader，如果存在则强制写入 .debug_mode 文件
+    try:
+        import devmode_loader
 
-    # 在开发环境或调试模式开启时显示调试菜单
-    if is_dev or is_debug:
+        devmode_loader.ensure_debug_mode()
+    except ImportError:
+        pass
+
+    # 检查 .debug_mode 文件，如果存在则强制开启调试模式
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    debug_file = os.path.join(data_dir, ".debug_mode")
+    is_debug = settings.get("debugMode", False)
+    if os.path.isfile(debug_file):
+        is_debug = True
+
+    # 在调试模式开启时显示调试菜单
+    if is_debug:
         menu = pystray.Menu(
             pystray.MenuItem("显示主窗口", on_show_window),
             pystray.Menu.SEPARATOR,
