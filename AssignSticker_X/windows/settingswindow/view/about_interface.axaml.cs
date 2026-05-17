@@ -1,10 +1,10 @@
-using AssignSticker_X.windows;
 using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using AssignSticker_X.windows;
 
 namespace AssignSticker_X.windows.settingswindow.view;
 
@@ -77,7 +77,11 @@ public partial class about_interface : UserControl
 
     private void OnOpenAuthorsWindow(object? sender, RoutedEventArgs e)
     {
-        var window = new authers_window();
-        window.ShowDialog((Window)TopLevel.GetTopLevel(this)!);
+        var top = TopLevel.GetTopLevel(this);
+        if (top is Window owner)
+        {
+            var window = new authers_window();
+            window.ShowDialog(owner);
+        }
     }
 }

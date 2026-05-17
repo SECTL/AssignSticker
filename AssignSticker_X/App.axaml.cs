@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using AssignSticker_X.Utils;
 
 namespace AssignSticker_X;
 
@@ -16,6 +17,7 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        Logger.Info("App 初始化完成");
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -24,13 +26,16 @@ public partial class App : Application
         {
             if (!IsFirstInstance)
             {
+                Logger.Warn("启动多开实例窗口");
                 desktop.MainWindow = new windows.doubleswindow();
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
 
+            Logger.Info("主窗口启动中...");
             var splash = CreateSplashWindow();
             splash.Show();
+            Logger.Info("启动画面已显示");
 
             var timer = new DispatcherTimer
             {
@@ -39,6 +44,7 @@ public partial class App : Application
             timer.Tick += (_, _) =>
             {
                 timer.Stop();
+                Logger.Info("启动画面关闭，主窗口显示");
                 var main = new MainWindow();
                 desktop.MainWindow = main;
                 main.Show();

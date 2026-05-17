@@ -39,6 +39,7 @@
                     <Button.Flyout>
                         <MenuFlyout Placement="Top">
                             <MenuItem Header="创建桌面快捷方式" />
+                            <MenuItem Header="反馈" Click="FeedbackMenuItem_Click" />
                         </MenuFlyout>
                     </Button.Flyout>
                     <ic:FluentIcon Icon="MoreHorizontal"
@@ -109,6 +110,19 @@
                         <ui:FANavigationViewItem Content="ClassWorksKV" Tag="classworkskv">
                             <ui:FANavigationViewItem.IconSource>
                                 <ui:FASymbolIconSource Symbol="PostUpdate" FontSize="16" />
+                            </ui:FANavigationViewItem.IconSource>
+                        </ui:FANavigationViewItem>
+                    </ui:FANavigationViewItem.MenuItems>
+                </ui:FANavigationViewItem>
+
+                <ui:FANavigationViewItem Content="管理" SelectsOnInvoked="False" IsExpanded="True">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="NewWindow" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                    <ui:FANavigationViewItem.MenuItems>
+                        <ui:FANavigationViewItem Content="学科管理" Tag="subjectmanag">
+                            <ui:FANavigationViewItem.IconSource>
+                                <ui:FASymbolIconSource Symbol="Find" FontSize="16" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                     </ui:FANavigationViewItem.MenuItems>
