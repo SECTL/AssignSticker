@@ -16,7 +16,7 @@ on:
 
 env:
   PROJECT: AssignSticker_X/AssignSticker_X.csproj
-  VERSION: ${{ github.ref_name || 'dev' }}
+  APPVER: ${{ startsWith(github.ref_name, 'v') && github.ref_name || '0.0.0-dev' }}
 
 jobs:
   windows:
@@ -32,10 +32,10 @@ jobs:
           dotnet publish $env:PROJECT -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o publish/win-x64
       - name: Package zip
         run: |
-          Compress-Archive -Path "publish/win-x64/*" -DestinationPath "AssignSticker_X-${env:VERSION}-win-x64.zip"
+          Compress-Archive -Path "publish/win-x64/*" -DestinationPath "AssignSticker_X-${{ env.APPVER }}-win-x64.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: AssignSticker_X-${{ env.VERSION }}-win-x64
+          name: AssignSticker_X-${{ env.APPVER }}-win-x64
           path: "*.zip"
 
   linux:
@@ -57,13 +57,13 @@ jobs:
         run: |
           rid="linux-${{ matrix.arch }}"
           deb_arch="${{ matrix.arch == 'x64' && 'amd64' || 'arm64' }}"
-          pkg_name="assignsticker-x_${{ env.VERSION }}_$deb_arch"
+          pkg_name="assignsticker-x_${{ env.APPVER }}_$deb_arch"
           dir="deb/$pkg_name"
           mkdir -p "$dir/DEBIAN" "$dir/usr/bin" "$dir/usr/share/applications" "$dir/usr/share/icons/hicolor/256x256/apps"
           cp -r "publish/$rid/"* "$dir/usr/bin/"
           cat > "$dir/DEBIAN/control" <<EOF
           Package: assignsticker-x
-          Version: ${{ env.VERSION }}
+          Version: ${{ env.APPVER }}
           Section: utils
           Priority: optional
           Architecture: $deb_arch
@@ -83,7 +83,7 @@ jobs:
           mv "deb/$pkg_name.deb" .
       - uses: actions/upload-artifact@v4
         with:
-          name: AssignSticker_X-${{ env.VERSION }}-linux-${{ matrix.arch }}
+          name: AssignSticker_X-${{ env.APPVER }}-linux-${{ matrix.arch }}
           path: "*.deb"
 
   macos:
@@ -115,8 +115,8 @@ jobs:
             <key>CFBundleExecutable</key><string>AssignSticker_X</string>
             <key>CFBundleIdentifier</key><string>com.sectl.assignsticker</string>
             <key>CFBundleName</key><string>AssignSticker_X</string>
-            <key>CFBundleVersion</key><string>${{ env.VERSION }}</string>
-            <key>CFBundleShortVersionString</key><string>${{ env.VERSION }}</string>
+            <key>CFBundleVersion</key><string>${{ env.APPVER }}</string>
+            <key>CFBundleShortVersionString</key><string>${{ env.APPVER }}</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>10.15</string>
           </dict>
@@ -128,10 +128,10 @@ jobs:
           pkgbuild \
             --root AssignSticker_X.app \
             --identifier com.sectl.assignsticker \
-            --version "${{ env.VERSION }}" \
+            --version "${{ env.APPVER }}" \
             --install-location /Applications/AssignSticker_X.app \
-            "AssignSticker_X-${{ env.VERSION }}-osx-$rid.pkg"
+            "AssignSticker_X-${{ env.APPVER }}-osx-$rid.pkg"
       - uses: actions/upload-artifact@v4
         with:
-          name: AssignSticker_X-${{ env.VERSION }}-osx-${{ matrix.arch }}
+          name: AssignSticker_X-${{ env.APPVER }}-osx-${{ matrix.arch }}
           path: "*.pkg"
