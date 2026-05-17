@@ -1,0 +1,36 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AssignSticker_X.App"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
+             xmlns:styling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <FontFamily x:Key="DefaultFont">avares://AssignSticker_X/Assets/fonts/MiSans-Normal.ttf#MiSans</FontFamily>
+    </Application.Resources>
+
+    <Application.Styles>
+        <styling:FluentAvaloniaTheme />
+
+        <Style Selector="TextElement">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+        <Style Selector="MenuItem">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+        <Style Selector="ToolTip">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+        <Style Selector="ui|FANavigationViewItem">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+    </Application.Styles>
+</Application>

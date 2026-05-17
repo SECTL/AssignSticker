@@ -1,0 +1,224 @@
+<Window xmlns="https://github.com/avaloniaui"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:mc="http://schemas.microsoft.com/markup-compatibility/2006"
+         xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+         xmlns:fic="clr-namespace:FluentIcons.Common;assembly=FluentIcons.Common"
+         d:DesignWidth="2413" d:DesignHeight="1265"
+         x:Class="AssignSticker_X.MainWindow"
+        Title="AssignSticker_X"
+        Width="2413" Height="1265"
+        CanResize="False"
+        WindowDecorations="BorderOnly"
+        >
+
+    <Grid>
+        <Grid Margin="28,24,28,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel HorizontalAlignment="Left"
+                        VerticalAlignment="Top">
+                <Grid Grid.IsSharedSizeScope="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition SharedSizeGroup="TimeGroup" Width="Auto" />
+                        <ColumnDefinition SharedSizeGroup="TimeGroup" Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Name="TimeTextBlock"
+                               Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                               FontSize="36" FontWeight="Bold"
+                               VerticalAlignment="Center" />
+
+                    <TextBlock Name="WeekdayTextBlock"
+                               Grid.Row="0" Grid.Column="1"
+                               FontSize="13" FontWeight="Bold"
+                               Margin="3,7,0,0" />
+
+                    <TextBlock Name="DateTextBlock"
+                               Grid.Row="1" Grid.Column="1"
+                               FontSize="13" FontWeight="Bold"
+                               Margin="3,-1,0,0" />
+                </Grid>
+
+                <TextBlock Name="HomeworkTitleTextBlock"
+                           FontSize="19" FontWeight="Bold"
+                           Margin="0,12,0,0"
+                           Text="今日作业" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Spacing="8">
+                <TextBlock Name="HitokotoContentTextBlock"
+                           FontSize="20" FontWeight="Bold"
+                           TextAlignment="Right" />
+                <TextBlock Name="HitokotoFromTextBlock"
+                           FontSize="15" FontStyle="Italic"
+                           TextAlignment="Right" />
+            </StackPanel>
+        </Grid>
+
+        <Border CornerRadius="20"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,16"
+                Padding="24,10">
+            <StackPanel Name="ToolbarPanel"
+                        Orientation="Horizontal"
+                        Spacing="5">
+                <Button Name="AssignHomeworkButton"
+                        Width="40" Height="40"
+                        
+                        Background="LightSeaGreen"
+                        ToolTip.Tip="布置作业">
+                        
+                    <ic:FluentIcon Icon="Add"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="White" 
+                                   />
+                    
+                </Button>
+                <Button Name="lockbutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="锁定">
+                    <ic:FluentIcon Icon="LockClosed"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+                <Button Name="savebutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="保存">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="Top" VerticalOffset="-3">
+                            <MenuItem Header="手动保存作业">
+                                <MenuItem.Icon>
+                                    <ic:FluentIcon Icon="Save"
+                                                   IconVariant="Regular"
+                                                   IconSize="Size20"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="云端同步" IsEnabled="False">
+                                <MenuItem.Icon>
+                                    <ic:FluentIcon Icon="Cloud"
+                                                   IconVariant="Regular"
+                                                   IconSize="Size20"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <ic:FluentIcon Icon="Save"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+                
+                
+                <Button Name="menubutton"
+                        Width="40" Height="40"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="菜单">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="Top" VerticalOffset="-3">
+                            <MenuItem Header="恢复往日作业">
+                                <MenuItem.Icon>
+                                    <ic:FluentIcon Icon="History"
+                                                   IconVariant="Regular"
+                                                   IconSize="Size20"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="设置" Click="MenuItemSettings_Click">
+                                <MenuItem.Icon>
+                                    <ic:FluentIcon Icon="Settings"
+                                                   IconVariant="Regular"
+                                                   IconSize="Size20"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <ic:FluentIcon Icon="MoreHorizontal"
+                                            IconVariant="Filled"
+                                            IconSize="Size24"
+                                            Foreground="White" />
+                </Button>
+                <TextBlock Text="｜"
+                           FontSize="16"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                           VerticalAlignment="Center"
+                           Margin="2,0" />
+                
+                
+                <Button Name="fullscreenbutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="全屏(自习课模式)">
+                    <ic:FluentIcon Icon="FullScreenMaximize"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+                
+                <Button Name="hidebutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="隐藏主窗口">
+                    <ic:FluentIcon Icon="SlideHide"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+                
+                <Button Name="restartbutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="重启">
+                    <ic:FluentIcon Icon="ArrowReset"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    
+                    
+                </Button>
+                
+                <Button Name="exitbutton"
+                        Width="38" Height="38"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTip.Tip="退出">
+                    <ic:FluentIcon Icon="ArrowExit"
+                                   IconVariant="Filled"
+                                   IconSize="Size24"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+               
+                          
+                
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

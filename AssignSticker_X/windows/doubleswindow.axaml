@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="AssignSticker_X.windows.doubleswindow"
+        Title="补药多开窗口啊qwq"
+        Width="800" Height="600"
+        CanResize="False">
+    <StackPanel Margin="24,20,24,0">
+        <TextBlock Text="多开实例提醒"
+                   FontSize="30"
+                   FontWeight="Bold" />
+        <TextBlock Text="您已经启动了一个 AssignSticker 实例，如果您没有看到。可能是因为您设置了开机自启动"
+                   
+                   FontSize="16"
+                   Margin="0,12,0,0" />
+        <TextBlock Text="您希望怎么做？"
+                   
+                   FontSize="16"
+                   Margin="0,13,0,0" />
+    </StackPanel>
+</Window>

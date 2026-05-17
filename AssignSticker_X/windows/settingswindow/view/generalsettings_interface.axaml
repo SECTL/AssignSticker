@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.settingswindow.view.generalsettings_interface">
+    <ScrollViewer>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Width="680">
+            <StackPanel Classes="page-container animated-intro">
+            <TextBlock Text="通用设置"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Margin="0,0,0,6" />
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="Find" FontSize="16" />
+                <TextBlock Text="行为"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <ui:FASettingsExpander x:Name="S_Behavior_Autostart"
+                                   Header="开机自启"
+                                   Description="登录时自动启动程序">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Send" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander x:Name="S_Behavior_ShowStartupWindow"
+                                   Header="启动时显示主窗口"
+                                   Description="程序启动后自动显示主界面">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="NewWindow" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            
+
+            
+            
+
+            <Separator Margin="0,12,0,4" />
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="Setting" FontSize="16" />
+                <TextBlock Text="个性化"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <ui:FASettingsExpander x:Name="S_Personalized_Theme"
+                                   Header="主题"
+                                   Description="选择应用程序的外观主题">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="ColorFill" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="2">
+                        <ComboBoxItem Content="浅色" />
+                        <ComboBoxItem Content="深色" />
+                        <ComboBoxItem Content="自动" />
+                    </ComboBox>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="主题管理器"
+                                   Description="管理自定义主题和颜色方案"
+                                   IsClickEnabled="True">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <Label>(施工中）</Label>
+                </ui:FASettingsExpander.Footer>
+                
+            </ui:FASettingsExpander>
+
+            
+
+            <Separator Margin="0,12,0,4" />
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="Help" FontSize="16" />
+                <TextBlock Text="遥测"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            
+
+            <ui:FASettingsExpander x:Name="S_Telemetry_Mode"
+                                   Header="遥测模式"
+                                   Description="选择数据收集范围">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Help" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="0">
+                        <ComboBoxItem Content="完整" />
+                        <ComboBoxItem Content="匿名" />
+                        <ComboBoxItem Content="关闭" />
+                    </ComboBox>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+        </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

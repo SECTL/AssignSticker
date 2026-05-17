@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AvaloniaProject">
+    <option name="projectPerEditor">
+      <map>
+        <entry key="AssignSticker_X/App.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/Doublewindow.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/MainWindow.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/settings/generalsettings_alpha/generalsettings_view.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/settings/settingmainshell.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/authers_window.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/doubleswindow.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/settingshell.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/about_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/asxweb.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/classworkskv.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/generalsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+      </map>
+    </option>
+  </component>
+</project>

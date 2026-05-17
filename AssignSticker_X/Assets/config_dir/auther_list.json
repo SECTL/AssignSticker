@@ -1,0 +1,22 @@
+{
+    "auther_list": [
+        "author1",{
+            "name": "黎泽懿_Aionflux",
+            "description": "思拓创联的创始人/主管",
+            "avatar": "avares://AssignSticker_X/Assets/imgs/auther_avator/aionflux.png",
+            "link": "https://space.bilibili.com/520571577?spm_id_from=333.337.0.0"
+        },
+        "author2",
+        {
+            "name": "Hello_CHL",
+            "description": "AssignStickerX的主开发",
+            "avatar": "avares://AssignSticker_X/Assets/imgs/auther_avator/Hello_CHL.png",
+            "link": "https://space.bilibili.com/3493130934422121?spm_id_from=333.1387.0.0"
+        },
+        "author3",{
+            "name":"wwiinnddyy",
+            "description": "设置页面贡献者",
+            "avatar": "avares://AssignSticker_X/Assets/imgs/auther_avator/wwiinnddyy.png"
+        }
+    ]
+}

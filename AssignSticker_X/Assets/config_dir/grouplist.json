@@ -1,0 +1,10 @@
+{
+    "group_list": [
+        "group1",
+        {
+            "name": "思拓创联",
+            "description": "AssignStickerX所属组织",
+            "avatar": "avares://AssignSticker_X/Assets/imgs/SECTLLogo.png"
+        }
+    ]
+}

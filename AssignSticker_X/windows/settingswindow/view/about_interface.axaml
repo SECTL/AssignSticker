@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.settingswindow.view.about_interface">
+    <UserControl.Styles>
+        <Style Selector="HyperlinkButton">
+            <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
+        </Style>
+    </UserControl.Styles>
+    <ScrollViewer>
+        <StackPanel >
+            <Grid MaxHeight="300">
+                <Panel Background="Transparent">
+                    <Panel.OpacityMask>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                            <GradientStop Color="#ffffffff" Offset="0.0" />
+                            <GradientStop Color="#ffffffff" Offset="0.75" />
+                            <GradientStop Color="#00ffffff" Offset="0.92" />
+                        </LinearGradientBrush>
+                    </Panel.OpacityMask>
+                    <Image Source="avares://AssignSticker_X/Assets/imgs/banner.png"
+                           Stretch="UniformToFill" />
+                </Panel>
+            </Grid>
+
+            <TextBlock Text="关于"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Margin="12,16,0,0" />
+
+            <Grid x:Name="InfoGrid"
+                  Margin="12,12,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:FASettingsExpander Grid.Column="0"
+                                       Margin="0,0,4,0"
+                                       MinWidth="200"
+                                       Header="应用版本"
+                                       Description="1.8.100.1">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="ContactInfo" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                </ui:FASettingsExpander>
+                <ui:FASettingsExpander Grid.Column="1"
+                                       Margin="4,0,0,0"
+                                       MinWidth="200"
+                                       Header="Avalonia版本"
+                                       Description="12.0">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="ContactInfo" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                </ui:FASettingsExpander>
+                
+            </Grid>
+            
+            <ui:FASettingsExpander Margin="12" Header="相关链接">
+                <ui:FASettingsExpander.IconSource>
+                    
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <HyperlinkButton Click="OnOpenGitHub">GITHUB</HyperlinkButton>
+                        <HyperlinkButton Click="OnOpenWebsite">
+                            官网
+                        </HyperlinkButton>
+                    </StackPanel>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+            <Separator Margin="0,11,0,0" />
+            <ui:FASettingsExpander Margin="12" Header="Copyright 2026 思拓创联©️ all rights reserved" Description="AssignSticker是思拓创联(SECTL Studio)旗下应用程序，使用MIT许可证开源。" IsExpanded="True">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAImageIconSource Source="avares://AssignSticker_X/Assets/imgs/SECTLLogo.png" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpanderItem IsClickEnabled="True"
+                                            Click="OnOpenAuthorsWindow">
+                    <TextBlock>鸣谢...</TextBlock>
+                    <ui:FASettingsExpanderItem.Footer>
+                       
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem IsClickEnabled="True"
+                                            Click="OnOpenOrgWebsite">
+                    <ui:FASettingsExpanderItem.ActionIconSource>
+                        <ui:FASymbolIconSource Symbol="Link" FontSize="16" />
+                    </ui:FASettingsExpanderItem.ActionIconSource>
+                    <TextBlock>访问组织官网</TextBlock>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem>
+                    <TextBlock>了解思拓创联的其他潜力项目！</TextBlock>
+                    <ui:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <HyperlinkButton Content="SecRandom点名系统"
+                                    Click="OnOpenSecRandom" />
+                            <HyperlinkButton Content="Luminalium荧素万演"
+                                    Click="OnOpenLuminalium" />
+                        </StackPanel>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem Description="加入官方社群交流或者带着您的项目加入！">
+                    <TextBlock>加入思拓创联！</TextBlock>
+                    <ui:FASettingsExpanderItem.Footer>
+                        <HyperlinkButton Content="加入官方社群"
+                                    Click="OnOpenQQGroup" />
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                
+            </ui:FASettingsExpander>
+        </StackPanel>
+        
+    </ScrollViewer>
+</UserControl>

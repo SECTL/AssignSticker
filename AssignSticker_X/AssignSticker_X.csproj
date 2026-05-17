@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>icon.ico</ApplicationIcon>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.2"/>
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="FluentAvaloniaUI" Version="3.0.0-preview2" />
+        <PackageReference Include="FluentIcons.Avalonia" Version="2.1.326" />
+        <PackageReference Include="FluentIcons.Avalonia.Fluent" Version="2.0.326" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaResource Include="Assets\**" />
+      <AvaloniaResource Include="icon.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets\imgs\auther_avator\" />
+      <Folder Include="Assets\logo\" />
+      <Folder Include="settingswidow\" />
+      <Folder Include="windows\settingswindow\view\customsettings\" />
+    </ItemGroup>
+</Project>

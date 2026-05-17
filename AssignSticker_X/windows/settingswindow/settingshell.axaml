@@ -1,0 +1,127 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        x:Class="AssignSticker_X.windows.settingswindow.settingshell"
+        Title=""
+        Width="900" Height="600"
+        MinWidth="1260" MinHeight="900"
+        CanResize="True">
+    <Grid Name="RootGrid" RowDefinitions="Auto *">
+        <Border Grid.Row="0" Height="48"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                PointerPressed="TitleBar_PointerPressed">
+            <Grid ColumnDefinitions="Auto * Auto Auto">
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            Margin="8" Spacing="8">
+                    <Image Source="avares://AssignSticker_X/Assets/logo/logo.png"
+                           Width="18" Height="18"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           IsHitTestVisible="False" />
+                    <TextBlock Text="设置"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               IsHitTestVisible="False" />
+                </StackPanel>
+                
+
+                <Button Grid.Column="2"
+                        Width="40" Height="48"
+                        Background="Transparent"
+                        BorderThickness="0">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="Top">
+                            <MenuItem Header="创建桌面快捷方式" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <ic:FluentIcon Icon="MoreHorizontal"
+                                   IconVariant="Regular"
+                                   IconSize="Size20"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                </Button>
+
+                <StackPanel Grid.Column="3"
+                            Name="RightPanel"
+                            Orientation="Horizontal"
+                            Spacing="0">
+                    <Button Width="46" Height="48"
+                            Name="MinimizeButton"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="MinimizeButton_Click">
+                        <ic:FluentIcon Icon="Subtract"
+                                       IconVariant="Regular"
+                                       IconSize="Size16"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="46" Height="48"
+                            Name="MaximizeButton"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="MaximizeButton_Click">
+                        <ic:FluentIcon Icon="Square"
+                                       IconVariant="Regular"
+                                       IconSize="Size16"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="46" Height="48"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="CloseButton_Click">
+                        <ic:FluentIcon Icon="Dismiss"
+                                       IconVariant="Regular"
+                                       IconSize="Size16"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ui:FANavigationView x:Name="NavView" Grid.Row="1"
+                             PaneDisplayMode="Left"
+                             IsSettingsVisible="False"
+                             ItemInvoked="NavView_ItemInvoked">
+            <ui:FANavigationView.MenuItems>
+                <ui:FANavigationViewItem Content="通用设置" Tag="general">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="Setting" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+
+                <ui:FANavigationViewItem Content="云服务" SelectsOnInvoked="False" IsExpanded="True">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                    <ui:FANavigationViewItem.MenuItems>
+                        <ui:FANavigationViewItem Content="AssignSticker 网页版" Tag="asxweb">
+                            <ui:FANavigationViewItem.IconSource>
+                                <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
+                            </ui:FANavigationViewItem.IconSource>
+                        </ui:FANavigationViewItem>
+                        <ui:FANavigationViewItem Content="ClassWorksKV" Tag="classworkskv">
+                            <ui:FANavigationViewItem.IconSource>
+                                <ui:FASymbolIconSource Symbol="PostUpdate" FontSize="16" />
+                            </ui:FANavigationViewItem.IconSource>
+                        </ui:FANavigationViewItem>
+                    </ui:FANavigationViewItem.MenuItems>
+                </ui:FANavigationViewItem>
+            </ui:FANavigationView.MenuItems>
+            <ui:FANavigationView.FooterMenuItems>
+                <ui:FANavigationViewItem Content="关于AssignSticker X" Tag="about">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="ContactInfo" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+            </ui:FANavigationView.FooterMenuItems>
+            <ContentControl x:Name="PageContent" Margin="16" />
+        </ui:FANavigationView>
+    </Grid>
+</Window>
