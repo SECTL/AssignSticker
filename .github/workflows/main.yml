@@ -1,0 +1,137 @@
+name: Build & Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 构建目标
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - "all"
+          - "windows"
+          - "linux"
+          - "macos"
+
+env:
+  PROJECT: AssignSticker_X/AssignSticker_X.csproj
+  VERSION: ${{ github.ref_name || 'dev' }}
+
+jobs:
+  windows:
+    if: inputs.build == 'all' || inputs.build == 'windows'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Publish self-contained
+        run: |
+          dotnet publish $env:PROJECT -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o publish/win-x64
+      - name: Package zip
+        run: |
+          Compress-Archive -Path "publish/win-x64/*" -DestinationPath "AssignSticker_X-${env:VERSION}-win-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AssignSticker_X-${{ env.VERSION }}-win-x64
+          path: "*.zip"
+
+  linux:
+    if: inputs.build == 'all' || inputs.build == 'linux'
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Publish self-contained
+        run: |
+          rid="linux-${{ matrix.arch }}"
+          dotnet publish $PROJECT -c Release -r "$rid" --self-contained true -p:PublishSingleFile=false -o "publish/$rid"
+      - name: Package .deb
+        run: |
+          rid="linux-${{ matrix.arch }}"
+          deb_arch="${{ matrix.arch == 'x64' && 'amd64' || 'arm64' }}"
+          pkg_name="assignsticker-x_${{ env.VERSION }}_$deb_arch"
+          dir="deb/$pkg_name"
+          mkdir -p "$dir/DEBIAN" "$dir/usr/bin" "$dir/usr/share/applications" "$dir/usr/share/icons/hicolor/256x256/apps"
+          cp -r "publish/$rid/"* "$dir/usr/bin/"
+          cat > "$dir/DEBIAN/control" <<EOF
+          Package: assignsticker-x
+          Version: ${{ env.VERSION }}
+          Section: utils
+          Priority: optional
+          Architecture: $deb_arch
+          Maintainer: SECTL
+          Description: AssignSticker_X - Homework assignment sticker app
+          EOF
+          cat > "$dir/usr/share/applications/assignsticker-x.desktop" <<EOF
+          [Desktop Entry]
+          Name=AssignSticker_X
+          Exec=/usr/bin/AssignSticker_X
+          Type=Application
+          Categories=Utility;
+          Terminal=false
+          EOF
+          cp AssignSticker_X/Assets/logo/logo.png "$dir/usr/share/icons/hicolor/256x256/apps/assignsticker-x.png"
+          dpkg-deb --build "$dir"
+          mv "deb/$pkg_name.deb" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AssignSticker_X-${{ env.VERSION }}-linux-${{ matrix.arch }}
+          path: "*.deb"
+
+  macos:
+    if: inputs.build == 'all' || inputs.build == 'macos'
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Publish self-contained
+        run: |
+          rid="osx-${{ matrix.arch }}"
+          dotnet publish $PROJECT -c Release -r "$rid" --self-contained true -p:PublishSingleFile=false -o "publish/$rid"
+      - name: Bundle .app
+        run: |
+          rid="osx-${{ matrix.arch }}"
+          app="AssignSticker_X.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp -r "publish/$rid/"* "$app/Contents/MacOS/"
+          cat > "$app/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key><string>AssignSticker_X</string>
+            <key>CFBundleIdentifier</key><string>com.sectl.assignsticker</string>
+            <key>CFBundleName</key><string>AssignSticker_X</string>
+            <key>CFBundleVersion</key><string>${{ env.VERSION }}</string>
+            <key>CFBundleShortVersionString</key><string>${{ env.VERSION }}</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>10.15</string>
+          </dict>
+          </plist>
+          EOF
+      - name: Package .pkg
+        run: |
+          rid="osx-${{ matrix.arch }}"
+          pkgbuild \
+            --root AssignSticker_X.app \
+            --identifier com.sectl.assignsticker \
+            --version "${{ env.VERSION }}" \
+            --install-location /Applications/AssignSticker_X.app \
+            "AssignSticker_X-${{ env.VERSION }}-osx-$rid.pkg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AssignSticker_X-${{ env.VERSION }}-osx-${{ matrix.arch }}
+          path: "*.pkg"
