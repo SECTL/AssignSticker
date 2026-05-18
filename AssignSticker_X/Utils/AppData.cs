@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace AssignSticker_X.Utils;
@@ -12,7 +13,11 @@ public static class AppData
 
     public static void Initialize()
     {
-        BasePath = Directory.GetCurrentDirectory();
+        BasePath = OperatingSystem.IsMacOS()
+            ? Path.Combine(
+                Environment.GetEnvironmentVariable("HOME") ?? ".",
+                "Library", "Application Support", "AssignSticker_X")
+            : Directory.GetCurrentDirectory();
         DataPath = Path.Combine(BasePath, "data");
         SavesPath = Path.Combine(DataPath, "saves");
         LogsPath = Path.Combine(DataPath, "logs");

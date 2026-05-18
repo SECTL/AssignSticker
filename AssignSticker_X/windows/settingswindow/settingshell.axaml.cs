@@ -38,9 +38,17 @@ public partial class settingshell : Window
 
     private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        var props = e.GetCurrentPoint(this).Properties;
+        if (props.IsLeftButtonPressed && e.ClickCount == 2)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            e.Handled = true;
+            return;
+        }
+        if (props.IsLeftButtonPressed)
         {
             BeginMoveDrag(e);
+            e.Handled = true;
         }
     }
 
