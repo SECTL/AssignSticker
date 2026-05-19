@@ -12,44 +12,26 @@ using AssignSticker_X.windows.settingswindow.view.cloudservice;
 using AssignSticker_X.windows.settingswindow.view.management;
 using Avalonia.Input.Platform;
 using AssignSticker_X.Utils;
+using Avalonia.Media;
+using FluentAvalonia.UI.Windowing;
 
 namespace AssignSticker_X.windows.settingswindow;
 
-public partial class settingshell : Window
+public partial class settingshell : FAAppWindow
 {
     public settingshell()
     {
         InitializeComponent();
         Logger.Info("设置窗口初始化");
 
-        if (OperatingSystem.IsMacOS())
-        {
-            Title = "设置";
-            RightPanel.IsVisible = false;
-        }
-        else
-        {
-            Title = "";
-            WindowDecorations = Avalonia.Controls.WindowDecorations.None;
-        }
+        TitleBar.Height = 48;
+        TitleBar.ExtendsContentIntoTitleBar = true;
+        // TitleBar.TitleBarHitTestType = FATitleBarHitTestType.Complex;
+        TitleBar.ButtonHoverBackgroundColor = Color.FromArgb(23, 0, 0, 0);
+        TitleBar.ButtonPressedBackgroundColor = Color.FromArgb(52, 0, 0, 0);
+        TitleBar.ButtonInactiveForegroundColor = Colors.Gray;
 
         PageContent.Content = new generalsettings_interface();
-    }
-
-    private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        var props = e.GetCurrentPoint(this).Properties;
-        if (props.IsLeftButtonPressed && e.ClickCount == 2)
-        {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-            e.Handled = true;
-            return;
-        }
-        if (props.IsLeftButtonPressed)
-        {
-            BeginMoveDrag(e);
-            e.Handled = true;
-        }
     }
 
     private void NavView_ItemInvoked(object sender, FANavigationViewItemInvokedEventArgs e)
@@ -76,21 +58,6 @@ public partial class settingshell : Window
                     break;
             }
         }
-    }
-
-    private void MinimizeButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        WindowState = WindowState.Minimized;
-    }
-
-    private void MaximizeButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-    }
-
-    private void CloseButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        Close();
     }
 
     private async void FeedbackMenuItem_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

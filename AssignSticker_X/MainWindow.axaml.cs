@@ -37,6 +37,8 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        SetupWindowGeometry();
+        
         InitializeComponent();
         Logger.Info("主窗口初始化");
 
@@ -95,6 +97,16 @@ public partial class MainWindow : Window
         };
     }
 
+    private void SetupWindowGeometry()
+    {
+        var offset = Screens.Primary?.WorkingArea.TopLeft ?? new PixelPoint(0, 0);
+        Position = offset + new PixelPoint(16, 16);
+        
+        var size = Screens.Primary?.WorkingArea.Size ?? new PixelSize(800, 600);
+        Width = size.Width - 16 * 2;
+        Height = size.Height - 16 * 2;
+    }
+    
     private void SetupTrayIcon()
     {
         try
@@ -711,6 +723,8 @@ public partial class MainWindow : Window
         var grouped = _homeworkItems.GroupBy(h => h.Subject);
         foreach (var group in grouped)
         {
+            var border = new Border { Classes = { "HomeworkBox" }};
+            
             var section = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 12) };
 
             section.Children.Add(new TextBlock
@@ -832,7 +846,9 @@ public partial class MainWindow : Window
                 section.Children.Add(container);
             }
 
-            HomeworkContainer.Children.Add(section);
+            border.Child = section;
+            
+            HomeworkContainer.Children.Add(border);
         }
     }
 }
