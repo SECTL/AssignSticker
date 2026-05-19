@@ -43,7 +43,6 @@
                     
                     <ic:FluentIcon Icon="MoreHorizontal"
                                    IconVariant="Regular"
-                                   IconSize="Size12"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                 </Button>
                 
