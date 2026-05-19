@@ -13,6 +13,7 @@ namespace AssignSticker_X;
 public partial class App : Application
 {
     public static bool IsFirstInstance { get; set; } = true;
+    public static bool IsWindows { get; } = OperatingSystem.IsWindows();
 
     public override void Initialize()
     {

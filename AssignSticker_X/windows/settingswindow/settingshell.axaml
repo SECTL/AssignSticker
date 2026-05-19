@@ -1,21 +1,19 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:ui="using:FluentAvalonia.UI.Controls"
-        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
-        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
-        x:Class="AssignSticker_X.windows.settingswindow.settingshell"
-        Title=""
-        Width="900" Height="600"
-        MinWidth="1260" MinHeight="900"
-        CanResize="True">
+<windowing:FAAppWindow xmlns="https://github.com/avaloniaui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                       xmlns:ui="using:FluentAvalonia.UI.Controls"
+                       xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+                       xmlns:assignStickerX="clr-namespace:AssignSticker_X"
+                       xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
+                       mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+                       x:Class="AssignSticker_X.windows.settingswindow.settingshell"
+                       Title=""
+                       Width="900" Height="600"
+                       MinWidth="1260" MinHeight="900"
+                       CanResize="True">
     <Grid Name="RootGrid" RowDefinitions="Auto *">
-        <Border Grid.Row="0" Height="48"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="0,0,0,1"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                PointerPressed="TitleBar_PointerPressed">
+        <Border Grid.Row="0" Height="48">
             <Grid ColumnDefinitions="Auto * Auto Auto">
                 <StackPanel Grid.Column="0"
                             Orientation="Horizontal"
@@ -47,42 +45,8 @@
                                    IconSize="Size20"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                 </Button>
-
-                <StackPanel Grid.Column="3"
-                            Name="RightPanel"
-                            Orientation="Horizontal"
-                            Spacing="0">
-                    <Button Width="46" Height="48"
-                            Name="MinimizeButton"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="MinimizeButton_Click">
-                        <ic:FluentIcon Icon="Subtract"
-                                       IconVariant="Regular"
-                                       IconSize="Size16"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-                    <Button Width="46" Height="48"
-                            Name="MaximizeButton"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="MaximizeButton_Click">
-                        <ic:FluentIcon Icon="Square"
-                                       IconVariant="Regular"
-                                       IconSize="Size16"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-                    <Button Width="46" Height="48"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="CloseButton_Click">
-                        <ic:FluentIcon Icon="Dismiss"
-                                       IconVariant="Regular"
-                                       IconSize="Size16"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                    </Button>
-                    
-                </StackPanel>
+                
+                <Border Grid.Column="3" Width="140" IsVisible="{x:Static assignStickerX:App.IsWindows}" />
             </Grid>
         </Border>
 
@@ -138,4 +102,4 @@
             <ContentControl x:Name="PageContent" Margin="16" />
         </ui:FANavigationView>
     </Grid>
-</Window>
+</windowing:FAAppWindow>

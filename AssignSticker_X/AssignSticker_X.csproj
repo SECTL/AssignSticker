@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -30,7 +30,5 @@
     <ItemGroup>
       <Folder Include="Assets\imgs\auther_avator\" />
       <Folder Include="Assets\logo\" />
-      <Folder Include="settingswidow\" />
-      <Folder Include="windows\settingswindow\view\customsettings\" />
     </ItemGroup>
 </Project>
