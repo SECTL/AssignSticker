@@ -6,15 +6,15 @@
                        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
                        xmlns:assignStickerX="clr-namespace:AssignSticker_X"
                        xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
-                       mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+                       mc:Ignorable="d"
                        x:Class="AssignSticker_X.windows.settingswindow.settingshell"
-                       Title=""
-                       Width="900" Height="600"
-                       MinWidth="1260" MinHeight="900"
-                       CanResize="True">
+                       Title="设置"
+                       MinWidth="800" MinHeight="600"
+                       Width="1240" Height="800"
+                       d:DesignWidth="1240" d:DesignHeight="800">
     <Grid Name="RootGrid" RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
-            <Grid ColumnDefinitions="Auto * Auto Auto">
+            <Grid ColumnDefinitions="Auto * Auto Auto" ColumnSpacing="4">
                 <StackPanel Grid.Column="0"
                             Orientation="Horizontal"
                             Margin="8" Spacing="8">
@@ -31,18 +31,19 @@
                 
 
                 <Button Grid.Column="2"
-                        Width="40" Height="48"
+                        VerticalAlignment="Center"
                         Background="Transparent"
                         BorderThickness="0">
                     <Button.Flyout>
-                        <MenuFlyout Placement="Top">
+                        <MenuFlyout>
                             <MenuItem Header="创建桌面快捷方式" />
                             <MenuItem Header="反馈" Click="FeedbackMenuItem_Click" />
                         </MenuFlyout>
                     </Button.Flyout>
+                    
                     <ic:FluentIcon Icon="MoreHorizontal"
                                    IconVariant="Regular"
-                                   IconSize="Size20"
+                                   IconSize="Size12"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                 </Button>
                 
@@ -99,6 +100,7 @@
                     </ui:FANavigationViewItem.IconSource>
                 </ui:FANavigationViewItem>
             </ui:FANavigationView.FooterMenuItems>
+            
             <ContentControl x:Name="PageContent" Margin="16" />
         </ui:FANavigationView>
     </Grid>
