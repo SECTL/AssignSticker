@@ -723,6 +723,8 @@ public partial class MainWindow : Window
         var grouped = _homeworkItems.GroupBy(h => h.Subject);
         foreach (var group in grouped)
         {
+            var border = new Border { Classes = { "HomeworkBox" }};
+            
             var section = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 12) };
 
             section.Children.Add(new TextBlock
@@ -844,7 +846,9 @@ public partial class MainWindow : Window
                 section.Children.Add(container);
             }
 
-            HomeworkContainer.Children.Add(section);
+            border.Child = section;
+            
+            HomeworkContainer.Children.Add(border);
         }
     }
 }

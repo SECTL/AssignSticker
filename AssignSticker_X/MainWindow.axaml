@@ -10,6 +10,15 @@
         CanResize="False"
         WindowDecorations="BorderOnly"
         >
+    <Window.Styles>
+        <Style Selector="Border.HomeworkBox">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+    </Window.Styles>
 
     <Grid RowDefinitions="Auto *, Auto">
         <Grid Grid.Row="0" Margin="28,24,28,0">
