@@ -37,6 +37,8 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        SetupWindowGeometry();
+        
         InitializeComponent();
         Logger.Info("主窗口初始化");
 
@@ -95,6 +97,16 @@ public partial class MainWindow : Window
         };
     }
 
+    private void SetupWindowGeometry()
+    {
+        var offset = Screens.Primary?.WorkingArea.TopLeft ?? new PixelPoint(0, 0);
+        Position = offset + new PixelPoint(16, 16);
+        
+        var size = Screens.Primary?.WorkingArea.Size ?? new PixelSize(800, 600);
+        Width = size.Width - 16 * 2;
+        Height = size.Height - 16 * 2;
+    }
+    
     private void SetupTrayIcon()
     {
         try
