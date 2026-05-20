@@ -14,6 +14,7 @@
         <entry key="AssignSticker_X/windows/settingswindow/view/about_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/asxweb.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/classworkskv.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/custom/sayingsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/generalsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/management/subjectmanag_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
       </map>

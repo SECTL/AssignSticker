@@ -9,9 +9,10 @@
                        mc:Ignorable="d"
                        x:Class="AssignSticker_X.windows.settingswindow.settingshell"
                        Title="设置"
-                       MinWidth="800" MinHeight="600"
-                       Width="1240" Height="800"
-                       d:DesignWidth="1240" d:DesignHeight="800">
+                        WindowStartupLocation="CenterScreen"
+                        MinWidth="800" MinHeight="600"
+                        Width="1240" Height="800"
+                        d:DesignWidth="1240" d:DesignHeight="800">
     <Grid Name="RootGrid" RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48">
             <Grid ColumnDefinitions="Auto * Auto Auto" ColumnSpacing="4">

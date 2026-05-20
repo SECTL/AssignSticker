@@ -42,6 +42,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         Logger.Info("主窗口初始化");
 
+        if (OperatingSystem.IsWindows())
+            ShowInTaskbar = false;
+
         LoadHitokoto();
         SetupWindowIcon();
         SetupTrayIcon();
@@ -99,12 +102,14 @@ public partial class MainWindow : Window
 
     private void SetupWindowGeometry()
     {
-        var offset = Screens.Primary?.WorkingArea.TopLeft ?? new PixelPoint(0, 0);
-        Position = offset + new PixelPoint(16, 16);
+        var screenSize = Screens.Primary?.WorkingArea.Size ?? new PixelSize(1920, 1080);
+        Width = screenSize.Width - 16 * 2;
+        Height = screenSize.Height - 16 * 2;
         
-        var size = Screens.Primary?.WorkingArea.Size ?? new PixelSize(800, 600);
-        Width = size.Width - 16 * 2;
-        Height = size.Height - 16 * 2;
+        var offset = Screens.Primary?.WorkingArea.TopLeft ?? new PixelPoint(0, 0);
+        Position = offset + new PixelPoint(
+            (screenSize.Width - (int)Width) / 2,
+            (screenSize.Height - (int)Height) / 2);
     }
     
     private void SetupTrayIcon()
