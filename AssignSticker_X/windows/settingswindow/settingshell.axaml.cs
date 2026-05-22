@@ -10,6 +10,7 @@ using FluentAvalonia.UI.Controls;
 using AssignSticker_X.windows.settingswindow.view;
 using AssignSticker_X.windows.settingswindow.view.cloudservice;
 using AssignSticker_X.windows.settingswindow.view.management;
+using AssignSticker_X.windows.settingswindow.view.custom;
 using Avalonia.Input.Platform;
 using AssignSticker_X.Utils;
 using Avalonia.Media;
@@ -55,6 +56,9 @@ public partial class settingshell : FAAppWindow
                     break;
                 case "subjectmanag":
                     PageContent.Content = new subjectmanag_interface();
+                    break;
+                case "saying":
+                    PageContent.Content = new sayingsettings_interface();
                     break;
             }
         }

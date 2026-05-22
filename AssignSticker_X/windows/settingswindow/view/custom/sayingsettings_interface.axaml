@@ -1,9 +1,57 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="AssignSticker_X.windows.settingswindow.view.custom.sayingsettings_interface"
-        Title="sayingsettings_interface">
-    Welcome to Avalonia!
-</Window>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.settingswindow.view.custom.sayingsettings_interface">
+    <ScrollViewer>
+        <StackPanel MaxWidth="680" Spacing="6">
+            <TextBlock Text="一言设置"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Margin="0,0,0,6" />
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="Globe" FontSize="16" />
+                <TextBlock Text="展示"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <ui:FASettingsExpander Header="启用一言展示"
+                                   Description="在主窗口右上角显示一言句子">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Globe" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch Name="HitokotoToggle" IsChecked="True" IsCheckedChanged="HitokotoToggle_IsCheckedChanged" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+            <ui:FASettingsExpander Name="SourceExpander" Header="一言来源"  Description="调整一言显示的来源">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ComboBox Name="SourceCombo" SelectedIndex="0" SelectionChanged="SourceCombo_SelectionChanged">
+                        <ComboBoxItem>诗词</ComboBoxItem>
+                        <ComboBoxItem>文案</ComboBoxItem>
+                    </ComboBox>
+                </ui:FASettingsExpander.Footer>
+                <ui:FASettingsExpanderItem Description="投稿您的诗词或者语录等，内容需正向积极，内容通过会在下个快照版加入。"
+                                            IsClickEnabled="True"
+                                            Click="SubmitSaying_Click">
+                    <TextBlock>投稿一言</TextBlock>
+                    <ui:FASettingsExpanderItem.Footer>
+                        <TextBlock>(点我前往投稿)</TextBlock>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
+            <ui:FASettingsExpander Header="设置切换频率" Description="设置一言内容的切换频率">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="SpeakerMute" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+            </ui:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

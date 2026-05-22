@@ -26,6 +26,9 @@ namespace AssignSticker_X;
 
 public partial class MainWindow : Window
 {
+    public static Action<bool>? HitokotoEnabledChanged;
+    public static Action? HitokotoSourceChanged;
+
     private readonly DispatcherTimer _timer;
     private readonly Random _random = new();
     private TrayIcon? _trayIcon;
@@ -46,6 +49,8 @@ public partial class MainWindow : Window
             ShowInTaskbar = false;
 
         LoadHitokoto();
+        HitokotoEnabledChanged += OnHitokotoEnabledChanged;
+        HitokotoSourceChanged += LoadHitokoto;
         SetupWindowIcon();
         SetupTrayIcon();
 
@@ -169,11 +174,28 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnHitokotoEnabledChanged(bool enabled)
+    {
+        HitokotoContentTextBlock.IsVisible = enabled;
+        HitokotoFromTextBlock.IsVisible = enabled;
+    }
+
     private void LoadHitokoto()
     {
+        if (!ConfigManager.Get("hitokoto_enabled", true))
+        {
+            HitokotoContentTextBlock.IsVisible = false;
+            HitokotoFromTextBlock.IsVisible = false;
+            return;
+        }
+
+        HitokotoContentTextBlock.IsVisible = true;
+        HitokotoFromTextBlock.IsVisible = true;
+
         try
         {
-            var uri = new Uri("avares://AssignSticker_X/Assets/Saying/gushi.json");
+            var file = ConfigManager.Get("hitokoto_source", "poem") == "wenan" ? "wenan.json" : "gushi.json";
+            var uri = new Uri($"avares://AssignSticker_X/Assets/Saying/{file}");
             using var stream = AssetLoader.Open(uri);
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();

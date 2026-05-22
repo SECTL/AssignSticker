@@ -62,6 +62,21 @@
                     </ui:FANavigationViewItem.IconSource>
                 </ui:FANavigationViewItem>
 
+                <ui:FANavigationViewItemSeparator />
+
+                <ui:FANavigationViewItem Content="自定义" SelectsOnInvoked="False" IsExpanded="True">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="ColorFill" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                    <ui:FANavigationViewItem.MenuItems>
+                        <ui:FANavigationViewItem Content="一言设置" Tag="saying">
+                            <ui:FANavigationViewItem.IconSource>
+                                <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="16" />
+                            </ui:FANavigationViewItem.IconSource>
+                        </ui:FANavigationViewItem>
+                    </ui:FANavigationViewItem.MenuItems>
+                </ui:FANavigationViewItem>
+
                 <ui:FANavigationViewItem Content="云服务" SelectsOnInvoked="False" IsExpanded="True">
                     <ui:FANavigationViewItem.IconSource>
                         <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
