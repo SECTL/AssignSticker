@@ -747,6 +747,22 @@ public partial class MainWindow : Window
         HomeworkContainer.Children.Clear();
         _expandedActionRow = null;
 
+        if (_homeworkItems.Count == 0)
+        {
+            EmptyStatePanel.IsVisible = true;
+            return;
+        }
+
+        EmptyStatePanel.IsVisible = false;
+
+        HomeworkContainer.Children.Add(new TextBlock
+        {
+            Text = "今日作业",
+            FontSize = 19,
+            FontWeight = FontWeight.Bold,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
         var grouped = _homeworkItems.GroupBy(h => h.Subject);
         foreach (var group in grouped)
         {

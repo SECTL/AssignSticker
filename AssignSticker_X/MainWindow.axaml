@@ -55,10 +55,6 @@
                                Margin="3,-1,0,0" />
                 </Grid>
 
-                <TextBlock Name="HomeworkTitleTextBlock"
-                           FontSize="19" FontWeight="Bold"
-                           Margin="0,12,0,0"
-                           Text="今日作业" />
             </StackPanel>
 
             <StackPanel Grid.Column="1"
@@ -75,12 +71,27 @@
         </Grid>
 
         <ScrollViewer Grid.Row="1"
-                      HorizontalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto"
                       Margin="28,16,28,16">
-            <StackPanel Name="HomeworkContainer"
-                        Orientation="Vertical"
-                        Spacing="12" />
+            <Grid>
+                <StackPanel Name="HomeworkContainer"
+                            Orientation="Vertical"
+                            Spacing="12" />
+                <StackPanel Name="EmptyStatePanel"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            Spacing="8"
+                            IsVisible="False">
+                    <TextBlock Text="📋"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="今天还没有作业哦"
+                               FontSize="18"
+                               Foreground="Gray"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <Border Grid.Row="2"
