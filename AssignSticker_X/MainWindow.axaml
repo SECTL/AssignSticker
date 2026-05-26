@@ -96,19 +96,19 @@
 
         <Border Grid.Row="2"
                 CornerRadius="20"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
                 Margin="0,0,0,16"
-                Padding="24,10">
+                Padding="6,4">
             <StackPanel Name="ToolbarPanel"
                         Orientation="Horizontal"
                         Spacing="5">
                 <Button Name="AssignHomeworkButton"
                         Width="40" Height="40"
-                        
+                CornerRadius="100"
                         Background="LightSeaGreen"
                         ToolTip.Tip="布置作业">
                         
@@ -121,21 +121,56 @@
                 </Button>
                 <Button Name="lockbutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
-                        ToolTip.Tip="锁定">
-                    <ic:FluentIcon Icon="LockClosed"
-                                   IconVariant="Filled"
+                        ToolTip.Tip="锁定"
+                        Click="LockButton_Click">
+                    <ic:FluentIcon x:Name="lockicon"
+                                   Icon="Pin"
                                    IconSize="Size24"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                 </Button>
                 <Button Name="savebutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="保存">
                     <Button.Flyout>
                         <MenuFlyout Placement="Top" VerticalOffset="-3">
+                            <MenuItem Header="导出/另存为...">
+                                <MenuItem.Icon>
+                                    <ic:FluentIcon Icon="ArrowExport"
+                                                   IconVariant="Regular"
+                                                   IconSize="Size20"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                </MenuItem.Icon>
+                                <MenuItem Header="json文件">
+                                    <MenuItem.Icon>
+                                        <ic:FluentIcon Icon="Code"
+                                                       IconVariant="Regular"
+                                                       IconSize="Size20"
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="uaf文件(待开发）" IsEnabled="False">
+                                    <MenuItem.Icon>
+                                        <ic:FluentIcon Icon="Code"
+                                                       IconVariant="Regular"
+                                                       IconSize="Size20"
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="图片">
+                                    <MenuItem.Icon>
+                                        <ic:FluentIcon Icon="Image"
+                                                       IconVariant="Regular"
+                                                       IconSize="Size20"
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
                             <MenuItem Header="手动保存作业">
                                 <MenuItem.Icon>
                                     <ic:FluentIcon Icon="Save"
@@ -155,7 +190,7 @@
                         </MenuFlyout>
                     </Button.Flyout>
                     <ic:FluentIcon Icon="Save"
-                                   IconVariant="Filled"
+                                   
                                    IconSize="Size24"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                 </Button>
@@ -163,6 +198,7 @@
                 
                 <Button Name="menubutton"
                         Width="40" Height="40"
+                        CornerRadius="20"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="菜单">
@@ -188,9 +224,9 @@
                         </MenuFlyout>
                     </Button.Flyout>
                     <ic:FluentIcon Icon="MoreHorizontal"
-                                            IconVariant="Filled"
+                                   IconVariant="Regular"
                                             IconSize="Size24"
-                                            Foreground="White" />
+                                            />
                 </Button>
                 <TextBlock Text="｜"
                            FontSize="16"
@@ -201,10 +237,13 @@
                 
                 <Button Name="fullscreenbutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
-                        ToolTip.Tip="全屏(自习课模式)">
-                    <ic:FluentIcon Icon="FullScreenMaximize"
+                        ToolTip.Tip="全屏(自习课模式)"
+                        Click="FullscreenButton_Click">
+                    <ic:FluentIcon x:Name="fullscreenicon"
+                                   Icon="FullScreenMaximize"
                                    IconVariant="Filled"
                                    IconSize="Size24"
                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
@@ -212,6 +251,7 @@
                 
                 <Button Name="hidebutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="隐藏主窗口">
@@ -223,6 +263,7 @@
                 
                 <Button Name="restartbutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="重启">
@@ -236,6 +277,7 @@
                 
                 <Button Name="exitbutton"
                         Width="38" Height="38"
+                        CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
                         ToolTip.Tip="退出">

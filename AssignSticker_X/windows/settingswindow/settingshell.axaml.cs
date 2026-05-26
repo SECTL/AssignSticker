@@ -45,6 +45,9 @@ public partial class settingshell : FAAppWindow
                 case "general":
                     PageContent.Content = new generalsettings_interface();
                     break;
+                case "bar":
+                    PageContent.Content = new barsettings_interface();
+                    break;
                 case "about":
                     PageContent.Content = new about_interface();
                     break;

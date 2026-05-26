@@ -11,8 +11,9 @@
             <Setter Property="FontFamily" Value="{StaticResource DefaultFont}" />
         </Style>
     </UserControl.Styles>
-    <ScrollViewer>
-        <StackPanel >
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel>
             <Grid MaxHeight="300">
                 <Panel Background="Transparent">
                     <Panel.OpacityMask>
@@ -112,6 +113,6 @@
                 
             </ui:FASettingsExpander>
         </StackPanel>
-        
+        </Grid>
     </ScrollViewer>
 </UserControl>

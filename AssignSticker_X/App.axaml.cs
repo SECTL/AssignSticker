@@ -5,6 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using AssignSticker_X.Utils;
 
@@ -18,7 +19,19 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        ApplySavedTheme();
         Logger.Info("App 初始化完成");
+    }
+
+    private static void ApplySavedTheme()
+    {
+        var savedTheme = ConfigManager.Get<string>("theme", "default");
+        Current.RequestedThemeVariant = savedTheme switch
+        {
+            "light" => ThemeVariant.Light,
+            "dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
     }
 
     public override void OnFrameworkInitializationCompleted()

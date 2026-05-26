@@ -5,8 +5,9 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AssignSticker_X.windows.settingswindow.view.generalsettings_interface">
-    <ScrollViewer>
-        <StackPanel MaxWidth="680">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680">
             <TextBlock Text="通用设置"
                        FontSize="24"
                        FontWeight="Bold"
@@ -62,7 +63,8 @@
                     <ui:FASymbolIconSource Symbol="ColorFill" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="2">
+                    <ComboBox x:Name="ThemeComboBox"
+                              SelectionChanged="ThemeComboBox_SelectionChanged">
                         <ComboBoxItem Content="浅色" />
                         <ComboBoxItem Content="深色" />
                         <ComboBoxItem Content="自动" />
@@ -110,5 +112,6 @@
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>

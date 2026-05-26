@@ -5,24 +5,21 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AssignSticker_X.windows.settingswindow.view.cloudservice.classworkskv">
-    <ScrollViewer>
-        <StackPanel MaxWidth="680">
-            <TextBlock Text="ClassWorksKV"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Margin="0,0,0,6" />
-            
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" Height="400">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680" Spacing="16" VerticalAlignment="Center">
+                <TextBlock Text="ClassWorksKV"
+                           FontSize="24"
+                           FontWeight="Bold" />
+
                 <TextBlock Text="该板块施工中"
                            FontSize="32"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center" />
+                           FontWeight="Bold" />
                 <TextBlock Text="comming soon"
                            FontSize="14"
                            Foreground="Gray"
-                           TextWrapping="Wrap"
-                           HorizontalAlignment="Center" />
+                           TextWrapping="Wrap" />
             </StackPanel>
-        </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>

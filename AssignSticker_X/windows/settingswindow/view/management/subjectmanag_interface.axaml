@@ -5,8 +5,9 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AssignSticker_X.windows.settingswindow.view.management.subjectmanag_interface">
-    <ScrollViewer>
-        <StackPanel MaxWidth="680">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680">
             <TextBlock Text="学科管理"
                        FontSize="24"
                        FontWeight="Bold"
@@ -19,5 +20,6 @@
 
             <StackPanel Name="SubjectList" Spacing="4" />
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>

@@ -34,6 +34,9 @@ public partial class MainWindow : Window
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _showMenuItem;
     private Window? _widgetWindow;
+    private windows.settingswindow.settingshell? _settingsWindow;
+    private PixelRect _normalBounds;
+    private bool _isLocked;
 
     private static readonly string[] CnDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
     private static readonly string[] EnDays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -67,6 +70,7 @@ public partial class MainWindow : Window
 
         AssignHomeworkButton.Click += async (_, _) =>
         {
+            if (_isLocked) return;
             Logger.Info("打开布置作业对话框");
             var item = await ShowHomeworkDialog();
             if (item != null)
@@ -116,7 +120,44 @@ public partial class MainWindow : Window
             (screenSize.Width - (int)Width) / 2,
             (screenSize.Height - (int)Height) / 2);
     }
-    
+
+    private void FullscreenButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.FullScreen)
+        {
+            WindowState = WindowState.Normal;
+            Position = _normalBounds.Position;
+            Width = _normalBounds.Width;
+            Height = _normalBounds.Height;
+            fullscreenicon.Icon = (FluentIcons.Common.Icon)FluentIcons.Common.Symbol.FullScreenMaximize;
+            ToolTip.SetTip(fullscreenbutton, "全屏(自习课模式)");
+        }
+        else
+        {
+            _normalBounds = new PixelRect(Position, new PixelSize((int)Width, (int)Height));
+            WindowState = WindowState.FullScreen;
+            fullscreenicon.Icon = (FluentIcons.Common.Icon)FluentIcons.Common.Symbol.FullScreenMinimize;
+            ToolTip.SetTip(fullscreenbutton, "退出全屏");
+        }
+    }
+
+    private void LockButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _isLocked = !_isLocked;
+        AssignHomeworkButton.IsEnabled = !_isLocked;
+        if (_isLocked)
+        {
+            lockicon.Icon = (FluentIcons.Common.Icon)FluentIcons.Common.Symbol.PinOff;
+            ToolTip.SetTip(lockbutton, "解锁");
+        }
+        else
+        {
+            lockicon.Icon = (FluentIcons.Common.Icon)FluentIcons.Common.Symbol.Pin;
+            ToolTip.SetTip(lockbutton, "锁定");
+        }
+        RenderHomeworkCards();
+    }
+
     private void SetupTrayIcon()
     {
         try
@@ -403,8 +444,16 @@ public partial class MainWindow : Window
     private void MenuItemSettings_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         Logger.Info("打开设置窗口");
-        var settingsWindow = new windows.settingswindow.settingshell();
-        settingsWindow.Show();
+        if (_settingsWindow == null)
+        {
+            _settingsWindow = new windows.settingswindow.settingshell();
+            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            _settingsWindow.Show();
+        }
+        else
+        {
+            _settingsWindow.Activate();
+        }
     }
 
     private List<HomeworkItem> _homeworkItems = new();
@@ -848,12 +897,13 @@ public partial class MainWindow : Window
                     IsVisible = false
                 };
 
-                var editBtn = new Button { Content = "编辑", FontSize = 14, Padding = new Thickness(10, 4) };
-                var deleteBtn = new Button { Content = "删除", FontSize = 14, Padding = new Thickness(10, 4) };
+                var editBtn = new Button { Content = "编辑", FontSize = 14, Padding = new Thickness(10, 4), IsEnabled = !_isLocked };
+                var deleteBtn = new Button { Content = "删除", FontSize = 14, Padding = new Thickness(10, 4), IsEnabled = !_isLocked };
 
                 var capturedItem = item;
                 editBtn.Click += async (_, _) =>
                 {
+                    if (_isLocked) return;
                     var updated = await ShowHomeworkDialog(capturedItem);
                     if (updated != null)
                     {
@@ -869,6 +919,7 @@ public partial class MainWindow : Window
 
                 deleteBtn.Click += (_, _) =>
                 {
+                    if (_isLocked) return;
                     _homeworkItems.Remove(capturedItem);
                     RenderHomeworkCards();
                     Logger.Info($"删除作业: {capturedItem.Subject} - {capturedItem.Type}");

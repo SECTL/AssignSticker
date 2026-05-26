@@ -5,8 +5,9 @@
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AssignSticker_X.windows.settingswindow.view.custom.sayingsettings_interface">
-    <ScrollViewer>
-        <StackPanel MaxWidth="680" Spacing="6">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680" Spacing="6">
             <TextBlock Text="一言设置"
                        FontSize="24"
                        FontWeight="Bold"
@@ -35,16 +36,25 @@
                 <ui:FASettingsExpanderItem>
                     <TextBlock>来源</TextBlock>
                     <ui:FASettingsExpanderItem.Footer>
-                        <ComboBox SelectedIndex="0">
-                            <ComboBoxItem>本地 json 文件</ComboBoxItem>
-                            <ComboBoxItem> SECTL API(beta)</ComboBoxItem>
+                        <ComboBox Name="SourceModeCombo" SelectedIndex="0" SelectionChanged="SourceModeCombo_SelectionChanged">
+                            <ComboBoxItem>本地</ComboBoxItem>
+                            <ComboBoxItem> 在线（从网络获取）</ComboBoxItem>
+                        </ComboBox>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem Name="ApiSourceItem" Description="设置一言网络源（API）" IsVisible="False">
+                    <TextBlock>一言 API</TextBlock>
+                    <ui:FASettingsExpanderItem.Footer>
+                        <ComboBox Name="ApiSourceCombo" SelectedIndex="0" SelectionChanged="ApiSourceCombo_SelectionChanged">
+                            <ComboBoxItem>SECTL API（推荐）</ComboBoxItem>
+                            <ComboBoxItem>其他第三方</ComboBoxItem>
                         </ComboBox>
                     </ui:FASettingsExpanderItem.Footer>
                 </ui:FASettingsExpanderItem>
                 <ui:FASettingsExpanderItem Description="显示的一言内容">
                     <TextBlock>一言内容</TextBlock>
                     <ui:FASettingsExpanderItem.Footer>
-                        <ComboBox Name="SourceCombo">
+                        <ComboBox Name="SourceCombo" SelectionChanged="SourceCombo_SelectionChanged">
                             <ComboBoxItem>诗词</ComboBoxItem>
                             <ComboBoxItem>文案</ComboBoxItem>
                         </ComboBox>
@@ -72,6 +82,7 @@
                     </ComboBox>
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
-        </StackPanel>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>

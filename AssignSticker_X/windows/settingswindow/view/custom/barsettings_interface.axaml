@@ -1,0 +1,233 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.settingswindow.view.custom.barsettings_interface">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680">
+
+            <TextBlock Text="浮动栏设置"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Margin="0,0,0,6" />
+
+            <Border CornerRadius="100"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,16"
+                    Padding="6,4">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Button Width="40" Height="40"
+                            CornerRadius="100"
+                            Background="LightSeaGreen">
+                        <ic:FluentIcon Icon="Add"
+                                       IconVariant="Filled"
+                                       IconSize="Size24"
+                                       Foreground="White" />
+                    </Button>
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="锁定">
+                        <ic:FluentIcon Icon="Pin"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="保存">
+                        <ic:FluentIcon Icon="Save"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="40" Height="40"
+                            CornerRadius="20"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="菜单">
+                        <ic:FluentIcon Icon="MoreHorizontal"
+                                       IconVariant="Regular"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <TextBlock Text="｜"
+                               FontSize="16"
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                               VerticalAlignment="Center"
+                               Margin="2,0" />
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="全屏(自习课模式)">
+                        <ic:FluentIcon Icon="FullScreenMaximize"
+                                       IconVariant="Filled"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="隐藏主窗口">
+                        <ic:FluentIcon Icon="SlideHide"
+                                       IconVariant="Filled"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="重启">
+                        <ic:FluentIcon Icon="ArrowReset"
+                                       IconVariant="Filled"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                    <Button Width="38" Height="38"
+                            CornerRadius="19"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip.Tip="退出">
+                        <ic:FluentIcon Icon="ArrowExit"
+                                       IconVariant="Filled"
+                                       IconSize="Size24"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="ColorFill" FontSize="16" />
+                <TextBlock Text="外观"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <ui:FASettingsExpander Header="背景不透明度"
+                                   Description="调整浮动工具栏背景的透明程度">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="ColorFill" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <Slider Width="200" Minimum="0" Maximum="100" Value="100"
+                            TickFrequency="10" IsSnapToTickEnabled="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="圆角大小"
+                                   Description="设置浮动工具栏的圆角半径">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="2">
+                        <ComboBoxItem Content="小" />
+                        <ComboBoxItem Content="中" />
+                        <ComboBoxItem Content="大（胶囊形）" />
+                    </ComboBox>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <Separator Margin="0,12,0,4" />
+
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                <ui:FASymbolIcon Symbol="Find" FontSize="16" />
+                <TextBlock Text="显示按钮"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <ui:FASettingsExpander Header="显示布置作业按钮"
+                                   Description="在浮动栏中显示布置作业按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="NewWindow" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示锁定按钮"
+                                   Description="在浮动栏中显示锁定按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Find" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示保存按钮"
+                                   Description="在浮动栏中显示保存按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Send" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示菜单按钮"
+                                   Description="在浮动栏中显示菜单按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Help" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示全屏按钮"
+                                   Description="在浮动栏中显示全屏按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示隐藏按钮"
+                                   Description="在浮动栏中显示隐藏主窗口按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示重启按钮"
+                                   Description="在浮动栏中显示重启按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Globe" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+
+            <ui:FASettingsExpander Header="显示退出按钮"
+                                   Description="在浮动栏中显示退出按钮">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
+                </ui:FASettingsExpander.IconSource>
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="True" />
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
