@@ -112,6 +112,14 @@
                         </ui:FANavigationViewItem>
                     </ui:FANavigationViewItem.MenuItems>
                 </ui:FANavigationViewItem>
+
+                <ui:FANavigationViewItemSeparator />
+
+                <ui:FANavigationViewItem Content="存储设置" Tag="save">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FASymbolIconSource Symbol="Save" FontSize="16" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
             </ui:FANavigationView.MenuItems>
             <ui:FANavigationView.FooterMenuItems>
                 <ui:FANavigationViewItem Content="关于AssignSticker X" Tag="about">

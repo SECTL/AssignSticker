@@ -63,6 +63,9 @@ public partial class settingshell : FAAppWindow
                 case "saying":
                     PageContent.Content = new sayingsettings_interface();
                     break;
+                case "save":
+                    PageContent.Content = new savessetting_interface();
+                    break;
             }
         }
     }

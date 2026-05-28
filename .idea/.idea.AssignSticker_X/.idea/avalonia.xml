@@ -14,9 +14,17 @@
         <entry key="AssignSticker_X/windows/settingswindow/view/about_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/asxweb.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/cloudservice/classworkskv.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/custom/barsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/custom/sayingsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/generalsettings_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/settingswindow/view/management/subjectmanag_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/settingswindow/view/savessetting_interface.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/navigationview.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/rootwindow.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/Appearancepage.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/qppearance.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/subjects.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/welcomepage.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
       </map>
     </option>
   </component>

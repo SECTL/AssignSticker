@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.settingswindow.view.savessetting_interface">
+    <ScrollViewer VerticalContentAlignment="Stretch">
+        <Grid>
+            <StackPanel MaxWidth="680">
+                <TextBlock Text="存储设置"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Margin="0,0,0,6" />
+
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Folder" FontSize="16" />
+                    <TextBlock Text="存储位置"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <ui:FASettingsExpander x:Name="S_Storage_Path"
+                                       Header="数据目录"
+                                       Description="应用程序数据的存储位置">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Folder" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource> 
+                    <ui:FASettingsExpander.Footer>
+                        <Button x:Name="OpenDataFolderButton"
+                                Content="打开文件夹"
+                                Click="OpenDataFolderButton_Click" />
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+                <Separator Margin="0,12,0,4" />
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Save" FontSize="16" />
+                    <TextBlock Text="作业存储"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+                    <ui:FASettingsExpander x:Name="AutoSaveExpander"
+                                           Header="自动保存"
+                                           Description="设置作业自动保存相关设置"
+                                            IsExpanded="False">
+                        <ui:FASettingsExpander.IconSource>
+                            <ui:FASymbolIconSource Symbol="Sync" FontSize="16" />
+                        </ui:FASettingsExpander.IconSource>
+                        <ui:FASettingsExpander.Footer>
+                            <ToggleSwitch x:Name="AutoSaveToggle"
+                                          IsCheckedChanged="AutoSaveToggle_IsCheckedChanged" />
+                        </ui:FASettingsExpander.Footer>
+                        <ui:FASettingsExpanderItem Description="调整作业自动存储位置">
+                            <TextBlock>自动保存位置</TextBlock>
+                            <ui:FASettingsExpanderItem.Footer>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button>点击选择</Button>
+                                </StackPanel>
+                            </ui:FASettingsExpanderItem.Footer>
+                        </ui:FASettingsExpanderItem>
+                        <ui:FASettingsExpanderItem>
+                            <TextBlock>设置自动保存间隔</TextBlock>
+                            <ui:FASettingsExpanderItem.Footer>
+                                <ComboBox SelectedIndex="0">
+                                    <ComboBoxItem>1分钟</ComboBoxItem>
+                                    <ComboBoxItem>5分钟</ComboBoxItem>
+                                    <ComboBoxItem>10分钟</ComboBoxItem>
+                                </ComboBox>
+                            </ui:FASettingsExpanderItem.Footer>
+                        </ui:FASettingsExpanderItem>
+                    </ui:FASettingsExpander>
+                <ui:FASettingsExpander Header="自动清除过期作业" Description="设置自动清除过期作业（一般当天夜里12点 00秒算第二天，并清除前一天作业）">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Clear"></ui:FASymbolIconSource>
+                    </ui:FASettingsExpander.IconSource>
+                    <ui:FASettingsExpander.Footer>
+                        <ToggleSwitch x:Name="AutoClearToggle"
+                                      IsCheckedChanged="AutoClearToggle_IsCheckedChanged" />
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+                
+                
+                <Separator Margin="0,12,0,4" />
+
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Manage" FontSize="16" />
+                    <TextBlock Text="数据管理"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <ui:FASettingsExpander x:Name="S_Data_Export"
+                                       Header="导出数据"
+                                       Description="将所有数据导出为备份文件"
+                                       IsClickEnabled="True">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Upload" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                    <ui:FASettingsExpander.Footer>
+                        <Button>点击导出</Button>
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+
+                <ui:FASettingsExpander x:Name="S_Data_Import"
+                                       Header="导入数据"
+                                       Description="从备份文件恢复数据"
+                                       IsClickEnabled="True">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Download" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                    <ui:FASettingsExpander.Footer>
+                        <Button>点击导入</Button>
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+
+                <ui:FASettingsExpander x:Name="S_Data_Clear"
+                                       Header="清除数据"
+                                       Description="清除所有应用程序数据">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Delete" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                    <ui:FASettingsExpander.Footer>
+                        <Button Content="清除"
+                                
+                                Background="red"
+                                Foreground="AliceBlue"/>
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+
+                <Separator Margin="0,12,0,4" />
+
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Help" FontSize="16" />
+                    <TextBlock Text="日志"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <ui:FASettingsExpander x:Name="S_Log_Level"
+                                       Header="日志级别"
+                                       Description="控制日志记录的详细程度">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="Help" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                    <ui:FASettingsExpander.Footer>
+                        <ComboBox SelectedIndex="0">
+                            <ComboBoxItem Content="调试" />
+                            <ComboBoxItem Content="信息" />
+                            <ComboBoxItem Content="警告" />
+                            <ComboBoxItem Content="错误" />
+                        </ComboBox>
+                    </ui:FASettingsExpander.Footer>
+                </ui:FASettingsExpander>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

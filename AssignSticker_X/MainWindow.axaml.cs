@@ -28,8 +28,13 @@ public partial class MainWindow : Window
 {
     public static Action<bool>? HitokotoEnabledChanged;
     public static Action? HitokotoSourceChanged;
+    public static Action<double>? BarOpacityChanged;
+    public static Action<double>? BarCornerRadiusChanged;
+    public static Action<string, bool>? BarButtonVisibilityChanged;
+    public static Action<bool>? AutoClearExpiredChanged;
 
     private readonly DispatcherTimer _timer;
+    private DispatcherTimer? _autoClearTimer;
     private readonly Random _random = new();
     private TrayIcon? _trayIcon;
     private NativeMenuItem? _showMenuItem;
@@ -56,6 +61,11 @@ public partial class MainWindow : Window
         HitokotoSourceChanged += LoadHitokoto;
         SetupWindowIcon();
         SetupTrayIcon();
+        BarOpacityChanged += OnBarOpacityChanged;
+        BarCornerRadiusChanged += OnBarCornerRadiusChanged;
+        BarButtonVisibilityChanged += OnBarButtonVisibilityChanged;
+        AutoClearExpiredChanged += OnAutoClearExpiredChanged;
+        ApplyBarSettings();
 
         _timer = new DispatcherTimer
         {
@@ -82,6 +92,7 @@ public partial class MainWindow : Window
         };
 
         RenderHomeworkCards();
+        SetupAutoClear();
 
         exitbutton.Click += (_, _) => ShutdownApp();
 
@@ -121,6 +132,78 @@ public partial class MainWindow : Window
             (screenSize.Height - (int)Height) / 2);
     }
 
+    private void ApplyBarSettings()
+    {
+        ApplyBarOpacity();
+        ApplyBarCornerRadius();
+        ApplyBarButtonVisibility();
+    }
+
+    private void ApplyBarOpacity()
+    {
+        var opacity = ConfigManager.Get<double>("bar_opacity", 1.0);
+        ToolbarBorder.Opacity = opacity;
+    }
+
+    private void ApplyBarCornerRadius()
+    {
+        var size = ConfigManager.Get<string>("bar_corner_radius", "large");
+        var radius = size switch { "small" => 8.0, "medium" => 20.0, _ => 100.0 };
+        ToolbarBorder.CornerRadius = new CornerRadius(radius);
+        ToolbarMask.CornerRadius = new CornerRadius(radius);
+    }
+
+    private void OnBarCornerRadiusChanged(double radius)
+    {
+        ToolbarBorder.CornerRadius = new CornerRadius(radius);
+        ToolbarMask.CornerRadius = new CornerRadius(radius);
+    }
+
+    private void ApplyBarButtonVisibility()
+    {
+        AssignHomeworkButton.IsVisible = ConfigManager.Get("bar_show_assign", true);
+        lockbutton.IsVisible = ConfigManager.Get("bar_show_lock", true);
+        savebutton.IsVisible = ConfigManager.Get("bar_show_save", true);
+        menubutton.IsVisible = ConfigManager.Get("bar_show_menu", true);
+        fullscreenbutton.IsVisible = ConfigManager.Get("bar_show_fullscreen", true);
+        hidebutton.IsVisible = ConfigManager.Get("bar_show_hide", true);
+        restartbutton.IsVisible = ConfigManager.Get("bar_show_restart", true);
+        exitbutton.IsVisible = ConfigManager.Get("bar_show_exit", true);
+    }
+
+    private void OnBarOpacityChanged(double opacity)
+    {
+        ToolbarBorder.Opacity = opacity;
+    }
+
+    private void OnBarButtonVisibilityChanged(string key, bool visible)
+    {
+        switch (key)
+        {
+            case "assign": AssignHomeworkButton.IsVisible = visible; break;
+            case "lock": lockbutton.IsVisible = visible; break;
+            case "save": savebutton.IsVisible = visible; break;
+            case "menu": menubutton.IsVisible = visible; break;
+            case "fullscreen": fullscreenbutton.IsVisible = visible; break;
+            case "hide": hidebutton.IsVisible = visible; break;
+            case "restart": restartbutton.IsVisible = visible; break;
+            case "exit": exitbutton.IsVisible = visible; break;
+        }
+    }
+
+    private void OnAutoClearExpiredChanged(bool enabled)
+    {
+        if (enabled)
+        {
+            SetupAutoClear();
+        }
+        else
+        {
+            _autoClearTimer?.Stop();
+            _autoClearTimer = null;
+        }
+    }
+
     private void FullscreenButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (WindowState == WindowState.FullScreen)
@@ -145,6 +228,7 @@ public partial class MainWindow : Window
     {
         _isLocked = !_isLocked;
         AssignHomeworkButton.IsEnabled = !_isLocked;
+        ToolbarMask.IsVisible = _isLocked;
         if (_isLocked)
         {
             lockicon.Icon = (FluentIcons.Common.Icon)FluentIcons.Common.Symbol.PinOff;
@@ -156,6 +240,12 @@ public partial class MainWindow : Window
             ToolTip.SetTip(lockbutton, "锁定");
         }
         RenderHomeworkCards();
+    }
+
+    private void UnlockButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_isLocked)
+            LockButton_Click(sender, e);
     }
 
     private void SetupTrayIcon()
@@ -911,7 +1001,7 @@ public partial class MainWindow : Window
                         if (idx >= 0)
                         {
                             _homeworkItems[idx] = updated;
-                            RenderHomeworkCards();
+        RenderHomeworkCards();
                             Logger.Info($"编辑作业: {updated.Subject} - {updated.Type}");
                         }
                     }
@@ -944,5 +1034,57 @@ public partial class MainWindow : Window
             
             HomeworkContainer.Children.Add(border);
         }
+    }
+
+    public void ClearHomework()
+    {
+        _homeworkItems.Clear();
+        RenderHomeworkCards();
+        Logger.Info("已清除所有作业");
+    }
+
+    private void SetupAutoClear()
+    {
+        if (!ConfigManager.Get<bool>("auto_clear_expired_enabled", false))
+            return;
+
+        var lastClear = ConfigManager.Get<string>("auto_clear_last_date", "");
+        var today = DateTime.Now.ToString("yyyy-MM-dd");
+
+        if (!string.IsNullOrEmpty(lastClear) && lastClear != today)
+        {
+            ClearHomework();
+        }
+        ConfigManager.Set("auto_clear_last_date", today);
+        ConfigManager.Save();
+
+        ScheduleNextAutoClear();
+    }
+
+    private void ScheduleNextAutoClear()
+    {
+        _autoClearTimer?.Stop();
+        var now = DateTime.Now;
+        var nextMidnight = now.Date.AddDays(1);
+        var delay = nextMidnight - now;
+
+        _autoClearTimer = new DispatcherTimer
+        {
+            Interval = delay
+        };
+        _autoClearTimer.Tick += (_, _) =>
+        {
+            if (ConfigManager.Get<bool>("auto_clear_expired_enabled", false))
+            {
+                ClearHomework();
+                var today = DateTime.Now.ToString("yyyy-MM-dd");
+                ConfigManager.Set("auto_clear_last_date", today);
+                ConfigManager.Save();
+            }
+            ScheduleNextAutoClear();
+        };
+        _autoClearTimer.Start();
+
+        Logger.Info($"自动清除定时器已设置，将在 {delay.Hours} 小时 {delay.Minutes} 分钟后触发");
     }
 }

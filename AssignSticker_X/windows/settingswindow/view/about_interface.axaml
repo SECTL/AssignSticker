@@ -70,6 +70,7 @@
                         <HyperlinkButton Click="OnOpenWebsite">
                             官网
                         </HyperlinkButton>
+                        <HyperlinkButton Click="OnOpenstcn">智教联盟板块</HyperlinkButton>
                     </StackPanel>
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>

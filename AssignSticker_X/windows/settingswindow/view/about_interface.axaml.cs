@@ -74,6 +74,13 @@ public partial class about_interface : UserControl
         if (top != null)
             await top.Launcher.LaunchUriAsync(new Uri("https://assignsticker.sectl.top/"));
     }
+    private async void OnOpenstcn(object? sender, RoutedEventArgs e)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top != null)
+            await top.Launcher.LaunchUriAsync(new Uri("https://forum.smart-teach.cn/t/assignsticker"));
+    }
+
 
     private void OnOpenAuthorsWindow(object? sender, RoutedEventArgs e)
     {

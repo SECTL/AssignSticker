@@ -20,9 +20,9 @@
                     BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
                     HorizontalAlignment="Center"
-                    Margin="0,0,0,16"
-                    Padding="6,4">
-                <StackPanel Orientation="Horizontal" Spacing="5">
+                    Margin="0,50,0,50"
+                    Padding="12,8">
+                <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button Width="40" Height="40"
                             CornerRadius="100"
                             Background="LightSeaGreen">
@@ -120,8 +120,9 @@
                     <ui:FASymbolIconSource Symbol="ColorFill" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <Slider Width="200" Minimum="0" Maximum="100" Value="100"
-                            TickFrequency="10" IsSnapToTickEnabled="True" />
+                    <Slider x:Name="OpacitySlider" Width="200" Minimum="0" Maximum="100" Value="100"
+                            TickFrequency="10" IsSnapToTickEnabled="True"
+                            ValueChanged="OpacitySlider_ValueChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
@@ -131,7 +132,8 @@
                     <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="2">
+                    <ComboBox x:Name="CornerRadiusCombo" SelectedIndex="2"
+                              SelectionChanged="CornerRadiusCombo_SelectionChanged">
                         <ComboBoxItem Content="小" />
                         <ComboBoxItem Content="中" />
                         <ComboBoxItem Content="大（胶囊形）" />
@@ -148,83 +150,75 @@
                            FontWeight="SemiBold" />
             </StackPanel>
 
-            <ui:FASettingsExpander Header="显示布置作业按钮"
-                                   Description="在浮动栏中显示布置作业按钮">
-                <ui:FASettingsExpander.IconSource>
-                    <ui:FASymbolIconSource Symbol="NewWindow" FontSize="16" />
-                </ui:FASettingsExpander.IconSource>
-                <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
-                </ui:FASettingsExpander.Footer>
-            </ui:FASettingsExpander>
+            
 
             <ui:FASettingsExpander Header="显示锁定按钮"
-                                   Description="在浮动栏中显示锁定按钮">
+                                    Description="在浮动栏中显示锁定按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="Find" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="LockToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示保存按钮"
-                                   Description="在浮动栏中显示保存按钮">
+                                    Description="在浮动栏中显示保存按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="Send" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="SaveToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示菜单按钮"
-                                   Description="在浮动栏中显示菜单按钮">
+                                    Description="在浮动栏中显示菜单按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="Help" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="MenuToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示全屏按钮"
-                                   Description="在浮动栏中显示全屏按钮">
+                                    Description="在浮动栏中显示全屏按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="FullscreenToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示隐藏按钮"
-                                   Description="在浮动栏中显示隐藏主窗口按钮">
+                                    Description="在浮动栏中显示隐藏主窗口按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="HideToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示重启按钮"
-                                   Description="在浮动栏中显示重启按钮">
+                                    Description="在浮动栏中显示重启按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="Globe" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="RestartToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
 
             <ui:FASettingsExpander Header="显示退出按钮"
-                                   Description="在浮动栏中显示退出按钮">
+                                    Description="在浮动栏中显示退出按钮">
                 <ui:FASettingsExpander.IconSource>
                     <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="True" />
+                    <ToggleSwitch x:Name="ExitToggle" IsChecked="True" IsCheckedChanged="Toggle_IsCheckedChanged" />
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
             </StackPanel>
