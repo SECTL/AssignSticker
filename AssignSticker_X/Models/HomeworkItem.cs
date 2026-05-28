@@ -6,6 +6,7 @@ public class HomeworkItem
 {
     public string Subject { get; set; } = "";
     public string Type { get; set; } = "";
+    public string? WorkbookName { get; set; }
     public string? StartPage { get; set; }
     public string? EndPage { get; set; }
     public string? Note { get; set; }

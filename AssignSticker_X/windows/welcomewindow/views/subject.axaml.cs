@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -9,11 +10,11 @@ using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using AssignSticker_X.Utils;
 
-namespace AssignSticker_X.windows.settingswindow.view.management;
+namespace AssignSticker_X.windows.welcomewindow.views;
 
-public partial class subjectmanag_interface : UserControl
+public partial class subject : UserControl
 {
-    public subjectmanag_interface()
+    public subject()
     {
         InitializeComponent();
         LoadSubjects();
@@ -56,13 +57,9 @@ public partial class subjectmanag_interface : UserControl
             if (workbooks.TryGetValue(subj, out var books))
             {
                 foreach (var book in books)
-                {
                     expander.Items.Add(BuildWorkbookItem(subj, book));
-                }
             }
-
             expander.Items.Add(BuildAddWorkbookItem(subj));
-
             SubjectList.Children.Add(expander);
         }
     }
@@ -82,7 +79,6 @@ public partial class subjectmanag_interface : UserControl
             FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         };
-
         var renameBtn = new Button
         {
             Content = "重命名",
@@ -96,16 +92,13 @@ public partial class subjectmanag_interface : UserControl
             Padding = new Thickness(6, 1),
             Foreground = new SolidColorBrush(Color.Parse("#D32F2F"))
         };
-
         renameBtn.Click += (_, _) =>
         {
             if (renameBox.IsVisible)
             {
                 var newName = renameBox.Text?.Trim();
                 if (!string.IsNullOrEmpty(newName) && newName != workbook)
-                {
                     RenameWorkbook(subject, workbook, newName);
-                }
                 renameBox.IsVisible = false;
                 nameText.IsVisible = true;
                 renameBtn.Content = "重命名";
@@ -118,28 +111,23 @@ public partial class subjectmanag_interface : UserControl
                 renameBtn.Content = "确认";
             }
         };
-
         var capturedWorkbook = workbook;
         deleteBtn.Click += (_, _) => DeleteWorkbook(subject, capturedWorkbook);
 
-        var content = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { nameText, renameBox }
-        };
-
-        var footer = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { renameBtn, deleteBtn }
-        };
-
         return new FASettingsExpanderItem
         {
-            Content = content,
-            Footer = footer
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { nameText, renameBox }
+            },
+            Footer = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { renameBtn, deleteBtn }
+            }
         };
     }
 
@@ -165,17 +153,14 @@ public partial class subjectmanag_interface : UserControl
             addBox.Text = "";
         };
 
-        var footer = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { addBox, addBtn }
-        };
-
         return new FASettingsExpanderItem
         {
-            Content = null,
-            Footer = footer
+            Footer = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { addBox, addBtn }
+            }
         };
     }
 
@@ -186,18 +171,19 @@ public partial class subjectmanag_interface : UserControl
         {
             try
             {
-                var parsed = System.Text.Json.JsonSerializer.Deserialize<List<string>>(saved);
+                var parsed = JsonSerializer.Deserialize<List<string>>(saved);
                 if (parsed != null && parsed.Count > 0) return parsed;
             }
             catch { }
         }
-        return new List<string> { "语文", "数学", "英语", "物理", "化学", "生物", "历史", "地理", "政治" };
+        var defaults = new List<string> { "语文", "数学", "英语", "物理", "化学", "生物", "历史", "地理", "政治" };
+        SaveSubjects(defaults);
+        return defaults;
     }
 
     private static void SaveSubjects(List<string> subjects)
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(subjects);
-        ConfigManager.Set("subjects", json);
+        ConfigManager.Set("subjects", JsonSerializer.Serialize(subjects));
         ConfigManager.Save();
     }
 
@@ -208,12 +194,11 @@ public partial class subjectmanag_interface : UserControl
         {
             try
             {
-                var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<string>>>(saved);
+                var parsed = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(saved);
                 if (parsed != null) return parsed;
             }
             catch { }
         }
-
         var defaults = new Dictionary<string, List<string>>
         {
             ["语文"] = new() { "能力培养与测试" },
@@ -226,8 +211,7 @@ public partial class subjectmanag_interface : UserControl
 
     private static void SaveWorkbooks(Dictionary<string, List<string>> workbooks)
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(workbooks);
-        ConfigManager.Set("subject_workbooks", json);
+        ConfigManager.Set("subject_workbooks", JsonSerializer.Serialize(workbooks));
         ConfigManager.Save();
     }
 
@@ -235,10 +219,8 @@ public partial class subjectmanag_interface : UserControl
     {
         var name = NewSubjectBox.Text?.Trim();
         if (string.IsNullOrEmpty(name)) return;
-
         var subjects = GetSubjects();
         if (subjects.Contains(name)) return;
-
         subjects.Add(name);
         SaveSubjects(subjects);
         NewSubjectBox.Text = "";
@@ -250,11 +232,9 @@ public partial class subjectmanag_interface : UserControl
         var subjects = GetSubjects();
         subjects.Remove(name);
         SaveSubjects(subjects);
-
         var workbooks = GetWorkbooks();
         workbooks.Remove(name);
         SaveWorkbooks(workbooks);
-
         LoadSubjects();
     }
 
@@ -264,7 +244,6 @@ public partial class subjectmanag_interface : UserControl
         if (!workbooks.ContainsKey(subject))
             workbooks[subject] = new List<string>();
         if (workbooks[subject].Contains(workbook)) return;
-
         workbooks[subject].Add(workbook);
         SaveWorkbooks(workbooks);
         LoadSubjects();
@@ -274,10 +253,8 @@ public partial class subjectmanag_interface : UserControl
     {
         var workbooks = GetWorkbooks();
         if (!workbooks.ContainsKey(subject)) return;
-
         var idx = workbooks[subject].IndexOf(oldName);
         if (idx < 0) return;
-
         workbooks[subject][idx] = newName;
         SaveWorkbooks(workbooks);
         LoadSubjects();
@@ -287,7 +264,6 @@ public partial class subjectmanag_interface : UserControl
     {
         var workbooks = GetWorkbooks();
         if (!workbooks.ContainsKey(subject)) return;
-
         workbooks[subject].Remove(workbook);
         SaveWorkbooks(workbooks);
         LoadSubjects();

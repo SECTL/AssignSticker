@@ -1,9 +1,73 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="AssignSticker_X.windows.welcomewindow.views.appearance"
-        Title="qppearance">
-    Welcome to Avalonia!
-</Window>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.welcomewindow.views.appearance">
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel Spacing="24" HorizontalAlignment="Center">
+            <TextBlock Text="外观设置"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="选择你喜欢的主题模式"
+                       FontSize="14"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                       HorizontalAlignment="Center" />
+
+            <Grid ColumnDefinitions="Auto,Auto,Auto"
+                  HorizontalAlignment="Center"
+                  Margin="0,8,0,0">
+                <!-- Light -->
+                <Border Grid.Column="0" x:Name="LightBorder"
+                        Padding="16" CornerRadius="12"
+                        BorderThickness="2" BorderBrush="Transparent"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        Margin="0,0,8,0">
+                    <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <Image Width="140" Height="93"
+                               Source="avares://AssignSticker_X/Assets/imgs/intro/light.png" />
+                        <TextBlock Text="亮色" FontSize="14"
+                                   HorizontalAlignment="Center" />
+                        <RadioButton x:Name="LightRadio" GroupName="Theme"
+                                     HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Dark -->
+                <Border Grid.Column="1" x:Name="DarkBorder"
+                        Padding="16" CornerRadius="12"
+                        BorderThickness="2" BorderBrush="Transparent"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        Margin="4,0">
+                    <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <Image Width="140" Height="93"
+                               Source="avares://AssignSticker_X/Assets/imgs/intro/dark.png" />
+                        <TextBlock Text="暗色" FontSize="14"
+                                   HorizontalAlignment="Center" />
+                        <RadioButton x:Name="DarkRadio" GroupName="Theme"
+                                     HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- System -->
+                <Border Grid.Column="2" x:Name="SystemBorder"
+                        Padding="16" CornerRadius="12"
+                        BorderThickness="2" BorderBrush="Transparent"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        Margin="8,0,0,0">
+                    <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <ui:FASymbolIcon Symbol="DarkTheme" FontSize="56"
+                                        HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                        <TextBlock Text="跟随系统" FontSize="14"
+                                   HorizontalAlignment="Center" />
+                        <RadioButton x:Name="SystemRadio" GroupName="Theme"
+                                     HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

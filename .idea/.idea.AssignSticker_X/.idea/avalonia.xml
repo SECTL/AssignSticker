@@ -22,8 +22,11 @@
         <entry key="AssignSticker_X/windows/welcomewindow/navigationview.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/welcomewindow/rootwindow.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/welcomewindow/views/Appearancepage.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/appearance.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/welcomewindow/views/qppearance.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/subject.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/welcomewindow/views/subjects.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
+        <entry key="AssignSticker_X/windows/welcomewindow/views/successfully.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
         <entry key="AssignSticker_X/windows/welcomewindow/welcomepage.axaml" value="AssignSticker_X/AssignSticker_X.csproj" />
       </map>
     </option>

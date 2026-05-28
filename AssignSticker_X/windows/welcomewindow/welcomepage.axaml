@@ -1,9 +1,27 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="AssignSticker_X.windows.welcomewindow.welcomepage"
-        Title="welcomepage">
-    Welcome to Avalonia!
-</Window>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.welcomewindow.welcomepage">
+    <Grid>
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="100">
+            <Grid ClipToBounds="False">
+                <TextBlock x:Name="GreetingTextA"
+                           FontSize="45"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="GreetingTextB"
+                           FontSize="45"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0" />
+            </Grid>
+            <Button x:Name="StartButton"
+                    Content="开始"
+                    FontSize="14"
+                    Padding="32,8"
+                    HorizontalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</UserControl>

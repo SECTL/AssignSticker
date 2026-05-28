@@ -21,6 +21,7 @@ using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
 using AssignSticker_X.Models;
 using AssignSticker_X.Utils;
+using Avalonia.Platform.Storage;
 
 namespace AssignSticker_X;
 
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
     public static Action<double>? BarCornerRadiusChanged;
     public static Action<string, bool>? BarButtonVisibilityChanged;
     public static Action<bool>? AutoClearExpiredChanged;
+    public static Action<int>? HomeworkFontScaleChanged;
 
     private readonly DispatcherTimer _timer;
     private DispatcherTimer? _autoClearTimer;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
     private windows.settingswindow.settingshell? _settingsWindow;
     private PixelRect _normalBounds;
     private bool _isLocked;
+    private int _homeworkFontScale;
 
     private static readonly string[] CnDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
     private static readonly string[] EnDays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -65,6 +68,8 @@ public partial class MainWindow : Window
         BarCornerRadiusChanged += OnBarCornerRadiusChanged;
         BarButtonVisibilityChanged += OnBarButtonVisibilityChanged;
         AutoClearExpiredChanged += OnAutoClearExpiredChanged;
+        HomeworkFontScaleChanged += OnHomeworkFontScaleChanged;
+        _homeworkFontScale = ConfigManager.Get<int>("homework_font_scale", 100);
         ApplyBarSettings();
 
         _timer = new DispatcherTimer
@@ -86,12 +91,15 @@ public partial class MainWindow : Window
             if (item != null)
             {
                 _homeworkItems.Add(item);
+                SaveHomework();
                 RenderHomeworkCards();
                 Logger.Info($"添加作业: {item.Subject} - {item.Type}");
             }
         };
 
+        LoadHomework();
         RenderHomeworkCards();
+        Logger.Info($"已加载 {_homeworkItems.Count} 个作业");
         SetupAutoClear();
 
         exitbutton.Click += (_, _) => ShutdownApp();
@@ -204,6 +212,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnHomeworkFontScaleChanged(int scale)
+    {
+        _homeworkFontScale = scale;
+        RenderHomeworkCards();
+    }
+
     private void FullscreenButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (WindowState == WindowState.FullScreen)
@@ -246,6 +260,68 @@ public partial class MainWindow : Window
     {
         if (_isLocked)
             LockButton_Click(sender, e);
+    }
+
+    private void SaveButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_homeworkItems.Count == 0)
+        {
+            Logger.Info("没有作业可保存");
+            return;
+        }
+        SaveHomework();
+
+        var saves = System.IO.Directory.GetFiles(SavesDir, $"{DateTime.Now:yyyy-MM-dd}-*");
+        var latest = saves.OrderByDescending(f => f).FirstOrDefault();
+        var fileName = latest != null ? System.IO.Path.GetFileName(latest) : "homework.json";
+
+        ShowSaveNotification(fileName);
+        Logger.Info("作业已保存");
+    }
+
+    private async void ShowSaveNotification(string fileName)
+    {
+        SaveNotificationText.Text = $"已自动保存为 {fileName}";
+        SaveNotification.IsVisible = true;
+
+        await Task.Delay(3000);
+
+        SaveNotification.IsVisible = false;
+    }
+
+    private async void ExportJsonMenuItem_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_homeworkItems.Count == 0)
+        {
+            Logger.Info("没有作业可导出");
+            return;
+        }
+
+        var top = TopLevel.GetTopLevel(this);
+        if (top == null) return;
+
+        var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "导出作业为 JSON",
+            DefaultExtension = "json",
+            SuggestedFileName = $"homework_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.json"
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(_homeworkItems, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                await using var stream = await file.OpenWriteAsync();
+                await using var writer = new System.IO.StreamWriter(stream);
+                await writer.WriteAsync(json);
+                Logger.Info($"作业已导出到: {file.Name}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"导出作业失败: {ex.Message}");
+            }
+        }
     }
 
     private void SetupTrayIcon()
@@ -565,13 +641,45 @@ public partial class MainWindow : Window
         return new List<string> { "语文", "数学", "英语", "物理", "化学", "生物", "历史", "地理", "政治" };
     }
 
+    private static List<string> LoadWorkbooksForSubject(string? subject)
+    {
+        if (string.IsNullOrEmpty(subject)) return new();
+        var saved = ConfigManager.Get<string>("subject_workbooks");
+        if (string.IsNullOrEmpty(saved)) return new();
+        try
+        {
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<string>>>(saved);
+            if (dict != null && dict.TryGetValue(subject, out var books))
+                return books;
+        }
+        catch { }
+        return new();
+    }
+
     private async Task<HomeworkItem?> ShowHomeworkDialog(HomeworkItem? existing = null)
     {
         var subjectCombo = new ComboBox { Width = 100, ItemsSource = LoadSubjects() };
         var typeCombo = new ComboBox { Width = 140, ItemsSource = new[] { "练习册", "预习", "自定义作业" } };
+        var workbookCombo = new ComboBox { Width = 160 };
+        var workbookPanel = new StackPanel { Spacing = 4, Children =
+        {
+            new TextBlock { Text = "练习册名", FontSize = 13 },
+            workbookCombo
+        }};
 
         var dynamicPanel = new StackPanel { Spacing = 8 };
         TextBox? startBox = null, endBox = null, noteBox = null, contentBox = null;
+
+        void UpdateWorkbookCombo()
+        {
+            var subj = subjectCombo.SelectedItem?.ToString();
+            var books = LoadWorkbooksForSubject(subj);
+            workbookCombo.ItemsSource = books;
+            if (books.Count > 0)
+                workbookCombo.SelectedIndex = 0;
+        }
+
+        subjectCombo.SelectionChanged += (_, _) => UpdateWorkbookCombo();
 
         StackPanel MakeFormatToolbar(TextBox target)
         {
@@ -642,6 +750,7 @@ public partial class MainWindow : Window
         {
             dynamicPanel.Children.Clear();
             startBox = null; endBox = null; noteBox = null; contentBox = null;
+            workbookPanel.IsVisible = typeCombo.SelectedIndex == 0;
             switch (typeCombo.SelectedIndex)
             {
                 case 0:
@@ -742,6 +851,12 @@ public partial class MainWindow : Window
             subjectCombo.SelectedItem = existing.Subject;
             var typeIdx = Array.IndexOf(new[] { "练习册", "预习", "自定义作业" }, existing.Type);
             typeCombo.SelectedIndex = typeIdx >= 0 ? typeIdx : 2;
+            UpdateWorkbookCombo();
+            if (existing.WorkbookName != null && workbookCombo.ItemsSource is List<string> books)
+            {
+                var idx = books.IndexOf(existing.WorkbookName);
+                if (idx >= 0) workbookCombo.SelectedIndex = idx;
+            }
             // UpdateDynamicContent triggered by SelectedIndex, controls now exist
             if (startBox != null) startBox.Text = existing.StartPage ?? "";
             if (endBox != null) endBox.Text = existing.EndPage ?? "";
@@ -751,6 +866,7 @@ public partial class MainWindow : Window
         else
         {
             typeCombo.SelectedIndex = 2;
+            UpdateWorkbookCombo();
         }
 
         var content = new StackPanel
@@ -761,7 +877,8 @@ public partial class MainWindow : Window
                 new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 16, Children =
                 {
                     new StackPanel { Spacing = 4, Children = { new TextBlock { Text = "科目", FontSize = 13 }, subjectCombo } },
-                    new StackPanel { Spacing = 4, Children = { new TextBlock { Text = "作业类型", FontSize = 13 }, typeCombo } }
+                    new StackPanel { Spacing = 4, Children = { new TextBlock { Text = "作业类型", FontSize = 13 }, typeCombo } },
+                    workbookPanel
                 }},
                 new Separator(),
                 dynamicPanel,
@@ -790,6 +907,7 @@ public partial class MainWindow : Window
             {
                 Subject = subjectCombo.SelectedItem?.ToString() ?? "未设置",
                 Type = typeCombo.SelectedItem?.ToString() ?? "自定义作业",
+                WorkbookName = workbookPanel.IsVisible ? workbookCombo.SelectedItem?.ToString() : null,
                 StartPage = startBox?.Text,
                 EndPage = endBox?.Text,
                 Note = noteBox?.Text,
@@ -932,13 +1050,13 @@ public partial class MainWindow : Window
                 itemRow.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    FontSize = 18,
+                    FontSize = 18 * _homeworkFontScale / 100,
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
                 });
 
                 var contentText = new TextBlock
                 {
-                    FontSize = 18,
+                    FontSize = 18 * _homeworkFontScale / 100,
                     TextWrapping = TextWrapping.Wrap,
                     TextAlignment = Avalonia.Media.TextAlignment.Left,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
@@ -946,11 +1064,15 @@ public partial class MainWindow : Window
                     Inlines = new InlineCollection()
                 };
                 var inlines = contentText.Inlines!;
-                if (item.Type != "自定义作业")
+                if (item.Type == "练习册")
+                {
+                    var wb = item.WorkbookName ?? "练习册";
+                    inlines.Add(new Run { Text = wb });
+                    if (item.StartPage != null)
+                        inlines.Add(new Run { Text = $" P{item.StartPage}-{item.EndPage}" });
+                }
+                else if (item.Type != "自定义作业")
                     inlines.Add(new Run { Text = item.Type });
-
-                if (item.Type == "练习册" && item.StartPage != null)
-                    inlines.Add(new Run { Text = $" 第{item.StartPage}页-第{item.EndPage}页" });
 
                 if (!string.IsNullOrEmpty(item.Note))
                 {
@@ -970,7 +1092,7 @@ public partial class MainWindow : Window
                 {
                     itemRow.Children.Add(new Border
                     {
-                        Child = new TextBlock { Text = tag, FontSize = 14, Margin = new Thickness(6, 2), Foreground = Brushes.White },
+                        Child = new TextBlock { Text = tag, FontSize = 14 * _homeworkFontScale / 100, Margin = new Thickness(6, 2), Foreground = Brushes.White },
                         Background = new SolidColorBrush(Color.Parse("#0D6EFD")),
                         CornerRadius = new CornerRadius(4),
                         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
@@ -1001,7 +1123,8 @@ public partial class MainWindow : Window
                         if (idx >= 0)
                         {
                             _homeworkItems[idx] = updated;
-        RenderHomeworkCards();
+                            RenderHomeworkCards();
+                            SaveHomework();
                             Logger.Info($"编辑作业: {updated.Subject} - {updated.Type}");
                         }
                     }
@@ -1012,6 +1135,7 @@ public partial class MainWindow : Window
                     if (_isLocked) return;
                     _homeworkItems.Remove(capturedItem);
                     RenderHomeworkCards();
+                    SaveHomework();
                     Logger.Info($"删除作业: {capturedItem.Subject} - {capturedItem.Type}");
                 };
 
@@ -1039,6 +1163,19 @@ public partial class MainWindow : Window
     public void ClearHomework()
     {
         _homeworkItems.Clear();
+        try
+        {
+            var dir = SavesDir;
+            if (System.IO.Directory.Exists(dir))
+            {
+                foreach (var f in System.IO.Directory.GetFiles(dir, "*.json"))
+                    System.IO.File.Delete(f);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"清除作业文件失败: {ex.Message}");
+        }
         RenderHomeworkCards();
         Logger.Info("已清除所有作业");
     }
@@ -1086,5 +1223,67 @@ public partial class MainWindow : Window
         _autoClearTimer.Start();
 
         Logger.Info($"自动清除定时器已设置，将在 {delay.Hours} 小时 {delay.Minutes} 分钟后触发");
+    }
+
+    private static string SavesDir => AppData.SavesPath;
+
+    private void SaveHomework()
+    {
+        try
+        {
+            var dir = SavesDir;
+            if (!System.IO.Directory.Exists(dir))
+                System.IO.Directory.CreateDirectory(dir);
+
+            var now = DateTime.Now;
+            var datePrefix = now.ToString("yyyy-MM-dd");
+            var timePart = now.ToString("HH-mm-ss");
+
+            var existing = System.IO.Directory.GetFiles(dir, $"{datePrefix}-*");
+            var maxCount = 0;
+            foreach (var f in existing)
+            {
+                var name = System.IO.Path.GetFileNameWithoutExtension(f);
+                var parts = name.Split('-');
+                if (parts.Length >= 4 && int.TryParse(parts[3], out var c))
+                    maxCount = Math.Max(maxCount, c);
+            }
+            var count = maxCount + 1;
+
+            var fileName = $"{datePrefix}-{count}-{timePart}.json";
+            var path = System.IO.Path.Combine(dir, fileName);
+
+            var json = System.Text.Json.JsonSerializer.Serialize(_homeworkItems);
+            System.IO.File.WriteAllText(path, json);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"保存作业失败: {ex.Message}");
+        }
+    }
+
+    private void LoadHomework()
+    {
+        try
+        {
+            var dir = SavesDir;
+            if (!System.IO.Directory.Exists(dir))
+                return;
+
+            var today = DateTime.Now.ToString("yyyy-MM-dd");
+            var files = System.IO.Directory.GetFiles(dir, $"{today}-*");
+            if (files.Length == 0)
+                return;
+
+            var latest = files.OrderByDescending(f => f).First();
+            var json = System.IO.File.ReadAllText(latest);
+            var items = System.Text.Json.JsonSerializer.Deserialize<List<HomeworkItem>>(json);
+            if (items != null)
+                _homeworkItems = items;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"加载作业失败: {ex.Message}");
+        }
     }
 }

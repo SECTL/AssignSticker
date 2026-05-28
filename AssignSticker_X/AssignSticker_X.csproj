@@ -30,6 +30,7 @@
 
     <ItemGroup>
       <Folder Include="Assets\imgs\auther_avator\" />
+      <Folder Include="Assets\imgs\intro\" />
       <Folder Include="Assets\logo\" />
     </ItemGroup>
 </Project>

@@ -71,17 +71,23 @@
                     </ComboBox>
                 </ui:FASettingsExpander.Footer>
             </ui:FASettingsExpander>
+            
 
-            <ui:FASettingsExpander Header="主题管理器"
-                                   Description="管理自定义主题和颜色方案"
-                                   IsClickEnabled="True">
+             <ui:FASettingsExpander Header="作业显示缩放" Description="调整作业显示缩放，让后排同学也能更清楚看到作业！">
                 <ui:FASettingsExpander.IconSource>
-                    <ui:FASymbolIconSource Symbol="DarkTheme" FontSize="16" />
+                    <ui:FASymbolIconSource Symbol="FontSize" FontSize="16" />
                 </ui:FASettingsExpander.IconSource>
                 <ui:FASettingsExpander.Footer>
-                    <Label>(施工中）</Label>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="50%" FontSize="12" VerticalAlignment="Center" />
+                        <Slider x:Name="HomeworkFontScaleSlider" Width="160" Minimum="50" Maximum="200" Value="100"
+                                TickFrequency="10" IsSnapToTickEnabled="True"
+                                ValueChanged="HomeworkFontScaleSlider_ValueChanged" />
+                        <TextBlock Text="200%" FontSize="12" VerticalAlignment="Center" />
+                        <Button x:Name="ResetFontScaleBtn" Content="恢复默认" FontSize="12" Padding="8,2"
+                                Click="ResetFontScaleBtn_Click" />
+                    </StackPanel>
                 </ui:FASettingsExpander.Footer>
-                
             </ui:FASettingsExpander>
 
             

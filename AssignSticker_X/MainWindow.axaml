@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.microsoft.com/markup-compatibility/2006"
-        xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
-        xmlns:fic="clr-namespace:FluentIcons.Common;assembly=FluentIcons.Common"
-        d:DesignWidth="800" d:DesignHeight="600"
+         xmlns:ic="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
+         xmlns:fic="clr-namespace:FluentIcons.Common;assembly=FluentIcons.Common"
+         d:DesignWidth="800" d:DesignHeight="600"
         x:Class="AssignSticker_X.MainWindow"
         Title="AssignSticker_X"
         CanResize="False"
@@ -138,6 +138,7 @@
                         CornerRadius="19"
                         Background="Transparent"
                         BorderThickness="0"
+                        Click="SaveButton_Click"
                         ToolTip.Tip="保存">
                     <Button.Flyout>
                         <MenuFlyout Placement="Top" VerticalOffset="-3">
@@ -148,7 +149,7 @@
                                                    IconSize="Size20"
                                                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                                 </MenuItem.Icon>
-                                <MenuItem Header="json文件">
+                                <MenuItem Header="json文件" Click="ExportJsonMenuItem_Click">
                                     <MenuItem.Icon>
                                         <ic:FluentIcon Icon="Code"
                                                        IconVariant="Regular"
@@ -173,14 +174,7 @@
                                     </MenuItem.Icon>
                                 </MenuItem>
                             </MenuItem>
-                            <MenuItem Header="手动保存作业">
-                                <MenuItem.Icon>
-                                    <ic:FluentIcon Icon="Save"
-                                                   IconVariant="Regular"
-                                                   IconSize="Size20"
-                                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
+                            
                             <MenuItem Header="云端同步" IsEnabled="False">
                                 <MenuItem.Icon>
                                     <ic:FluentIcon Icon="Cloud"
@@ -316,5 +310,20 @@
             </StackPanel>
         </Border>
     </Grid>
+
+    <Border x:Name="SaveNotification"
+            Grid.Row="2"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Margin="0,0,16,76"
+            Padding="14,10"
+            CornerRadius="8"
+            Background="{DynamicResource SystemControlBackgroundAccentBrush}"
+            BoxShadow="0 2 8 0 rgba(0,0,0,0.2)"
+            IsVisible="False">
+        <TextBlock x:Name="SaveNotificationText"
+                   TextWrapping="NoWrap"
+                   Foreground="White" />
+    </Border>
 </Grid>
 </Window>

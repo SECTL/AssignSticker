@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.welcomewindow.views.successfully">
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <StackPanel Spacing="12" HorizontalAlignment="Center">
+            <TextBlock Text="🎉"
+                       FontSize="48"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="你已经完成了所有的设置"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="现在开始使用 AssignSticker_X 吧"
+                       FontSize="14"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                       HorizontalAlignment="Center" />
+
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16,12"
+                    Margin="0,8,0,0"
+                    Cursor="Hand"
+                    BoxShadow="0 2 8 0 rgba(0,0,0,0.1)"
+                    PointerPressed="Card_PointerPressed">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                    <ui:FASymbolIcon Symbol="Globe" FontSize="20"
+                                     VerticalAlignment="Center"
+                                     Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    <TextBlock Text="访问官方网站"
+                               FontSize="14"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="assignsticker.sectl.top"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

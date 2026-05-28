@@ -1,9 +1,41 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="AssignSticker_X.windows.welcomewindow.navigationview"
-        Title="navigationview">
-    Welcome to Avalonia!
-</Window>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="using:FluentAvalonia.UI.Controls"
+             xmlns:views="using:AssignSticker_X.windows.welcomewindow.views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.welcomewindow.navigationview">
+    <fa:FANavigationView x:Name="NavView"
+                       PaneDisplayMode="Top"
+                       IsBackButtonVisible="False"
+                       IsPaneToggleButtonVisible="False"
+                       IsSettingsVisible="False">
+        <fa:FANavigationView.MenuItems>
+            <fa:FANavigationViewItem Content="外观设置" IsHitTestVisible="False" />
+            <fa:FANavigationViewItem Content="科目设置" IsHitTestVisible="False" />
+            <fa:FANavigationViewItem Content="设置完成" IsHitTestVisible="False" />
+        </fa:FANavigationView.MenuItems>
+        <Grid RowDefinitions="*,Auto">
+            <ContentControl x:Name="PageContent" Grid.Row="0" />
+            <Border Grid.Row="1" Padding="16,12"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel x:Name="ButtonPanel" Orientation="Horizontal"
+                            HorizontalAlignment="Right" Spacing="8">
+                    <Button x:Name="PrevButton" Content="上一步"
+                            FontSize="13" Padding="16,6"
+                            IsVisible="False"
+                            Click="PrevButton_Click" />
+                    <Button x:Name="NextButton" Content="下一步"
+                            FontSize="13" Padding="16,6"
+                            IsVisible="False"
+                            Click="NextButton_Click" />
+                    <Button x:Name="FinishButton" Content="完成并进入"
+                            FontSize="13" Padding="16,6"
+                            IsVisible="False"
+                            Click="FinishButton_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </fa:FANavigationView>
+</UserControl>

@@ -1,12 +1,9 @@
 using System;
+using System.IO;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Styling;
-using Avalonia.Threading;
 using AssignSticker_X.Utils;
 
 namespace AssignSticker_X;
@@ -46,46 +43,22 @@ public partial class App : Application
                 return;
             }
 
-            Logger.Info("主窗口启动中...");
-            var splash = CreateSplashWindow();
-            splash.Show();
-            Logger.Info("启动画面已显示");
-
-            var timer = new DispatcherTimer
+            var finishesPath = Path.Combine(AppData.DataPath, "finishes");
+            if (!File.Exists(finishesPath))
             {
-                Interval = TimeSpan.FromSeconds(2)
-            };
-            timer.Tick += (_, _) =>
+                Logger.Info("初次启动，将显示引导设置窗口");
+                var welcome = new windows.welcomewindow.rootwindow();
+                desktop.MainWindow = welcome;
+                welcome.Show();
+            }
+            else
             {
-                timer.Stop();
-                Logger.Info("启动画面关闭，主窗口显示");
                 var main = new MainWindow();
                 desktop.MainWindow = main;
                 main.Show();
-                splash.Close();
-            };
-            timer.Start();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private static Window CreateSplashWindow()
-    {
-        var uri = new Uri("avares://AssignSticker_X/Assets/imgs/splash_screen.png");
-        using var stream = AssetLoader.Open(uri);
-        var bitmap = new Bitmap(stream);
-
-        return new Window
-        {
-            Width = bitmap.PixelSize.Width,
-            Height = bitmap.PixelSize.Height,
-            WindowDecorations = WindowDecorations.None,
-            CanResize = false,
-            ShowInTaskbar = false,
-            Topmost = true,
-            Content = new Image { Source = bitmap },
-            WindowStartupLocation = WindowStartupLocation.CenterScreen
-        };
     }
 }

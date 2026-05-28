@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="AssignSticker_X.windows.welcomewindow.views.subject">
+    <Grid>
+        <Grid RowDefinitions="Auto,*" HorizontalAlignment="Center" MaxWidth="500">
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center">
+                <TextBlock Text="科目设置"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,6" />
+                <TextBlock Text="设置你的学科和练习册，也可以在后期随时修改"
+                           FontSize="13"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,20" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12"
+                            HorizontalAlignment="Center">
+                    <TextBox Name="NewSubjectBox" Width="200" PlaceholderText="输入新学科名称" />
+                    <Button Name="AddSubjectBtn" Content="添加学科" FontSize="13" Padding="12,4" />
+                </StackPanel>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Name="SubjectList" Spacing="4" />
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
