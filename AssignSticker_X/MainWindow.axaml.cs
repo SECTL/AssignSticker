@@ -1007,25 +1007,24 @@ public partial class MainWindow : Window
         if (_homeworkItems.Count == 0)
         {
             EmptyStatePanel.IsVisible = true;
+            HomeworkTitle.IsVisible = false;
             return;
         }
 
         EmptyStatePanel.IsVisible = false;
-
-        HomeworkContainer.Children.Add(new TextBlock
-        {
-            Text = "今日作业",
-            FontSize = 19,
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 0, 8)
-        });
-
+        HomeworkTitle.IsVisible = true;
         var grouped = _homeworkItems.GroupBy(h => h.Subject);
         foreach (var group in grouped)
         {
-            var border = new Border { Classes = { "HomeworkBox" }};
-            
-            var section = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 12) };
+            var border = new Border
+            {
+                Classes = { "HomeworkBox" },
+                Width = 320 * _homeworkFontScale / 100,
+                Margin = new Thickness(0, 0, 12, 12),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
+            };
+
+            var section = new StackPanel { Spacing = 2 };
 
             section.Children.Add(new TextBlock
             {

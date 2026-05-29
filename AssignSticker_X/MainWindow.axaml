@@ -16,7 +16,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="8" />
+            <Setter Property="Padding" Value="8,8,8,16" />
         </Style>
     </Window.Styles>
 
@@ -74,10 +74,14 @@
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto"
                       Margin="28,16,28,16">
-            <Grid>
-                <StackPanel Name="HomeworkContainer"
-                            Orientation="Vertical"
-                            Spacing="12" />
+            <Grid RowDefinitions="Auto,*">
+                <TextBlock x:Name="HomeworkTitle"
+                           Text="今日作业"
+                           FontSize="19"
+                           FontWeight="Bold"
+                           Margin="0,0,0,8"
+                           IsVisible="False" />
+                <WrapPanel Name="HomeworkContainer" Grid.Row="1" Orientation="Vertical" />
                 <StackPanel Name="EmptyStatePanel"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center"
