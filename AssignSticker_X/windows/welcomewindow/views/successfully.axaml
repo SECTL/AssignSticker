@@ -35,7 +35,7 @@
                     <TextBlock Text="访问官方网站"
                                FontSize="14"
                                VerticalAlignment="Center" />
-                    <TextBlock Text="assignsticker.sectl.top"
+                    <TextBlock Text="assignsticker.sectl.cn"
                                FontSize="12"
                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                                VerticalAlignment="Center" />

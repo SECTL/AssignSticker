@@ -15,6 +15,6 @@ public partial class successfully : UserControl
     private void Card_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         var launcher = TopLevel.GetTopLevel(this)?.Launcher;
-        launcher?.LaunchUriAsync(new System.Uri("https://assignsticker.sectl.top/"));
+        launcher?.LaunchUriAsync(new System.Uri("https://assignsticker.sectl.cn/"));
     }
 }

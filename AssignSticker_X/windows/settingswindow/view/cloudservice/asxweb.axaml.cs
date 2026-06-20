@@ -10,4 +10,10 @@ public partial class asxweb : UserControl
     {
         InitializeComponent();
     }
+
+    private void OpenWeb_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var launcher = TopLevel.GetTopLevel(this)?.Launcher;
+        launcher?.LaunchUriAsync(new System.Uri("https://assignsticker.sectl.top/"));
+    }
 }

@@ -7,18 +7,83 @@
              x:Class="AssignSticker_X.windows.settingswindow.view.cloudservice.asxweb">
     <ScrollViewer VerticalContentAlignment="Stretch">
         <Grid>
-            <StackPanel MaxWidth="680" Spacing="16" VerticalAlignment="Center">
+            <StackPanel MaxWidth="680">
                 <TextBlock Text="AssignSticker 网页版"
                            FontSize="24"
-                           FontWeight="Bold" />
+                           FontWeight="Bold"
+                           Margin="0,0,0,6" />
 
-                <TextBlock Text="该板块施工中"
-                           FontSize="32"
-                           FontWeight="Bold" />
-                <TextBlock Text="comming soon"
-                           FontSize="14"
-                           Foreground="Gray"
-                           TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Account" FontSize="16" />
+                    <TextBlock Text="账号"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <ui:FAInfoBar Title="提示" IsOpen="True" Severity="Warning" Message="登录到SECTL 账号后方可使用云服务">
+                    <ui:FAInfoBar.ActionButton>
+                        <Button Content="点击登录" />
+                    </ui:FAInfoBar.ActionButton>
+                </ui:FAInfoBar>
+                <ui:FASettingsExpander Header="未登录" Description="请登录后使用">
+                   <ui:FASettingsExpander.Footer>
+                       <Button Content="点击登录到SECTL账户"></Button>
+                   </ui:FASettingsExpander.Footer>
+                    <ui:FASettingsExpanderItem>
+                        <TextBlock>账号邮箱</TextBlock>
+                        <ui:FASettingsExpanderItem.Footer>
+                            <TextBlock>未登录</TextBlock>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                </ui:FASettingsExpander>
+
+                <Separator Margin="0,12,0,4" />
+
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Cloud" FontSize="16" />
+                    <TextBlock Text="同步"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <Grid>
+                    <StackPanel>
+                        <ui:FASettingsExpander Header="自动云同步"
+                                               Description="自动将作业数据同步到云端（开发中）">
+                            <ui:FASettingsExpander.IconSource>
+                                <ui:FASymbolIconSource Symbol="Cloud" FontSize="16" />
+                            </ui:FASettingsExpander.IconSource>
+                            <ui:FASettingsExpander.Footer>
+                                <ToggleSwitch IsEnabled="False" />
+                            </ui:FASettingsExpander.Footer>
+                        </ui:FASettingsExpander>
+
+                        <ui:FASettingsExpander Header="同步频率"
+                                               Description="设置自动同步的时间间隔">
+                            <ui:FASettingsExpander.IconSource>
+                                <ui:FASymbolIconSource Symbol="Clock" FontSize="16" />
+                            </ui:FASettingsExpander.IconSource>
+                            <ui:FASettingsExpander.Footer>
+                                <ComboBox IsEnabled="False" SelectedIndex="1">
+                                    <ComboBoxItem Content="每 15 分钟" />
+                                    <ComboBoxItem Content="每 30 分钟" />
+                                    <ComboBoxItem Content="每 1 小时" />
+                                    <ComboBoxItem Content="每 2 小时" />
+                                </ComboBox>
+                            </ui:FASettingsExpander.Footer>
+                        </ui:FASettingsExpander>
+                    </StackPanel>
+
+                    <Border Background="#80F2F2F2"
+                            CornerRadius="12"
+                            IsHitTestVisible="True">
+                        <TextBlock Text="您需要登录后才能使用这些功能"
+                                   FontSize="14"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    </Border>
+                </Grid>
             </StackPanel>
         </Grid>
     </ScrollViewer>

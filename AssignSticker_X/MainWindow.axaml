@@ -161,13 +161,14 @@
                                                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="uaf文件(待开发）" IsEnabled="False">
+                                <MenuItem Header="uaf文件" IsEnabled="False">
                                     <MenuItem.Icon>
                                         <ic:FluentIcon Icon="Code"
                                                        IconVariant="Regular"
                                                        IconSize="Size20"
                                                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                                     </MenuItem.Icon>
+                                    
                                 </MenuItem>
                                 <MenuItem Header="图片">
                                     <MenuItem.Icon>

@@ -35,6 +35,37 @@
                 <Separator Margin="0,12,0,4" />
                 <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
                     <ui:FASymbolIcon Symbol="Save" FontSize="16" />
+                    <TextBlock Text="存储格式"
+                               FontSize="14"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+                <ui:FASettingsExpander Header="作业存储的格式" Description="选定作业存储的格式">
+                    <ui:FASettingsExpander.IconSource>
+                        <ui:FASymbolIconSource Symbol="SaveAs" FontSize="16" />
+                    </ui:FASettingsExpander.IconSource>
+                        
+                    <ui:FASettingsExpanderItem>
+                        <CheckBox>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="UAF" VerticalAlignment="Center" />
+                                <Border Background="#FFD700" CornerRadius="4" Padding="6,2">
+                                    <TextBlock Text="实验性" FontSize="11" Foreground="Black" />
+                                </Border>
+                            </StackPanel>
+                        </CheckBox>
+                        <ui:FASettingsExpanderItem.Footer>
+                            <HyperlinkButton x:Name="UafHelpLink"
+                                             Click="UafHelpLink_Click">什么是UAF格式?</HyperlinkButton>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem>
+                        <CheckBox IsChecked="True">Json(传统）</CheckBox>
+                    </ui:FASettingsExpanderItem>
+                    
+                </ui:FASettingsExpander>
+                <Separator Margin="0,12,0,4" />
+                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <ui:FASymbolIcon Symbol="Save" FontSize="16" />
                     <TextBlock Text="作业存储"
                                FontSize="14"
                                FontWeight="SemiBold" />
