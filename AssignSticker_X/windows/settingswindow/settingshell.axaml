@@ -58,7 +58,7 @@
             <ui:FANavigationView.MenuItems>
                 <ui:FANavigationViewItem Content="通用设置" Tag="general">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="Setting" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="Setting" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                 </ui:FANavigationViewItem>
 
@@ -66,17 +66,17 @@
 
                 <ui:FANavigationViewItem Content="个性化" SelectsOnInvoked="False" IsExpanded="True">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="ColorFill" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="ColorFill" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                     <ui:FANavigationViewItem.MenuItems>
                         <ui:FANavigationViewItem Content="浮动栏设置" Tag="bar">
                             <ui:FANavigationViewItem.IconSource>
-                                <ui:FASymbolIconSource Symbol="ColorFill" FontSize="20" />
+                                <ui:FASymbolIconSource Symbol="ColorFill" FontSize="35" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                         <ui:FANavigationViewItem Content="一言设置" Tag="saying">
                             <ui:FANavigationViewItem.IconSource>
-                                <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="20" />
+                                <ui:FASymbolIconSource Symbol="LeaveChat" FontSize="35" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                     </ui:FANavigationViewItem.MenuItems>
@@ -84,12 +84,12 @@
 
                 <ui:FANavigationViewItem Content="管理" SelectsOnInvoked="False" IsExpanded="True">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="NewWindow" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="NewWindow" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                     <ui:FANavigationViewItem.MenuItems>
                         <ui:FANavigationViewItem Content="学科管理" Tag="subjectmanag">
                             <ui:FANavigationViewItem.IconSource>
-                                <ui:FASymbolIconSource Symbol="Find" FontSize="20" />
+                                <ui:FASymbolIconSource Symbol="Find" FontSize="35" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                     </ui:FANavigationViewItem.MenuItems>
@@ -97,17 +97,17 @@
 
                 <ui:FANavigationViewItem Content="云服务" SelectsOnInvoked="False" IsExpanded="True">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="Cloud" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="Cloud" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                     <ui:FANavigationViewItem.MenuItems>
                         <ui:FANavigationViewItem Content="AssignSticker 网页版" Tag="asxweb">
                             <ui:FANavigationViewItem.IconSource>
-                                <ui:FASymbolIconSource Symbol="Cloud" FontSize="20" />
+                                <ui:FASymbolIconSource Symbol="Cloud" FontSize="35" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                         <ui:FANavigationViewItem Content="ClassWorksKV" Tag="classworkskv" IsEnabled="False">
                             <ui:FANavigationViewItem.IconSource>
-                                <ui:FASymbolIconSource Symbol="PostUpdate" FontSize="20" />
+                                <ui:FASymbolIconSource Symbol="PostUpdate" FontSize="35" />
                             </ui:FANavigationViewItem.IconSource>
                         </ui:FANavigationViewItem>
                     </ui:FANavigationViewItem.MenuItems>
@@ -117,14 +117,14 @@
 
                 <ui:FANavigationViewItem Content="存储设置" Tag="save">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="Save" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="Save" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                 </ui:FANavigationViewItem>
             </ui:FANavigationView.MenuItems>
             <ui:FANavigationView.FooterMenuItems>
                 <ui:FANavigationViewItem Content="关于AssignSticker X" Tag="about">
                     <ui:FANavigationViewItem.IconSource>
-                        <ui:FASymbolIconSource Symbol="ContactInfo" FontSize="20" />
+                        <ui:FASymbolIconSource Symbol="ContactInfo" FontSize="35" />
                     </ui:FANavigationViewItem.IconSource>
                 </ui:FANavigationViewItem>
             </ui:FANavigationView.FooterMenuItems>

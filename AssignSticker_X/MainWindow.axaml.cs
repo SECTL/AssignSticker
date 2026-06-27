@@ -12,6 +12,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Documents;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -44,6 +45,7 @@ public partial class MainWindow : Window
     private windows.settingswindow.settingshell? _settingsWindow;
     private PixelRect _normalBounds;
     private bool _isLocked;
+    private bool _isViewingHistory;
     private int _homeworkFontScale;
 
     private static readonly string[] CnDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
@@ -101,6 +103,8 @@ public partial class MainWindow : Window
         RenderHomeworkCards();
         Logger.Info($"已加载 {_homeworkItems.Count} 个作业");
         SetupAutoClear();
+
+        BackToTodayButton.PointerPressed += (_, _) => RestoreTodayHomework();
 
         exitbutton.Click += (_, _) => ShutdownApp();
 
@@ -620,6 +624,262 @@ public partial class MainWindow : Window
         {
             _settingsWindow.Activate();
         }
+    }
+
+    private async void RestoreHistory_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var dir = SavesDir;
+        if (!System.IO.Directory.Exists(dir))
+        {
+            var emptyDialog = new FAContentDialog
+            {
+                Title = "恢复到往日作业",
+                Content = new TextBlock { Text = "暂无历史作业记录", FontSize = 14, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center },
+                CloseButtonText = "知道了"
+            };
+            await emptyDialog.ShowAsync(this);
+            return;
+        }
+
+        var allFiles = System.IO.Directory.GetFiles(dir, "*.json");
+        if (allFiles.Length == 0)
+        {
+            var emptyDialog = new FAContentDialog
+            {
+                Title = "恢复到往日作业",
+                Content = new TextBlock { Text = "暂无历史作业记录", FontSize = 14, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center },
+                CloseButtonText = "知道了"
+            };
+            await emptyDialog.ShowAsync(this);
+            return;
+        }
+
+        var grouped = allFiles
+            .GroupBy(f => System.IO.Path.GetFileName(f).Substring(0, 10))
+            .OrderByDescending(g => g.Key)
+            .ToList();
+
+        var font = (FontFamily)Application.Current!.FindResource("DefaultFont")!;
+
+        if (grouped.Count > 3)
+        {
+            await ShowCalendarHistoryDialog(grouped, font);
+        }
+        else
+        {
+            await ShowCardHistoryDialog(grouped, font);
+        }
+    }
+
+    private async Task ShowCardHistoryDialog(List<IGrouping<string, string>> grouped, FontFamily font)
+    {
+        var cardPanel = new WrapPanel { Orientation = Avalonia.Layout.Orientation.Vertical };
+        FAContentDialog? historyDialog = null;
+
+        foreach (var group in grouped)
+        {
+            var date = group.Key;
+            var count = group.Count();
+            var latestFile = group.OrderByDescending(f => f).First();
+
+            var card = new Border
+            {
+                Width = 200,
+                Margin = new Thickness(0, 0, 12, 12),
+                CornerRadius = new CornerRadius(12),
+                Background = new SolidColorBrush(Color.Parse("#2D2D2D")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#404040")),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(16, 12),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                Tag = latestFile
+            };
+
+            var cardContent = new StackPanel { Spacing = 6 };
+            cardContent.Children.Add(new TextBlock
+            {
+                Text = date,
+                FontSize = 18,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            });
+            cardContent.Children.Add(new TextBlock
+            {
+                Text = $"共 {count} 次存储",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.Parse("#888888"))
+            });
+            card.Child = cardContent;
+
+            card.Tapped += async (_, args) =>
+            {
+                if (card.Tag is string filePath && historyDialog != null)
+                {
+                    historyDialog.Hide();
+                    LoadHomeworkFromFile(filePath);
+                    SaveHomework();
+                    RenderHomeworkCards();
+                    BackToTodayButton.IsVisible = true;
+                    _isViewingHistory = true;
+                    HomeworkTitle.Text = $"往日作业 - {date}";
+                    Logger.Info($"恢复往日作业: {date}");
+                }
+            };
+
+            cardPanel.Children.Add(card);
+        }
+
+        var dialogContent = new StackPanel { Spacing = 16 };
+        dialogContent.Children.Add(new TextBlock
+        {
+            Text = "恢复到往日的作业",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.Parse("#888888"))
+        });
+
+        if (grouped.Count > 4)
+        {
+            var scroll = new ScrollViewer { MaxHeight = 360, Content = cardPanel };
+            dialogContent.Children.Add(scroll);
+        }
+        else
+        {
+            dialogContent.Children.Add(cardPanel);
+        }
+
+        historyDialog = new FAContentDialog
+        {
+            Title = "恢复到往日作业",
+            Content = dialogContent,
+            CloseButtonText = "取消"
+        };
+        historyDialog.Styles.Add(new Style { Selector = Selectors.OfType<TextBlock>(null), Setters = { new Setter(TextBlock.FontFamilyProperty, font) } });
+
+        await historyDialog.ShowAsync(this);
+    }
+
+    private async Task ShowCalendarHistoryDialog(List<IGrouping<string, string>> grouped, FontFamily font)
+    {
+        var dateMap = new Dictionary<DateTime, (int count, string latestFile)>();
+        foreach (var g in grouped)
+        {
+            if (DateTime.TryParse(g.Key, out var dt))
+            {
+                dateMap[dt] = (g.Count(), g.OrderByDescending(f => f).First());
+            }
+        }
+
+        var calendar = new Calendar
+        {
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            SelectionMode = CalendarSelectionMode.SingleDate
+        };
+
+        var selectedDateText = new TextBlock
+        {
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.Parse("#888888"))
+        };
+
+        var loadBtn = new Button
+        {
+            Content = "恢复此日作业",
+            IsEnabled = false,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            Padding = new Thickness(20, 8)
+        };
+
+        calendar.SelectedDatesChanged += (_, e) =>
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is DateTime dt)
+            {
+                if (dateMap.TryGetValue(dt.Date, out var info))
+                {
+                    selectedDateText.Text = $"{dt:yyyy-MM-dd}，共 {info.count} 次存储";
+                    loadBtn.IsEnabled = true;
+                    loadBtn.Tag = info.latestFile;
+                }
+                else
+                {
+                    selectedDateText.Text = "该日期没有作业记录";
+                    loadBtn.IsEnabled = false;
+                }
+            }
+        };
+
+        calendar.DisplayDateChanged += (_, _) =>
+        {
+            HighlightCalendarDates(calendar, dateMap);
+        };
+
+        loadBtn.Click += async (_, _) =>
+        {
+            if (loadBtn.Tag is string filePath)
+            {
+                var top = TopLevel.GetTopLevel(this);
+                if (top is Window win)
+                {
+                    var dlg = new FAContentDialog
+                    {
+                        Title = "恢复到往日作业",
+                        Content = new TextBlock { Text = "确定要恢复该日作业吗？当前作业将被替换。", TextWrapping = TextWrapping.Wrap },
+                        PrimaryButtonText = "确定",
+                        CloseButtonText = "取消"
+                    };
+                    var result = await dlg.ShowAsync(win);
+                    if (result == FAContentDialogResult.Primary)
+                    {
+                        LoadHomeworkFromFile(filePath);
+                        SaveHomework();
+                        RenderHomeworkCards();
+                        BackToTodayButton.IsVisible = true;
+                        _isViewingHistory = true;
+                        var dateStr = System.IO.Path.GetFileName(filePath).Substring(0, 10);
+                        HomeworkTitle.Text = $"往日作业 - {dateStr}";
+                        Logger.Info($"恢复往日作业: {dateStr}");
+                    }
+                }
+            }
+        };
+
+        var datesWithData = string.Join("、", dateMap.Keys.OrderByDescending(d => d).Take(10).Select(d => d.ToString("MM-dd")));
+        if (dateMap.Count > 10) datesWithData += "…";
+
+        var content = new StackPanel { Spacing = 12 };
+        content.Children.Add(new TextBlock
+        {
+            Text = "选择日期以恢复到该日的作业",
+            FontSize = 14,
+            Foreground = new SolidColorBrush(Color.Parse("#888888"))
+        });
+        content.Children.Add(calendar);
+        content.Children.Add(new TextBlock
+        {
+            Text = $"有作业记录的日期：{datesWithData}",
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Color.Parse("#888888")),
+            TextWrapping = TextWrapping.Wrap
+        });
+        content.Children.Add(selectedDateText);
+        content.Children.Add(loadBtn);
+
+        var dialog = new FAContentDialog
+        {
+            Title = "恢复到往日作业",
+            Content = content,
+            CloseButtonText = "取消"
+        };
+        dialog.Styles.Add(new Style { Selector = Selectors.OfType<TextBlock>(null), Setters = { new Setter(TextBlock.FontFamilyProperty, font) } });
+        dialog.Styles.Add(new Style { Selector = Selectors.OfType<Calendar>(null), Setters = { new Setter(Calendar.FontFamilyProperty, font) } });
+        dialog.Styles.Add(new Style { Selector = Selectors.OfType<Button>(null), Setters = { new Setter(Button.FontFamilyProperty, font) } });
+
+        var top = TopLevel.GetTopLevel(this);
+        if (top is Window window)
+            await dialog.ShowAsync(window);
+    }
+
+    private static void HighlightCalendarDates(Calendar calendar, Dictionary<DateTime, (int count, string latestFile)> dateMap)
+    {
     }
 
     private List<HomeworkItem> _homeworkItems = new();
@@ -1284,5 +1544,30 @@ public partial class MainWindow : Window
         {
             Logger.Error($"加载作业失败: {ex.Message}");
         }
+    }
+
+    private void LoadHomeworkFromFile(string filePath)
+    {
+        try
+        {
+            var json = System.IO.File.ReadAllText(filePath);
+            var items = System.Text.Json.JsonSerializer.Deserialize<List<HomeworkItem>>(json);
+            if (items != null)
+                _homeworkItems = items;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"加载作业文件失败: {ex.Message}");
+        }
+    }
+
+    private void RestoreTodayHomework()
+    {
+        _isViewingHistory = false;
+        BackToTodayButton.IsVisible = false;
+        HomeworkTitle.Text = "今日作业";
+        LoadHomework();
+        RenderHomeworkCards();
+        Logger.Info("恢复到今日作业");
     }
 }

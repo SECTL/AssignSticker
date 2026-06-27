@@ -113,6 +113,7 @@
                 </ui:FASettingsExpanderItem>
                 
             </ui:FASettingsExpander>
+            <ui:FASettingsExpander Margin="12"></ui:FASettingsExpander>
         </StackPanel>
         </Grid>
     </ScrollViewer>

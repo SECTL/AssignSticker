@@ -205,7 +205,7 @@
                         ToolTip.Tip="菜单">
                     <Button.Flyout>
                         <MenuFlyout Placement="Top" VerticalOffset="-3">
-                            <MenuItem Header="恢复往日作业">
+                            <MenuItem Header="恢复往日作业" Click="RestoreHistory_Click">
                                 <MenuItem.Icon>
                                     <ic:FluentIcon Icon="History"
                                                    IconVariant="Regular"
@@ -329,6 +329,27 @@
         <TextBlock x:Name="SaveNotificationText"
                    TextWrapping="NoWrap"
                    Foreground="White" />
+    </Border>
+
+    <Border x:Name="BackToTodayButton"
+            Grid.Row="2"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Margin="0,0,16,124"
+            Padding="14,10"
+            CornerRadius="8"
+            Background="{DynamicResource SystemControlBackgroundAccentBrush}"
+            BoxShadow="0 2 8 0 rgba(0,0,0,0.2)"
+            IsVisible="False"
+            Cursor="Hand">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="📅" FontSize="14" />
+        <TextBlock Text="回到今天"
+                   TextWrapping="NoWrap"
+                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                   FontSize="14"
+                   FontWeight="SemiBold" />
+        </StackPanel>
     </Border>
 </Grid>
 </Window>

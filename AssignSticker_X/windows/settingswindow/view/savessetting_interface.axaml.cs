@@ -63,6 +63,21 @@ public partial class savessetting_interface : UserControl
         }
     }
 
+    private static HyperlinkButton MakeGitHubLink()
+    {
+        var link = new HyperlinkButton
+        {
+            Content = "https://github.com/wwiinnddyy/UnifiedAssignmentFormat"
+        };
+        link.Click += async (_, _) =>
+        {
+            var top = TopLevel.GetTopLevel(link);
+            if (top != null)
+                await top.Launcher.LaunchUriAsync(new Uri("https://github.com/wwiinnddyy/UnifiedAssignmentFormat"));
+        };
+        return link;
+    }
+
     private async void UafHelpLink_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var content = new StackPanel
@@ -99,6 +114,12 @@ public partial class savessetting_interface : UserControl
                 },
                 new TextBlock
                 {
+                    Text = "• ImmersingHomework（计划支持）",
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    FontSize = 13
+                },
+                new TextBlock
+                {
                     Text = "• StickyHomework2(计划支持）",
                     TextWrapping = Avalonia.Media.TextWrapping.Wrap,
                     FontSize = 13
@@ -116,7 +137,12 @@ public partial class savessetting_interface : UserControl
                     TextWrapping = Avalonia.Media.TextWrapping.Wrap,
                     FontSize = 13,
                     Foreground = Avalonia.Media.Brushes.Gray
-                }
+                },
+                new TextBlock
+                {
+                    Text = "有关更多UAF格式的信息，请参阅 GitHub 仓库："
+                },
+                MakeGitHubLink(),
             }
         };
 
